@@ -161,7 +161,7 @@ body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 va
 .app-page-stages { grid-area: stages; }
 .app-page-cv { grid-area: cv; }
 .app-page-chat { grid-area: chat; }
-.app-page-cv > .ds-block, .app-page-chat > .ds-block { block-size: 100%; box-sizing: border-box; }
+.app-page-cv > .ds-block, .app-page-chat > .ds-block { block-size: 100%; box-sizing: border-box; border: 0; }
 .app-page-chat > .ds-block { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 0.75rem; }
 .app-page-chat-scroll { overflow-y: auto; }
 
