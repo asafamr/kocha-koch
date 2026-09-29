@@ -1,12 +1,23 @@
 # Works with `docker compose` and `podman compose`.
 # Both images run as uid 1000. Rootless podman: set USERNS_MODE=keep-id in .env
-# so that uid maps to your host user and ./data stays writable.
+# so that uid maps to your host user and ./.messages stays writable.
 x-hardening: &hardening
   cap_drop: [ALL]
   security_opt: [no-new-privileges:true]
   userns_mode: ${USERNS_MODE:-}
 
-# agent and storybook share one image and one bun package cache.
+x-app: &app
+  <<: *hardening
+  build: .
+  image: kocha-koch-app
+  init: true   # bun as PID 1 ignores SIGTERM
+  read_only: true
+  tmpfs: [/tmp]
+  env_file:
+    - path: .env
+      required: false
+
+# agent tools share one image and one bun package cache.
 x-tools: &tools
   <<: *hardening
   image: kocha-koch-agent
@@ -17,29 +28,40 @@ x-tools: &tools
     OPENAI_API_KEY: ${OPENAI_API_KEY:-}
 
 services:
+  # Answered by Claude Code / Codex through files. http://127.0.0.1:3000
   app:
-    build: .
-    <<: *hardening
-    init: true   # bun as PID 1 ignores SIGTERM
-    read_only: true
-    tmpfs: [/tmp]
+    <<: *app
+    environment: { BACKEND: files }
     ports: ["127.0.0.1:3000:3000"]
-    env_file:
-      - path: .env
-        required: false
     volumes:
-      - ./data:/app/data
+      - ./.messages/agent:/app/.messages
 
-  # Claude Code / Codex sandbox. Start with: docker compose run --rm agent
+  # Answered by Gemini in-process. http://127.0.0.1:3001
+  app-gemini:
+    <<: *app
+    environment: { BACKEND: gemini }
+    ports: ["127.0.0.1:3001:3000"]
+    volumes:
+      - ./.messages/gemini:/app/.messages
+
+  # Claude Code shell (also has codex). Start with: docker compose run --rm agent
   agent:
     <<: *tools
     profiles: [agent]
     stdin_open: true
     tty: true
-    volumes:
+    volumes: &agent-volumes
       - .:/work
       - bun-cache:/bun-cache
       - agent-home:/home/node   # keeps CLI logins between runs
+
+  # Answers app's messages with Claude Code. Start with: docker compose --profile claude up
+  claude-responder:
+    <<: *tools
+    profiles: [claude]
+    init: true
+    command: scripts/agent-loop.sh claude
+    volumes: *agent-volumes
 
   # Component dev UI. Start with: docker compose --profile dev up storybook
   storybook:

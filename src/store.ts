@@ -2,16 +2,16 @@ import { mkdir, readdir, rename } from "node:fs/promises";
 import { join } from "node:path";
 
 // File protocol (see AGENTS.md):
-//   data/inbox/<id>.json   written by the server for each user message
-//   data/outbox/<id>.json  the reply, written by the agent or the Gemini backend
+//   .messages/inbox/<id>.json   written by the server for each user message
+//   .messages/outbox/<id>.json  the reply, written by the agent or the Gemini backend
 // A message is pending while it has no outbox file with the same id.
 
 export type Message = { id: string; ts: string; text: string };
 export type Reply = Message & { by: string };
 
-const DATA_DIR = process.env.DATA_DIR ?? "data";
-export const INBOX = join(DATA_DIR, "inbox");
-export const OUTBOX = join(DATA_DIR, "outbox");
+const MESSAGES_DIR = process.env.MESSAGES_DIR ?? ".messages";
+export const INBOX = join(MESSAGES_DIR, "inbox");
+export const OUTBOX = join(MESSAGES_DIR, "outbox");
 
 await mkdir(INBOX, { recursive: true });
 await mkdir(OUTBOX, { recursive: true });

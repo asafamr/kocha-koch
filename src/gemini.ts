@@ -4,7 +4,7 @@ const MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
 const KEY = process.env.GEMINI_API_KEY;
 
 // Answer one inbox message the same way an external agent would: read the
-// thread, write data/outbox/<id>.json.
+// thread, write .messages/outbox/<id>.json.
 export async function answer(id: string) {
   if (!KEY) throw new Error("GEMINI_API_KEY is not set");
 

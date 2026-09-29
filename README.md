@@ -1,34 +1,36 @@
 # kocha-koch
 
-Chat frontend on a Bun server. Each message is written to `data/inbox/`. Replies come from
-`data/outbox/`, written either by Claude Code / Codex (`BACKEND=files`) or by the server
-through Gemini (`BACKEND=gemini`). Protocol details are in [AGENTS.md](AGENTS.md).
+Chat frontend on a Bun server. Each message is written to an inbox folder and the reply is
+read from an outbox folder. Two instances run side by side:
+
+| URL | Answered by | Messages |
+|---|---|---|
+| http://127.0.0.1:3000 | Claude Code (or Codex) through files | `.messages/agent/` |
+| http://127.0.0.1:3001 | Gemini, in the server | `.messages/gemini/` |
+
+Protocol details are in [AGENTS.md](AGENTS.md).
 
 ## Run
 
 ```sh
-cp .env.example .env          # set BACKEND, and GEMINI_API_KEY for gemini
-docker compose up --build     # http://127.0.0.1:3000
+cp .env.example .env                  # set GEMINI_API_KEY; USERNS_MODE=keep-id on rootless podman
+docker compose run --rm agent claude  # once: log in to Claude Code, then exit
+docker compose --profile claude up --build
 ```
 
-With `BACKEND=files`, answer messages from the agent container:
+This starts both apps and `claude-responder`, which runs Claude Code whenever
+`.messages/agent/inbox` has a message without a reply. Without `--profile claude`, only
+the two apps start and you can answer from `docker compose run --rm agent`.
+To answer with Codex instead: `docker compose run --rm agent scripts/agent-loop.sh codex`.
 
-```sh
-docker compose run --rm agent                              # shell with claude and codex
-docker compose run --rm agent scripts/agent-loop.sh claude # auto-answer pending messages
-docker compose run --rm agent scripts/agent-loop.sh codex
-```
-
-Log in once inside the container (`claude`, `codex login`) or pass `ANTHROPIC_API_KEY` /
-`OPENAI_API_KEY`. Logins persist in the `agent-home` volume.
+Logins persist in the `agent-home` volume. `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` from
+your shell also work.
 
 ## Isolation
 
-Both containers drop all Linux capabilities and set `no-new-privileges`. The app container
-has a read-only root filesystem and writes only to `./data`. The agent container sees only
-this repo, so AI CLIs can run without permission prompts without touching the host.
-The server port binds to `127.0.0.1` only.
-
-With rootless podman, set `USERNS_MODE=keep-id` in `.env` so the containers can write `./data`.
+All containers drop all Linux capabilities and set `no-new-privileges`. The app containers
+have a read-only root filesystem and each writes only its own `.messages/<name>/` folder.
+The agent containers see only this repo, so AI CLIs run without permission prompts without
+touching the host. Ports bind to `127.0.0.1` only.
 
 Development, Storybook and the code map: [DEVELOPING.md](DEVELOPING.md).

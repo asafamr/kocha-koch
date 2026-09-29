@@ -1,5 +1,5 @@
 .git
 .claude
 .env
-data
+.messages
 node_modules
