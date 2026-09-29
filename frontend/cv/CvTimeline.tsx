@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
-import type { CvData } from "./data";
-import { contactItems, Dates, Joined, Page } from "./parts";
+import { contactItems, type CvProps, Dates, Joined, Page } from "./parts";
 
 // 1. Timeline: dates in a narrow start column, entries hang off a vertical line with a dot each.
 function Item({ dates, children }: { dates: string; children: ReactNode }) {
@@ -12,9 +11,9 @@ function Item({ dates, children }: { dates: string; children: ReactNode }) {
   );
 }
 
-export function CvTimeline({ cv }: { cv: CvData }) {
+export function CvTimeline({ cv, palette = "Slate", typography = "Modern" }: CvProps) {
   return (
-    <Page variant="timeline">
+    <Page variant="timeline" palette={palette} typography={typography}>
       <header>
         <h1>{cv.name}</h1>
         <p className="cv-title">{cv.title}</p>
@@ -24,7 +23,7 @@ export function CvTimeline({ cv }: { cv: CvData }) {
       </header>
       <p className="cv-summary">{cv.summary}</p>
 
-      <h2>ניסיון תעסוקתי</h2>
+      <h2>Experience</h2>
       {cv.experience.map((j) => (
         <Item key={j.company} dates={j.dates}>
           <strong>{j.role}</strong>
@@ -39,7 +38,7 @@ export function CvTimeline({ cv }: { cv: CvData }) {
         </Item>
       ))}
 
-      <h2>השכלה ושירות צבאי</h2>
+      <h2>Education &amp; Military Service</h2>
       {cv.education.map((e) => (
         <Item key={e.degree} dates={e.dates}>
           <strong>{e.degree}</strong>
@@ -51,7 +50,7 @@ export function CvTimeline({ cv }: { cv: CvData }) {
         <div className="cv-meta">{cv.military.unit}</div>
       </Item>
 
-      <h2>כישורים</h2>
+      <h2>Skills</h2>
       <dl className="cv-skills">
         {cv.skills.map((s) => (
           <div key={s.label}>

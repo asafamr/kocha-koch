@@ -1,89 +1,112 @@
-/* CV styles. Sizes in pt/mm for print. One A4 page; overflow is cut (one-page CVs only).
-   Logical properties throughout, so dir="rtl" puts "start" on the right. */
+/* CV styles, English (LTR). Sizes in pt/mm for print. One A4 page; overflow is cut (one-page CVs only).
+   Colors and fonts come from --cv-* variables set by theme.ts (palette + typography), so every
+   style works with every palette and typography. Logical properties, so an RTL CV mirrors. */
+
+/* Latin text faces (variable, one file per style). Self-hosted from fontsource. */
+@font-face {
+  font-family: "Inter"; font-weight: 100 900; font-display: swap;
+  src: url("../components/fonts/inter-latin-wght.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Source Serif 4"; font-weight: 200 900; font-style: normal; font-display: swap;
+  src: url("../components/fonts/source-serif-4-latin-wght.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Source Serif 4"; font-weight: 200 900; font-style: italic; font-display: swap;
+  src: url("../components/fonts/source-serif-4-latin-wght-italic.woff2") format("woff2");
+}
 
 .cv {
   inline-size: 210mm; block-size: 297mm; box-sizing: border-box; overflow: hidden;
-  background: #fff; color: #000; font-family: "Noto Sans Hebrew", Arial, sans-serif;
+  background: #fff; color: var(--cv-ink); font-family: var(--cv-font-body);
+  font-kerning: normal;
   -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
 .cv h1, .cv h2, .cv p, .cv ul, .cv dl, .cv dd { margin: 0; }
+.cv h1 { font-family: var(--cv-font-display); font-weight: var(--cv-display-weight); line-height: 1.08; }
+.cv h2 {
+  font-family: var(--cv-font-heading); text-transform: var(--cv-heading-case);
+  font-variant: var(--cv-heading-variant); letter-spacing: var(--cv-heading-tracking);
+}
 .cv ul { padding-inline-start: 4mm; }
 .cv-row { display: flex; justify-content: space-between; align-items: baseline; gap: 4mm; }
-.cv-dates { white-space: nowrap; }
+.cv-dates { white-space: nowrap; font-variant-numeric: tabular-nums; } /* aligned digits; not page-wide, it widens hyphens in Inter */
+.cv-meta { color: var(--cv-muted); }
 
-/* 1. Timeline: 16 mm margins, dates in a 24 mm start column, entries on a vertical line with dots */
-.cv-timeline { padding: 16mm; font-size: 10pt; line-height: 1.4; color: #1D1D1B; }
-.cv-timeline header { border-block-end: 1.5pt solid #1D1D1B; padding-block-end: 4mm; margin-block-end: 4mm; }
-.cv-timeline h1 { font-size: 24pt; font-weight: 800; line-height: 1.1; }
-.cv-timeline .cv-title { font-size: 12pt; font-weight: 500; color: #3A4F66; margin-block: 1mm 2mm; }
-.cv-timeline .cv-meta { font-size: 9pt; color: #555; }
+/* 1. Timeline: 16 mm margins, dates in a 30 mm start column, entries on a vertical line with dots */
+.cv-timeline { padding: 16mm; font-size: 9.75pt; line-height: 1.45; }
+.cv-timeline header { border-block-end: 1.5pt solid var(--cv-ink); padding-block-end: 4mm; margin-block-end: 4mm; }
+.cv-timeline h1 { font-size: 26pt; }
+.cv-timeline .cv-title { font-size: 11.5pt; font-weight: 500; color: var(--cv-accent); margin-block: 1mm 2mm; }
+.cv-timeline .cv-meta { font-size: 8.75pt; }
 .cv-timeline .cv-summary { margin-block-end: 2mm; }
-.cv-timeline h2 { font-size: 11pt; font-weight: 700; color: #3A4F66; margin-block: 5mm 2.5mm; }
-.cv-tl-item { display: grid; grid-template-columns: 24mm 1fr; }
-.cv-tl-item > .cv-dates { font-size: 9pt; color: #555; padding-block-start: 0.4mm; justify-self: start; } /* LTR ranges would otherwise hug the line */
-.cv-tl-body { position: relative; border-inline-start: 1pt solid #C9CED4; padding-inline-start: 5mm; padding-block-end: 3.5mm; }
+.cv-timeline h2 { font-size: 9pt; font-weight: 700; color: var(--cv-accent); margin-block: 5.5mm 2.5mm; }
+.cv-tl-item { display: grid; grid-template-columns: 30mm 1fr; }
+/* dates may wrap here: "Jun 2018 – Feb 2021" is wider than the column */
+.cv-tl-item > .cv-dates { font-size: 8.75pt; color: var(--cv-muted); padding-block-start: 0.3mm; padding-inline-end: 3mm; white-space: normal; }
+.cv-tl-body { position: relative; border-inline-start: 1pt solid var(--cv-rule); padding-inline-start: 5mm; padding-block-end: 3.5mm; }
 .cv-tl-body::before {
   content: ""; position: absolute; inset-inline-start: -1.6mm; inset-block-start: 1.2mm;
-  inline-size: 2.4mm; block-size: 2.4mm; border-radius: 50%; background: #3A4F66;
+  inline-size: 2.4mm; block-size: 2.4mm; border-radius: 50%; background: var(--cv-accent);
 }
 .cv-timeline ul { margin-block-start: 1mm; }
 .cv-skills { display: grid; gap: 1mm; }
-.cv-skills > div { display: grid; grid-template-columns: 24mm 1fr; }
-.cv-skills dt { font-weight: 700; font-size: 9pt; color: #555; }
+.cv-skills > div { display: grid; grid-template-columns: 30mm 1fr; }
+.cv-skills dt { font-weight: 600; font-size: 8.75pt; color: var(--cv-muted); }
 
-/* 2. Sidebar: grid, 32% tinted sidebar at start (right), navy accent, no page margin */
+/* 2. Sidebar: grid, 32% tinted sidebar at start, accent name and headings, no page margin */
 .cv-sidebar {
   display: grid; grid-template-columns: 32% 68%; grid-template-areas: "side main";
-  font-size: 10pt; line-height: 1.35; color: #1A1A1A;
+  font-size: 9.75pt; line-height: 1.4;
 }
 .cv-sidebar .cv-main { grid-area: main; padding: 12mm; }
-.cv-sidebar .cv-side { grid-area: side; background: #F1F4F8; padding: 12mm 8mm; font-size: 9.5pt; }
+.cv-sidebar .cv-side { grid-area: side; background: var(--cv-tint); padding: 12mm 8mm; font-size: 9pt; }
 .cv-sidebar .cv-side p { margin-block-end: 2mm; overflow-wrap: anywhere; }
-.cv-sidebar h1 { font-size: 24pt; font-weight: 800; color: #1F3A5F; line-height: 1.1; }
-.cv-sidebar .cv-title { font-size: 12pt; font-weight: 500; margin-block: 1mm 4mm; }
+.cv-sidebar h1 { font-size: 26pt; color: var(--cv-accent); }
+.cv-sidebar .cv-title { font-size: 12pt; font-weight: 500; margin-block: 1.5mm 4mm; }
 .cv-sidebar h2 {
-  font-size: 11pt; font-weight: 700; color: #1F3A5F; margin-block: 5mm 2mm;
-  border-inline-start: 2pt solid #1F3A5F; padding-inline-start: 2mm;
+  font-size: 9pt; font-weight: 700; color: var(--cv-accent); margin-block: 5mm 2mm;
+  border-inline-start: 2pt solid var(--cv-accent); padding-inline-start: 2mm;
 }
 .cv-sidebar .cv-side h2:first-child { margin-block-start: 0; }
-.cv-sidebar .cv-meta { font-size: 9pt; color: #555; }
+.cv-sidebar .cv-meta { font-size: 8.75pt; }
 .cv-sidebar .cv-entry { margin-block-end: 3mm; }
 
-/* 3. Bars: 15 mm margins, headings on full-width light-gray bars, contact stacked at end */
-.cv-bars { padding: 15mm; font-size: 10pt; line-height: 1.4; color: #1A1A1A; }
+/* 3. Bars: 15 mm margins, headings on full-width tinted bars, contact stacked at end */
+.cv-bars { padding: 15mm; font-size: 9.75pt; line-height: 1.45; }
 .cv-bars header { align-items: end; margin-block-end: 5mm; }
-.cv-bars h1 { font-size: 24pt; font-weight: 800; line-height: 1.1; }
-.cv-bars .cv-title { font-size: 12pt; font-weight: 500; color: #444; margin-block-start: 1mm; }
-.cv-bars .cv-contact { display: grid; gap: 0.5mm; font-size: 9pt; justify-items: end; color: #333; }
-.cv-bars h2 { background: #E9E9E6; font-size: 11pt; font-weight: 700; padding: 1.2mm 3mm; margin-block: 4mm 2mm; }
+.cv-bars h1 { font-size: 26pt; }
+.cv-bars .cv-title { font-size: 11.5pt; font-weight: 500; color: var(--cv-accent); margin-block-start: 1mm; }
+.cv-bars .cv-contact { display: grid; gap: 0.5mm; font-size: 8.75pt; justify-items: end; color: var(--cv-muted); }
+.cv-bars h2 { background: var(--cv-tint); font-size: 9.5pt; font-weight: 700; padding: 1.3mm 3mm; margin-block: 4mm 2mm; }
 .cv-bars-body { padding-inline: 3mm; }
 .cv-bars .cv-entry { margin-block-end: 2.5mm; }
 .cv-bars li { margin-block: 0.5mm; }
 
-/* 4. Compact (Jake's): 12.5 mm margins, dense, 0.5pt rules, two-row entries, mono skills */
-.cv-compact { padding: 12.5mm; font-size: 9.75pt; line-height: 1.2; }
+/* 4. Compact (Jake's): 12.5 mm margins, dense, headings with 0.5pt rules, company/location then
+   italic role/dates */
+.cv-compact { padding: 12.5mm; font-size: 10pt; line-height: 1.25; }
 .cv-compact header { text-align: center; margin-block-end: 2mm; }
-.cv-compact h1 { font-size: 22pt; font-weight: 700; }
-.cv-compact .cv-meta { font-size: 9pt; }
-.cv-compact h2 { font-size: 11pt; font-weight: 700; border-block-end: 0.5pt solid #000; margin-block: 3mm 1.5mm; }
+.cv-compact h1 { font-size: 24pt; }
+.cv-compact .cv-meta { font-size: 9.5pt; color: var(--cv-ink); }
+.cv-compact h2 { font-size: 12pt; font-weight: 600; border-block-end: 0.5pt solid var(--cv-rule); margin-block: 3.5mm 1.5mm; }
 .cv-compact .cv-entry { margin-block-end: 1.5mm; }
-.cv-compact .cv-sub { font-weight: 500; font-size: 9.5pt; }
-.cv-compact ul { padding-inline-start: 3.5mm; }
-.cv-compact li { margin-block: 1mm; }
+.cv-compact .cv-sub { font-style: italic; font-size: 9.5pt; }
+.cv-compact ul { padding-inline-start: 4mm; }
+.cv-compact li { margin-block: 0.8mm; }
 .cv-compact p { margin-block-end: 0.8mm; }
-.cv-compact .cv-mono { font: 9pt "JetBrains Mono", monospace; }
 
-/* 5. Band: full-bleed light sand band, Suez One name, brick accent headings with a short bar */
-.cv-band { font-size: 10pt; line-height: 1.35; color: #1F1E1C; }
+/* 5. Band: full-bleed tinted band, accent title and headings with a short bar */
+.cv-band { font-size: 9.75pt; line-height: 1.4; }
 .cv-band .cv-head {
-  background: #E8E1D5; color: #262420; min-block-size: 40mm; box-sizing: border-box; padding: 10mm 16mm;
+  background: var(--cv-tint); min-block-size: 40mm; box-sizing: border-box; padding: 10mm 16mm;
   display: flex; justify-content: space-between; align-items: center; gap: 8mm;
 }
-.cv-band h1 { font: 26pt/1.1 "Suez One", serif; }
-.cv-band .cv-title { font-size: 12pt; font-weight: 500; margin-block-start: 1.5mm; color: #9A3B2A; }
-.cv-band .cv-contact { display: grid; gap: 0.5mm; font-size: 9pt; justify-items: end; color: #3B3833; }
+.cv-band h1 { font-size: 28pt; }
+.cv-band .cv-title { font-size: 11.5pt; font-weight: 500; margin-block-start: 1.5mm; color: var(--cv-accent); }
+.cv-band .cv-contact { display: grid; gap: 0.5mm; font-size: 8.75pt; justify-items: end; color: var(--cv-muted); }
 .cv-band .cv-body { padding: 8mm 16mm 16mm; }
-.cv-band h2 { font-size: 12pt; font-weight: 700; color: #9A3B2A; margin-block: 5mm 2mm; }
-.cv-band h2::after { content: ""; display: block; inline-size: 12mm; block-size: 2pt; background: #9A3B2A; margin-block-start: 1mm; }
+.cv-band h2 { font-size: 9.5pt; font-weight: 700; color: var(--cv-accent); margin-block: 5mm 2mm; }
+.cv-band h2::after { content: ""; display: block; inline-size: 12mm; block-size: 2pt; background: var(--cv-accent); margin-block-start: 1.2mm; }
 .cv-band .cv-entry { margin-block-end: 2.5mm; }
-.cv-band li::marker { content: "■  "; color: #9A3B2A; font-size: 7pt; }
+.cv-band li::marker { content: "■  "; color: var(--cv-accent); font-size: 6.5pt; }

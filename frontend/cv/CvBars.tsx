@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
-import type { CvData } from "./data";
-import { Dates, Ltr, Page } from "./parts";
+import { type CvProps, Dates, Ltr, Page } from "./parts";
 
-// 3. Bars: section headings on full-width light-gray bars (common in Israeli CV templates),
+// 3. Bars: uppercase section headings on full-width light-gray bars,
 // name and title at start with contact stacked at end, dates at the end of each row.
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -13,9 +12,9 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function CvBars({ cv }: { cv: CvData }) {
+export function CvBars({ cv, palette = "Ink", typography = "Modern" }: CvProps) {
   return (
-    <Page variant="bars">
+    <Page variant="bars" palette={palette} typography={typography}>
       <header className="cv-row">
         <div>
           <h1>{cv.name}</h1>
@@ -29,11 +28,11 @@ export function CvBars({ cv }: { cv: CvData }) {
         </div>
       </header>
 
-      <Section title="תקציר">
+      <Section title="Summary">
         <p>{cv.summary}</p>
       </Section>
 
-      <Section title="ניסיון תעסוקתי">
+      <Section title="Experience">
         {cv.experience.map((j) => (
           <div key={j.company} className="cv-entry">
             <div className="cv-row">
@@ -51,7 +50,7 @@ export function CvBars({ cv }: { cv: CvData }) {
         ))}
       </Section>
 
-      <Section title="השכלה">
+      <Section title="Education">
         {cv.education.map((e) => (
           <div key={e.degree} className="cv-row">
             <span>
@@ -62,7 +61,7 @@ export function CvBars({ cv }: { cv: CvData }) {
         ))}
       </Section>
 
-      <Section title="שירות צבאי">
+      <Section title="Military Service">
         <div className="cv-row">
           <span>
             <strong>{cv.military.role}</strong> | {cv.military.unit}
@@ -71,7 +70,7 @@ export function CvBars({ cv }: { cv: CvData }) {
         </div>
       </Section>
 
-      <Section title="כישורים">
+      <Section title="Skills">
         {cv.skills.map((s) => (
           <p key={s.label}>
             <strong>{s.label}:</strong> <bdi>{s.items}</bdi>

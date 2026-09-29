@@ -12,39 +12,39 @@ export type CvData = {
 };
 
 export const SAMPLE_CV: CvData = {
-  name: "נועה לוי",
-  title: "מפתחת Full Stack בכירה",
-  contact: { phone: "050-321-4450", email: "noa.levi@example.com", city: "תל אביב", linkedin: "linkedin.com/in/noalevi" },
+  name: "Noa Levi",
+  title: "Senior Full Stack Developer",
+  contact: { phone: "+972-50-321-4450", email: "noa.levi@example.com", city: "Tel Aviv", linkedin: "linkedin.com/in/noalevi" },
   summary:
-    "מפתחת Full Stack עם 7 שנות ניסיון בבניית מוצרי SaaS בקנה מידה גדול. מובילה צוותים קטנים, כותבת קוד נקי ומודדת כל שינוי.",
+    "Full stack developer with 7 years of experience building large-scale SaaS products. Leads small teams, writes clean code and measures every change.",
   experience: [
     {
-      role: "מפתחת Full Stack בכירה",
+      role: "Senior Full Stack Developer",
       company: "Monday.com",
-      location: "תל אביב",
-      dates: "2021 – היום",
+      location: "Tel Aviv",
+      dates: "Mar 2021 – Present",
       bullets: [
-        "הובלתי את המעבר של מערכת ההזמנות ל־React ו־TypeScript וקיצרתי את זמן הטעינה ב־40%.",
-        "בניתי שירות התראות ב־Node.js שמטפל ב־2 מיליון אירועים ביום.",
-        "חנכתי 3 מפתחים ג'וניורים; שניים קודמו בתוך שנה.",
+        "Led the migration of the booking system to React and TypeScript, cutting load time by 40%.",
+        "Built a Node.js notification service that handles 2 million events a day.",
+        "Mentored 3 junior developers; two were promoted within a year.",
       ],
     },
     {
-      role: "מפתחת Frontend",
+      role: "Frontend Developer",
       company: "Wix",
-      location: "תל אביב",
-      dates: "2018–2021",
+      location: "Tel Aviv",
+      dates: "Jun 2018 – Feb 2021",
       bullets: [
-        "פיתחתי את עורך הטפסים שמשמש 5 מיליון אתרים.",
-        "הורדתי את גודל ה־bundle ב־35% בעזרת code splitting ו־lazy loading.",
+        "Developed the form editor used by 5 million websites.",
+        "Reduced bundle size by 35% with code splitting and lazy loading.",
       ],
     },
   ],
-  education: [{ degree: "תואר ראשון במדעי המחשב", school: "אוניברסיטת תל אביב", dates: "2014–2018" }],
-  military: { role: "מפתחת תוכנה, סמ״ר", unit: "ממר״ם", dates: "2011–2013" },
+  education: [{ degree: "B.Sc. Computer Science", school: "Tel Aviv University", dates: "2014 – 2018" }],
+  military: { role: "Software Developer, Staff Sergeant", unit: "IDF Mamram", dates: "2011 – 2013" },
   skills: [
-    { label: "שפות תכנות", items: "TypeScript, JavaScript, Python, SQL" },
-    { label: "טכנולוגיות", items: "React, Node.js, PostgreSQL, AWS, Docker" },
-    { label: "שפות", items: "עברית (שפת אם), אנגלית (שוטפת)" },
+    { label: "Languages", items: "TypeScript, JavaScript, Python, SQL" },
+    { label: "Technologies", items: "React, Node.js, PostgreSQL, AWS, Docker" },
+    { label: "Spoken", items: "Hebrew (native), English (fluent)" },
   ],
 };

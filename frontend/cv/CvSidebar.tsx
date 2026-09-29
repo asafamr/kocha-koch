@@ -1,17 +1,16 @@
-import type { CvData } from "./data";
-import { Dates, Ltr, Page } from "./parts";
+import { type CvProps, Dates, Ltr, Page } from "./parts";
 
-// 2. Modern two-column: 32% tinted sidebar on the start (right) side, navy accent.
+// 2. Modern two-column: 32% tinted sidebar on the start side (left in English), navy accent.
 // Main column comes first in the DOM so parsers read it first; the grid places the sidebar at start.
-export function CvSidebar({ cv }: { cv: CvData }) {
+export function CvSidebar({ cv, palette = "Navy", typography = "Modern" }: CvProps) {
   return (
-    <Page variant="sidebar">
+    <Page variant="sidebar" palette={palette} typography={typography}>
       <div className="cv-main">
         <h1>{cv.name}</h1>
         <p className="cv-title">{cv.title}</p>
         <p>{cv.summary}</p>
 
-        <h2>ניסיון תעסוקתי</h2>
+        <h2>Experience</h2>
         {cv.experience.map((j) => (
           <section key={j.company} className="cv-entry">
             <strong>
@@ -30,7 +29,7 @@ export function CvSidebar({ cv }: { cv: CvData }) {
       </div>
 
       <aside className="cv-side">
-        <h2>פרטי קשר</h2>
+        <h2>Contact</h2>
         <p>{cv.contact.city}</p>
         <p>
           <Ltr>{cv.contact.phone}</Ltr>
@@ -42,7 +41,7 @@ export function CvSidebar({ cv }: { cv: CvData }) {
           <Ltr>{cv.contact.linkedin}</Ltr>
         </p>
 
-        <h2>כישורים</h2>
+        <h2>Skills</h2>
         {cv.skills.map((s) => (
           <p key={s.label}>
             <strong>{s.label}</strong>
@@ -51,7 +50,7 @@ export function CvSidebar({ cv }: { cv: CvData }) {
           </p>
         ))}
 
-        <h2>השכלה</h2>
+        <h2>Education</h2>
         {cv.education.map((e) => (
           <p key={e.degree}>
             <strong>{e.degree}</strong>
@@ -60,7 +59,7 @@ export function CvSidebar({ cv }: { cv: CvData }) {
           </p>
         ))}
 
-        <h2>שירות צבאי</h2>
+        <h2>Military Service</h2>
         <p>
           <strong>{cv.military.role}</strong>
           <br />

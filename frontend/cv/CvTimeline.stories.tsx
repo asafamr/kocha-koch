@@ -2,11 +2,13 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CvTimeline } from "./CvTimeline";
 import { SAMPLE_CV } from "./data";
 import { onDesk } from "./story";
+import { themeArgTypes } from "./theme";
 
 const meta = {
   title: "CV Styles/1 Timeline",
   component: CvTimeline,
   args: { cv: SAMPLE_CV },
+  argTypes: themeArgTypes,
   decorators: [onDesk],
   parameters: { layout: "fullscreen" },
 } satisfies Meta<typeof CvTimeline>;

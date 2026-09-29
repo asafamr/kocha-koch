@@ -1,10 +1,9 @@
-import type { CvData } from "./data";
-import { Dates, Ltr, Page } from "./parts";
+import { type CvProps, Dates, Ltr, Page } from "./parts";
 
-// 5. Accent header band: full-bleed teal band with name and title at start, contact stacked at end.
-export function CvBand({ cv }: { cv: CvData }) {
+// 5. Accent header band: full-bleed light sand band, name and title at start, contact stacked at end.
+export function CvBand({ cv, palette = "Sand & Brick", typography = "Editorial" }: CvProps) {
   return (
-    <Page variant="band">
+    <Page variant="band" palette={palette} typography={typography}>
       <header className="cv-head">
         <div>
           <h1>{cv.name}</h1>
@@ -21,7 +20,7 @@ export function CvBand({ cv }: { cv: CvData }) {
       <div className="cv-body">
         <p>{cv.summary}</p>
 
-        <h2>ניסיון תעסוקתי</h2>
+        <h2>Experience</h2>
         {cv.experience.map((j) => (
           <section key={j.company} className="cv-entry">
             <div className="cv-row">
@@ -38,14 +37,14 @@ export function CvBand({ cv }: { cv: CvData }) {
           </section>
         ))}
 
-        <h2>כישורים</h2>
+        <h2>Skills</h2>
         {cv.skills.map((s) => (
           <p key={s.label}>
             <strong>{s.label}:</strong> <bdi>{s.items}</bdi>
           </p>
         ))}
 
-        <h2>השכלה ושירות צבאי</h2>
+        <h2>Education &amp; Military Service</h2>
         {cv.education.map((e) => (
           <div key={e.degree} className="cv-row">
             <span>
