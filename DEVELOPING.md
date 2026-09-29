@@ -65,7 +65,7 @@ or the containers cannot write to `.messages/`.
 | `frontend/App.tsx` | the chat page: polls `api.load()` every 2 s, sends through `api.send()`, built from `components/` |
 | `frontend/components/` | design components (Button, Text, Paragraph, Checkbox, Block, Highlight, StageGauge), `design.css` (tokens, type scale, fonts, modal) |
 | `frontend/modals/` | modals built from components; `ConsentModal` |
-| `frontend/pages/` | Storybook pages; `DesignKitchenSink.stories.tsx` shows tokens and every component |
+| `frontend/pages/` | pages: `AppPage` (stage gauge on top, CV 70% left, scrollable chat 30% right; placeholders) and the `DesignKitchenSink` story (tokens and every component) |
 | `.storybook/` | Storybook (`@storybook/react-vite`), dev only |
 | `scripts/check-stories.sh` | fails if a component in `frontend/components/` or `frontend/modals/` has no `.stories.tsx` next to it |
 | `scripts/agent-loop.sh` | runs `claude -p` or `codex exec` while `$MESSAGES_DIR` (default `.messages/agent`) has pending messages |
