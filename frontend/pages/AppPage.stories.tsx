@@ -7,5 +7,7 @@ const meta = {
   parameters: { layout: "fullscreen" },
 } satisfies Meta<typeof AppPage>;
 export default meta;
+type Story = StoryObj<typeof meta>;
 
-export const Default: StoryObj<typeof meta> = { args: { stage: 0 } };
+export const Intake: Story = { args: { initialStage: 0 } };
+export const CvAndChat: Story = { args: { initialStage: 1 } };

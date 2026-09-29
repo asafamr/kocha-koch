@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Block } from "../components/Block";
 import { Message } from "../components/Message";
 import { Paragraph } from "../components/Paragraph";
 import { StageGauge } from "../components/StageGauge";
 import { Text } from "../components/Text";
 import { TypingIndicator } from "../components/TypingIndicator";
+import { IntakeForm } from "./IntakeForm";
 
 const STAGES = ["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"];
 
@@ -19,10 +21,12 @@ const SAMPLE_CHAT: { from: "kocha" | "user"; text: string }[] = [
   { from: "user", text: "הובלתי את הפרונטאנד וצוות של שלושה מפתחים." },
 ];
 
-// Full-height grid: stage gauge on top; below it CV (70%, left) and chat (30%, right).
+// Full-height grid: stage gauge on top; below it the current stage's view.
+// Stage 0 is the intake form; later stages show CV (70%, left) and chat (30%, right).
 // The grid itself is LTR so CV stays physically left and chat right; each area is RTL inside.
-// Both frames end at the viewport; only the chat messages scroll, inside the chat frame.
-export function AppPage({ stage = 0 }: { stage?: number }) {
+export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
+  const [stage, setStage] = useState(initialStage);
+
   return (
     <main className="app-page">
       <h1 className="ds-sr-only">קוחה</h1>
@@ -30,30 +34,38 @@ export function AppPage({ stage = 0 }: { stage?: number }) {
         <StageGauge label="שלבי העבודה" stages={STAGES} current={stage} />
       </div>
 
-      <section className="app-page-cv" aria-label="קורות חיים">
-        <Block>
-          <Text variant="heading">קורות חיים</Text>
-          <Paragraph muted>מקום שמור לרכיב קורות החיים.</Paragraph>
-        </Block>
-      </section>
+      {stage === 0 ? (
+        <section className="app-page-form" aria-label={STAGES[0]}>
+          <IntakeForm onNext={() => setStage(1)} />
+        </section>
+      ) : (
+        <>
+          <section className="app-page-cv" aria-label="קורות חיים">
+            <Block>
+              <Text variant="heading">קורות חיים</Text>
+              <Paragraph muted>מקום שמור לרכיב קורות החיים.</Paragraph>
+            </Block>
+          </section>
 
-      <section className="app-page-chat" aria-label="צ'אט">
-        <Block>
-          <Text variant="heading">צ'אט</Text>
-          {/* tabIndex: a scrollable region must be reachable by keyboard.
-              column-reverse pins the view to the newest message; the inner list keeps reading order. */}
-          <div className="app-page-chat-scroll" tabIndex={0} aria-label="הודעות">
-            <div className="app-page-chat-list">
-              {SAMPLE_CHAT.map((m, i) => (
-                <Message key={i} from={m.from}>
-                  {m.text}
-                </Message>
-              ))}
-              <TypingIndicator />
-            </div>
-          </div>
-        </Block>
-      </section>
+          <section className="app-page-chat" aria-label="צ'אט">
+            <Block>
+              <Text variant="heading">צ'אט</Text>
+              {/* tabIndex: a scrollable region must be reachable by keyboard.
+                  column-reverse pins the view to the newest message; the inner list keeps reading order. */}
+              <div className="app-page-chat-scroll" tabIndex={0} aria-label="הודעות">
+                <div className="app-page-chat-list">
+                  {SAMPLE_CHAT.map((m, i) => (
+                    <Message key={i} from={m.from}>
+                      {m.text}
+                    </Message>
+                  ))}
+                  <TypingIndicator />
+                </div>
+              </div>
+            </Block>
+          </section>
+        </>
+      )}
     </main>
   );
 }

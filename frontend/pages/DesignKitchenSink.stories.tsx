@@ -2,11 +2,14 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Block } from "../components/Block";
 import { Button } from "../components/Button";
 import { Checkbox } from "../components/Checkbox";
+import { FileInput } from "../components/FileInput";
 import { Highlight } from "../components/Highlight";
 import { Message } from "../components/Message";
 import { Paragraph } from "../components/Paragraph";
 import { StageGauge } from "../components/StageGauge";
 import { Text, type TextVariant } from "../components/Text";
+import { TextArea } from "../components/TextArea";
+import { TextField } from "../components/TextField";
 import { TypingIndicator } from "../components/TypingIndicator";
 
 // One page with the tokens and every design component. Values live in components/design.css.
@@ -84,6 +87,15 @@ function DesignKitchenSink() {
       <section style={section}>
         <Text variant="heading">מד שלבים</Text>
         <StageGauge label="שלבי העבודה" stages={["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"]} current={1} />
+      </section>
+
+      <section style={section}>
+        <Text variant="heading">שדות טופס</Text>
+        <div style={{ display: "grid", gap: "1rem", maxInlineSize: 480 }}>
+          <FileInput label="קורות חיים נוכחיים (PDF)" accept="application/pdf" file={null} onChange={() => {}} />
+          <TextField label="תפקיד מבוקש" placeholder="למשל: מפתח פרונטאנד בכיר" />
+          <TextArea label="תיאור המשרה המלא (לא חובה)" placeholder="הדביקו כאן את תיאור המשרה" rows={3} />
+        </div>
       </section>
 
       <section style={section}>

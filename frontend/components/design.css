@@ -187,3 +187,27 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 .ds-typing span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes ds-typing { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .ds-typing span { animation: none; opacity: 0.6; } }
+
+/* Form fields: label above, square 2px ink box, audio-blue focus ring (same as buttons) */
+.ds-field { display: grid; gap: 0.35rem; }
+.ds-field > label { font: 700 var(--fs-sm)/1.4 var(--f-body); color: var(--ink); }
+.ds-input {
+  font: var(--fs-base)/1.5 var(--f-body); color: var(--ink); background: var(--surface);
+  border: 2px solid var(--ink); border-radius: 0; padding: 0.6rem 0.75rem; box-sizing: border-box; inline-size: 100%;
+}
+.ds-input::placeholder { color: var(--muted); }
+.ds-input:focus-visible, .ds-file:focus-within { outline: 3px solid var(--audio); outline-offset: 2px; }
+.ds-textarea { resize: vertical; overflow-y: auto; }
+
+/* FileInput: transparent native input over a dashed box */
+.ds-file {
+  position: relative; display: grid; place-items: center; min-block-size: 4.5rem; padding: 0.75rem;
+  border: 2px dashed var(--ink); background: var(--surface); color: var(--muted);
+  font: var(--fs-sm)/1.4 var(--f-body); text-align: center;
+}
+.ds-file.has-file { border-style: solid; color: var(--ink); font-weight: 700; }
+.ds-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; inline-size: 100%; block-size: 100%; }
+
+/* AppPage stage 0: the intake form spans both columns and scrolls on its own */
+.app-page-form { grid-column: 1 / -1; grid-row: 2; overflow-y: auto; }
+.intake { display: grid; gap: 1.25rem; max-inline-size: 640px; margin-inline: auto; padding-block-end: 1rem; }

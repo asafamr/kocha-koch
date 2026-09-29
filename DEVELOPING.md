@@ -63,9 +63,9 @@ or the containers cannot write to `.messages/`.
 | `frontend/index.html`, `main.tsx` | entry point, bundled by `bun run build` into `dist/` |
 | `frontend/api.ts` | `Api` type and `httpApi`; the only place that calls the server |
 | `frontend/App.tsx` | the chat page: polls `api.load()` every 2 s, sends through `api.send()`, built from `components/` |
-| `frontend/components/` | design components (Button, Text, Paragraph, Checkbox, Block, Highlight, StageGauge, Message, TypingIndicator); images in `components/assets/` (kocha-face.webp from kohi), `design.css` (tokens, type scale, fonts, modal) |
+| `frontend/components/` | design components (Button, Text, Paragraph, Checkbox, Block, Highlight, StageGauge, Message, TypingIndicator, TextField, TextArea, FileInput); images in `components/assets/` (kocha-face.webp: mild smile, frame at 0.6 s of kohi `assets/landing-video/kocha-landing-v7.mp4`), `design.css` (tokens, type scale, fonts, modal) |
 | `frontend/modals/` | modals built from components; `ConsentModal` |
-| `frontend/pages/` | pages: `AppPage` (stage gauge on top, CV 70% left, scrollable chat 30% right; placeholders) and the `DesignKitchenSink` story (tokens and every component) |
+| `frontend/pages/` | pages: `AppPage` (stage gauge on top; stage 0 `IntakeForm`, later stages CV 70% left and scrollable chat 30% right) and the `DesignKitchenSink` story (tokens and every component) |
 | `.storybook/` | Storybook (`@storybook/react-vite`), dev only |
 | `scripts/check-stories.sh` | fails if a component in `frontend/components/` or `frontend/modals/` has no `.stories.tsx` next to it |
 | `scripts/agent-loop.sh` | runs `claude -p` or `codex exec` while `$MESSAGES_DIR` (default `.messages/agent`) has pending messages |
