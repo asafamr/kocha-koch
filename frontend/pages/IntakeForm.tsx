@@ -28,7 +28,7 @@ export function IntakeForm({ onNext }: { onNext: (intake: Intake) => void }) {
       <Message from="kocha">היי, אני קוחה! אני כאן כדי לעזור לכם לבנות קורות חיים שמתאימים בדיוק לתפקיד שאתם מחפשים.</Message>
       <Message from="kocha">
         כדי להתחיל, העלו את קורות החיים הנוכחיים שלכם וכתבו לאיזה תפקיד אתם מכוונים. אם יש לכם את תיאור המשרה המלא,
-        הדביקו אותו למטה. זה יעזור לי לדייק.
+        הדביקו אותו למטה. זה יעזור להתאים את קורות החיים בדיוק למשרה המיועדת.
       </Message>
 
       <FileInput label="קורות חיים נוכחיים (PDF)" accept="application/pdf" file={cv} onChange={setCv} />
