@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Fail if a component in frontend/components/ or frontend/modals/ has no Storybook story next to it.
+# Fail if a component (frontend/components/, frontend/modals/, CV styles frontend/cv/Cv*) has no story next to it.
 set -euo pipefail
 missing=0
-for f in frontend/components/*.tsx frontend/modals/*.tsx; do
+for f in frontend/components/*.tsx frontend/modals/*.tsx frontend/cv/Cv*.tsx; do
   case "$f" in *.stories.tsx) continue ;; esac
   story="${f%.tsx}.stories.tsx"
   if [ ! -e "$story" ]; then

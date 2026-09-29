@@ -1,0 +1,88 @@
+/* CV styles. Sizes in pt/mm for print. One A4 page; overflow is cut (one-page CVs only).
+   Logical properties throughout, so dir="rtl" puts "start" on the right. */
+
+@font-face {
+  font-family: "Noto Serif Hebrew"; font-weight: 400; font-display: swap; /* regular only: lets Chrome synthesize bold */
+  src: url("../components/fonts/noto-serif-hebrew-hebrew.woff2") format("woff2");
+  unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+@font-face {
+  font-family: "Noto Serif Hebrew"; font-weight: 400; font-display: swap; /* regular only: lets Chrome synthesize bold */
+  src: url("../components/fonts/noto-serif-hebrew-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+.cv {
+  inline-size: 210mm; block-size: 297mm; box-sizing: border-box; overflow: hidden;
+  background: #fff; color: #000; font-family: "Noto Sans Hebrew", Arial, sans-serif;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.cv h1, .cv h2, .cv p, .cv ul { margin: 0; }
+.cv ul { padding-inline-start: 4mm; }
+.cv-row { display: flex; justify-content: space-between; align-items: baseline; gap: 4mm; }
+.cv-dates { white-space: nowrap; }
+
+/* 1. Classic: serif, 18 mm margins, centered header, 0.75pt rule under headings */
+.cv-classic { padding: 18mm; font: 10.5pt/1.3 "Noto Serif Hebrew", serif; }
+.cv-classic header { text-align: center; margin-block-end: 4mm; }
+.cv-classic h1 { font-size: 20pt; font-weight: 700; }
+.cv-classic h2 { font-size: 12pt; font-weight: 700; border-block-end: 0.75pt solid #000; padding-block-end: 1.5mm; margin-block: 5mm 2.5mm; }
+.cv-classic .cv-meta { font-size: 9.5pt; color: #444; }
+.cv-classic .cv-entry { margin-block-end: 2.5mm; }
+.cv-classic li { margin-block: 0.5mm; }
+
+/* 2. Sidebar: grid, 32% tinted sidebar at start (right), navy accent, no page margin */
+.cv-sidebar {
+  display: grid; grid-template-columns: 32% 68%; grid-template-areas: "side main";
+  font-size: 10pt; line-height: 1.35; color: #1A1A1A;
+}
+.cv-sidebar .cv-main { grid-area: main; padding: 12mm; }
+.cv-sidebar .cv-side { grid-area: side; background: #F1F4F8; padding: 12mm 8mm; font-size: 9.5pt; }
+.cv-sidebar .cv-side p { margin-block-end: 2mm; overflow-wrap: anywhere; }
+.cv-sidebar h1 { font-size: 24pt; font-weight: 800; color: #1F3A5F; line-height: 1.1; }
+.cv-sidebar .cv-title { font-size: 12pt; font-weight: 500; margin-block: 1mm 4mm; }
+.cv-sidebar h2 {
+  font-size: 11pt; font-weight: 700; color: #1F3A5F; margin-block: 5mm 2mm;
+  border-inline-start: 2pt solid #1F3A5F; padding-inline-start: 2mm;
+}
+.cv-sidebar .cv-side h2:first-child { margin-block-start: 0; }
+.cv-sidebar .cv-meta { font-size: 9pt; color: #555; }
+.cv-sidebar .cv-entry { margin-block-end: 3mm; }
+
+/* 3. Minimal: 22 mm margins, light name, gray hanging labels (28 mm column), no rules */
+.cv-minimal { padding: 22mm; font-size: 10pt; line-height: 1.45; color: #222; }
+.cv-minimal header { margin-block-end: 9mm; }
+.cv-minimal h1 { font-size: 22pt; font-weight: 300; }
+.cv-minimal .cv-meta { font-size: 9pt; color: #555; white-space: pre; }
+.cv-minimal .cv-hang { display: grid; grid-template-columns: 28mm 1fr; gap: 4mm; margin-block-end: 7mm; }
+.cv-minimal h2 { font-size: 10pt; font-weight: 600; color: #666; }
+.cv-minimal .cv-entry { margin-block-end: 3mm; }
+.cv-minimal ul { list-style: "– "; }
+
+/* 4. Compact (Jake's): 12.5 mm margins, dense, 0.5pt rules, two-row entries, mono skills */
+.cv-compact { padding: 12.5mm; font-size: 9.75pt; line-height: 1.2; }
+.cv-compact header { text-align: center; margin-block-end: 2mm; }
+.cv-compact h1 { font-size: 22pt; font-weight: 700; }
+.cv-compact .cv-meta { font-size: 9pt; }
+.cv-compact h2 { font-size: 11pt; font-weight: 700; border-block-end: 0.5pt solid #000; margin-block: 3mm 1.5mm; }
+.cv-compact .cv-entry { margin-block-end: 1.5mm; }
+.cv-compact .cv-sub { font-weight: 500; font-size: 9.5pt; }
+.cv-compact ul { padding-inline-start: 3.5mm; }
+.cv-compact li { margin-block: 1mm; }
+.cv-compact p { margin-block-end: 0.8mm; }
+.cv-compact .cv-mono { font: 9pt "JetBrains Mono", monospace; }
+
+/* 5. Band: full-bleed teal header band, Suez One name, accent headings with short bar */
+.cv-band { font-size: 10pt; line-height: 1.35; color: #1F2937; }
+.cv-band .cv-head {
+  background: #0F766E; color: #fff; min-block-size: 40mm; box-sizing: border-box; padding: 10mm 16mm;
+  display: flex; justify-content: space-between; align-items: center; gap: 8mm;
+}
+.cv-band h1 { font: 26pt/1.1 "Suez One", serif; }
+.cv-band .cv-title { font-size: 12pt; font-weight: 500; margin-block-start: 1.5mm; }
+.cv-band .cv-contact { display: grid; gap: 0.5mm; font-size: 9pt; justify-items: end; }
+.cv-band .cv-body { padding: 8mm 16mm 16mm; }
+.cv-band h2 { font-size: 12pt; font-weight: 700; color: #0F766E; margin-block: 5mm 2mm; }
+.cv-band h2::after { content: ""; display: block; inline-size: 12mm; block-size: 2pt; background: #0F766E; margin-block-start: 1mm; }
+.cv-band .cv-entry { margin-block-end: 2.5mm; }
+.cv-band li::marker { content: "■  "; color: #0F766E; font-size: 7pt; }
