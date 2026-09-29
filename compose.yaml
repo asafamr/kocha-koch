@@ -52,6 +52,7 @@ services:
       - .:/work
       - bun-cache:/bun-cache
       - agent-home:/home/node   # keeps CLI logins between runs
+      - /dev/null:/work/.env:ro # hide API keys in .env from AI CLIs
 
   # Answers app's messages with Claude Code. Start with: docker compose --profile claude up
   claude-responder:
@@ -71,6 +72,7 @@ services:
     volumes:
       - .:/work
       - bun-cache:/bun-cache
+      - /dev/null:/work/.env:ro
 
 volumes:
   agent-home:

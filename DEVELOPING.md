@@ -11,7 +11,7 @@ Do not install Bun or AI CLIs on the host. Use:
 docker compose up --build                        # app (files, :3000) + app-gemini (:3001)
 docker compose --profile claude up               # same, plus claude-responder
 docker compose run --rm agent                    # shell with bun, claude, codex; repo at /work
-docker compose run --rm agent sh -c 'bun install && bunx tsc --noEmit'   # typecheck
+docker compose run --rm agent sh -c 'bun install --frozen-lockfile && bun run typecheck && bun run check-stories'
 docker compose --profile dev up storybook        # Storybook on http://127.0.0.1:6006
 ```
 
@@ -23,12 +23,15 @@ docker compose --profile dev up storybook        # Storybook on http://127.0.0.1
 | `agent`, `storybook` | `kocha-koch-agent` | CLI shell, component dev UI |
 
 `BACKEND` is set per service in `compose.yaml`; `.env` holds keys and shared settings.
-The two apps share code and image and differ only in `BACKEND` and message folder.
+The two apps share code and image and differ only in `BACKEND` and store.
+`.env` is masked (mounted as an empty file) inside the agent and Storybook containers, so
+AI CLIs cannot read the keys in it.
 
 The agent services share one bun package cache (`bun-cache` volume). `bun install` takes
 about 10 ms when nothing changed, 0.5 s from the cache, 3 s with an empty cache. Use
-`--frozen-lockfile` in scripts and commit `bun.lock`. The app image has no runtime
-dependencies and runs no install.
+`--frozen-lockfile` in scripts and commit `bun.lock`. The app image is built in two stages:
+the first installs only `react`/`react-dom` (with a build cache mount) and bundles the
+frontend; the second holds `src/` and `dist/`, no node_modules.
 
 `podman compose` works the same. With rootless podman, put `USERNS_MODE=keep-id` in `.env`,
 or the containers cannot write to `.messages/`.
@@ -37,24 +40,28 @@ or the containers cannot write to `.messages/`.
 
 | File | Role |
 |---|---|
-| `src/server.ts` | `GET/POST /api/messages`, static files from `public/` |
-| `src/store.ts` | `STORE=files`: inbox/outbox files, atomic writes (temp file + rename). `STORE=memory`: in process, nothing on disk |
-| `src/gemini.ts` | `BACKEND=gemini`: sends the thread to Gemini, writes the reply to outbox |
-| `public/components.js` | pure render functions, used by the app and by stories |
-| `public/app.js` | fetches `/api/messages` every 2 s, handles the form |
-| `public/style.css` | styles for the app and Storybook |
-| `stories/`, `.storybook/` | Storybook (`@storybook/html-vite`), dev only |
+| `src/server.ts` | `GET/POST /api/messages`, static files from `dist/` |
+| `src/store.ts` | `STORE=files`: inbox/outbox files, atomic writes (temp file + rename). `STORE=memory`: in process, nothing on disk. Types shared with the frontend |
+| `src/gemini.ts` | `BACKEND=gemini`: sends the thread to Gemini, adds the reply |
+| `frontend/index.html`, `main.tsx` | entry point, bundled by `bun run build` into `dist/` |
+| `frontend/api.ts` | `Api` type and `httpApi`; the only place that calls the server |
+| `frontend/App.tsx` | polls `api.load()` every 2 s, sends through `api.send()` |
+| `frontend/components/` | presentational React components, props in, no fetching |
+| `.storybook/` | Storybook (`@storybook/react-vite`), dev only |
+| `scripts/check-stories.sh` | fails if a `.tsx` component has no `.stories.tsx` next to it |
 | `scripts/agent-loop.sh` | runs `claude -p` or `codex exec` while `$MESSAGES_DIR` (default `.messages/agent`) has pending messages |
 
-The frontend has no build step; the server serves `public/` as is. Storybook is only for
-developing components.
+## Frontend and Storybook
 
-## Storybook
+React 19 + TypeScript, bundled with Bun's built-in bundler (no Vite in the app build).
+Storybook uses Vite, only for development.
 
-Put UI pieces in `public/components.js` as functions that take data and return a DOM node.
-Add a story for each one in `stories/<name>.stories.js`, with args for each state
-(empty, pending, error). Check a story change with
-`docker compose run --rm agent bun run build-storybook`.
+- Every component has a story file next to it: `Foo.tsx` → `Foo.stories.tsx`, with one story
+  per state (empty, pending, error). `bun run check-stories` enforces this.
+- Components take data and callbacks as props. Only `App` holds state, and it gets the
+  server through its `api` prop, so its stories use a fake `Api`.
+- Shared sample data for stories is in `frontend/components/fixtures.ts`.
+- Check a change with `docker compose run --rm agent bun run build-storybook`.
 
 ## Manual test
 

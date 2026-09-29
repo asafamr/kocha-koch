@@ -10,6 +10,7 @@ import { join } from "node:path";
 
 export type Message = { id: string; ts: string; text: string };
 export type Reply = Message & { by: string };
+export type ThreadItem = Message & { reply: Reply | null };
 
 type Store = {
   put(box: "inbox" | "outbox", item: Message | Reply): Promise<void>;
@@ -73,7 +74,7 @@ export async function addReply(id: string, text: string, by: string) {
   await store.put("outbox", { id, ts: new Date().toISOString(), text, by });
 }
 
-export async function thread() {
+export async function thread(): Promise<ThreadItem[]> {
   const { inbox, outbox } = await store.list();
   const replies = new Map(outbox.map((r) => [r.id, r]));
   return inbox

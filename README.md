@@ -1,6 +1,6 @@
 # kocha-koch
 
-Chat frontend on a Bun server. Each message is written to an inbox folder and the reply is
+React chat frontend on a Bun server. Each message is written to an inbox folder and the reply is
 read from an outbox folder. Two instances run side by side:
 
 | URL | Answered by | Messages |

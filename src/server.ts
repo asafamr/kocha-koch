@@ -7,7 +7,8 @@ if (BACKEND === "files" && STORE !== "files") {
   throw new Error("BACKEND=files needs STORE=files: the agent reads messages from disk");
 }
 const PORT = Number(process.env.PORT ?? 3000);
-const PUBLIC = join(import.meta.dir, "..", "public");
+// Bundled frontend, built by `bun run build` (see Dockerfile).
+const DIST = join(import.meta.dir, "..", "dist");
 const MAX_TEXT = 20_000;
 
 async function postMessage(req: Request) {
@@ -23,8 +24,8 @@ async function postMessage(req: Request) {
 }
 
 async function serveStatic(pathname: string) {
-  const path = normalize(join(PUBLIC, pathname === "/" ? "index.html" : pathname));
-  if (!path.startsWith(PUBLIC)) return new Response("forbidden", { status: 403 });
+  const path = normalize(join(DIST, pathname === "/" ? "index.html" : pathname));
+  if (!path.startsWith(DIST)) return new Response("forbidden", { status: 403 });
   const file = Bun.file(path);
   return (await file.exists()) ? new Response(file) : new Response("not found", { status: 404 });
 }

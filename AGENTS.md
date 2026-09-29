@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Bun server + static frontend. Users post messages; an AI answers them through files.
+Bun server + React/TypeScript frontend (bundled by Bun). Users post messages; an AI answers them through files.
 Dev workflow, code map and test steps: [DEVELOPING.md](DEVELOPING.md).
 
 ## Message protocol
@@ -21,9 +21,10 @@ container). The Gemini app keeps its messages in memory (`STORE=memory`); you ne
 - Run everything in containers (see DEVELOPING.md). Do not run Bun or AI CLIs on the host.
 - Keep it minimal: no new dependencies or frameworks without a reason.
 - Both stores (files, memory) have the same interface in `store.ts`. Change both, not one.
+- Every React component in `frontend/` has a `.stories.tsx` next to it covering its states.
 
 ## Before merging to main
-- Typecheck passes.
+- `bun run typecheck`, `bun run check-stories` and `bun run build-storybook` pass (in the agent container).
 - Every markdown file (`*.md`) is still true for the code being merged: commands run,
   paths exist, protocol and env vars match. Update or delete stale text in the same branch.
   Keep docs short; remove text rather than add caveats.
