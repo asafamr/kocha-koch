@@ -89,7 +89,7 @@ Storybook uses Vite, only for development.
 - CV styles are English, one A4 page each, from research on common formats: a typographic ledger (label column plus content), two-column
   sidebar (tinted), tinted heading bars, compact technical ("Jake's Resume"), a one-column "lede" with a large summary, and a two-column "margin" (narrow untinted column at the end).
   Colors and fonts come from `theme.ts` as `--cv-*` variables, so every style takes any palette
-  (Ink, Slate, Cobalt, Vermilion, Mulberry) and any typography (Bricolage, Literata,
+  (Ink, Slate, Cobalt, Vermilion, Mulberry, Ochre, Iris, Lichen, Umber, Petrol) and any typography (Bricolage, Literata,
   Newsreader, Schibsted, Editorial). Stories have controls for both; **Pages → CV Kitchen Sink**
   shows them all. CV fonts (`cv-fonts.css`): Bricolage Grotesque, Hanken Grotesk, Schibsted
   Grotesk, Newsreader, Literata; all SIL OFL 1.1 from fontsource, so self-hosting and

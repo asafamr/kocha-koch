@@ -31,6 +31,16 @@ export const PALETTES = {
   Vermilion: { ink: "#1A1210", muted: "#66605C", accent: "#C2280F", tint: "#F7EFEC", rule: "#E3D3CD" },
   // Deep berry on pale rose-grey (editorial / fashion print).
   Mulberry: { ink: "#1E1219", muted: "#6A5D66", accent: "#7C1D55", tint: "#F6EEF3", rule: "#DDCBD6" },
+  // Dark amber on pale butter paper (printed specimen sheet).
+  Ochre: { ink: "#1C1810", muted: "#666052", accent: "#85570A", tint: "#FAF3E1", rule: "#E6D9B8" },
+  // Electric ink-violet on lavender, between Cobalt and Mulberry.
+  Iris: { ink: "#14112A", muted: "#5E5A75", accent: "#5B2FB0", tint: "#F0ECFA", rule: "#D3CBEA" },
+  // Dark chartreuse on pale lime (editorial acid green, toned down to print).
+  Lichen: { ink: "#11140E", muted: "#5B6052", accent: "#4C6A00", tint: "#F1F5DC", rule: "#D5DDB0" },
+  // Chocolate on warm off-white (heritage publishing); darkest accent, safest in grayscale.
+  Umber: { ink: "#1F1612", muted: "#6B5F58", accent: "#5C3826", tint: "#F4EDE7", rule: "#DCCFC5" },
+  // Saturated cyan-leaning blue on ice paper; more vivid than Slate.
+  Petrol: { ink: "#0D1719", muted: "#54646A", accent: "#0B6383", tint: "#E9F3F6", rule: "#C5DCE3" },
 } satisfies Record<string, Palette>;
 
 export const TYPOGRAPHY = {
