@@ -7,7 +7,6 @@ export const SAMPLE_OUTLINE: OutlineSection[] = [
     entries: [
       {
         title: "Monday.com — מפתחת Full Stack בכירה",
-        meta: "2021 – היום",
         bullets: [
           "פיתחתי מחדש את מערכת ההזמנות ב־React ו־TypeScript וקיצרתי את זמן הטעינה ב־40%.",
           "בניתי שירות התראות ב־Node.js שמטפל ב־2 מיליון אירועים ביום.",
@@ -16,7 +15,6 @@ export const SAMPLE_OUTLINE: OutlineSection[] = [
       },
       {
         title: "Wix — מפתחת Frontend",
-        meta: "2018–2021",
         bullets: [
           "פיתחתי את עורך הטפסים שמשמש 5 מיליון אתרים.",
           "הקטנתי את גודל ה־bundle ב־35% בעזרת code splitting.",
@@ -29,7 +27,6 @@ export const SAMPLE_OUTLINE: OutlineSection[] = [
     entries: [
       {
         title: "אוניברסיטת תל אביב — תואר ראשון במדעי המחשב",
-        meta: "2014–2018",
         bullets: ["ממוצע 92.", "פרויקט גמר: מערכת המלצות לספרייה האוניברסיטאית."],
       },
     ],
@@ -39,7 +36,6 @@ export const SAMPLE_OUTLINE: OutlineSection[] = [
     entries: [
       {
         title: "ממר״ם — מפתחת תוכנה, סמ״ר",
-        meta: "2011–2013",
         bullets: ["פיתחתי כלים פנימיים לניהול משמרות ששימשו 400 חיילים."],
       },
     ],

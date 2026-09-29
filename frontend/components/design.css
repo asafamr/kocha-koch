@@ -214,15 +214,31 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 .app-page-form { grid-column: 1 / -1; grid-row: 2; overflow-y: auto; }
 .intake { display: grid; gap: 1.25rem; max-inline-size: 640px; margin-inline: auto; padding-block-end: 1rem; }
 
-/* CvOutline: sections -> entries -> bullets */
-.ds-outline { display: grid; gap: 1.5rem; }
-.ds-outline-title {
-  margin: 0 0 0.6rem; padding-block-end: 0.35rem; border-block-end: 2px solid var(--ink);
-  font: 800 var(--fs-lg)/1.3 var(--f-body); color: var(--ink);
+/* CvOutline: plain structured content (fine-tuning stage), no layout styling */
+.ds-outline { display: grid; gap: 1.25rem; font: var(--fs-md)/1.6 var(--f-body); color: var(--ink); }
+.ds-outline-title { margin: 0 0 0.25rem; font: 700 var(--fs-sm)/1.4 var(--f-body); color: var(--muted); }
+.ds-outline ul { margin: 0; padding-inline-start: 1.25rem; }
+.ds-outline-entries { list-style: none; padding-inline-start: 0; display: grid; gap: 0.6rem; }
+.ds-outline-entries > li > ul { list-style: disc; margin-block-start: 0.15rem; }
+
+/* CvCanvas: gray canvas, page transformed by zoom/pan, tray of zoom controls at the bottom */
+.ds-canvas { position: relative; block-size: 100%; min-block-size: 0; }
+.ds-canvas-viewport {
+  position: absolute; inset: 0; overflow: hidden; background: #d9d6cf; cursor: grab; touch-action: none;
 }
-.ds-outline-entry { margin-block-end: 0.9rem; }
-.ds-outline-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
-.ds-outline-head strong { font: 700 var(--fs-base)/1.4 var(--f-body); color: var(--ink); }
-.ds-outline-meta { font: var(--fs-sm)/1.4 var(--f-body); color: var(--muted); white-space: nowrap; }
-.ds-outline ul { margin: 0.35rem 0 0; padding-inline-start: 1.25rem; display: grid; gap: 0.25rem; }
-.ds-outline li { font: var(--fs-md)/1.55 var(--f-body); color: var(--ink); }
+.ds-canvas-viewport:active { cursor: grabbing; }
+.ds-canvas-viewport:focus-visible { outline: 3px solid var(--audio); outline-offset: -3px; }
+.ds-canvas-stage { position: absolute; inset-block-start: 0; left: 0; transform-origin: 0 0; }
+.ds-canvas-page { inline-size: fit-content; box-shadow: 0 2px 16px rgb(0 0 0 / 0.25); }
+.ds-canvas-tray {
+  position: absolute; inset-block-end: 12px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 2px; padding: 4px;
+  background: var(--surface); border: 2px solid var(--ink); font: 600 var(--fs-sm)/1 var(--f-body);
+}
+.ds-canvas-tray button {
+  font: inherit; min-inline-size: 2.25rem; block-size: 2rem; padding: 0 0.6rem;
+  border: 0; background: transparent; color: var(--ink); cursor: pointer;
+}
+.ds-canvas-tray button:hover { background: var(--paper); }
+.ds-canvas-tray button:focus-visible { outline: 3px solid var(--audio); outline-offset: 1px; }
+.ds-canvas-tray output { min-inline-size: 3.5rem; text-align: center; font-variant-numeric: tabular-nums; }

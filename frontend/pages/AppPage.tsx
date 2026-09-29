@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Block } from "../components/Block";
+import { CvCanvas } from "../components/CvCanvas";
 import { CvOutline } from "../components/CvOutline";
 import { SAMPLE_OUTLINE } from "../components/cvOutlineSample";
 import { Message } from "../components/Message";
 import { StageGauge } from "../components/StageGauge";
 import { Text } from "../components/Text";
 import { TypingIndicator } from "../components/TypingIndicator";
+import { CvLedger } from "../cv/CvLedger";
+import { SAMPLE_CV } from "../cv/data";
 import { IntakeForm } from "./IntakeForm";
 
 const STAGES = ["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"];
@@ -44,10 +47,17 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
           <section className="app-page-cv" aria-label="קורות חיים">
             <Block>
               <Text variant="heading">קורות חיים</Text>
-              {/* tabIndex: a scrollable region must be reachable by keyboard */}
-              <div className="app-page-cv-scroll" tabIndex={0} aria-label="סעיפי קורות החיים">
-                <CvOutline sections={SAMPLE_OUTLINE} />
-              </div>
+              {stage === 1 ? (
+                // Fine-tuning: plain structured content. tabIndex: scrollable regions need keyboard access.
+                <div className="app-page-cv-scroll" tabIndex={0} aria-label="סעיפי קורות החיים">
+                  <CvOutline sections={SAMPLE_OUTLINE} />
+                </div>
+              ) : (
+                // Design (and later): the laid-out page on a zoom/pan canvas.
+                <CvCanvas label="תצוגת קורות חיים">
+                  <CvLedger cv={SAMPLE_CV} />
+                </CvCanvas>
+              )}
             </Block>
           </section>
 

@@ -1,7 +1,8 @@
 import { useId } from "react";
 
-// A CV as an outline: sections (e.g. work experience) -> entries (e.g. a company) -> bullets.
-export type OutlineEntry = { title: string; meta?: string; bullets: string[] };
+// A CV as plain structured content for the fine-tuning stage: sections -> entries -> bullets.
+// No dates or layout styling here; those belong to the design stage.
+export type OutlineEntry = { title: string; bullets: string[] };
 export type OutlineSection = { title: string; entries: OutlineEntry[] };
 
 export function CvOutline({ sections }: { sections: OutlineSection[] }) {
@@ -21,21 +22,20 @@ function OutlineSectionView({ section }: { section: OutlineSection }) {
       <h3 id={id} className="ds-outline-title">
         {section.title}
       </h3>
-      {section.entries.map((e) => (
-        <div key={e.title} className="ds-outline-entry">
-          <div className="ds-outline-head">
-            <strong>{e.title}</strong>
-            {e.meta && <bdi className="ds-outline-meta">{e.meta}</bdi>}
-          </div>
-          {e.bullets.length > 0 && (
-            <ul>
-              {e.bullets.map((b) => (
-                <li key={b}>{b}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ))}
+      <ul className="ds-outline-entries">
+        {section.entries.map((e) => (
+          <li key={e.title}>
+            {e.title}
+            {e.bullets.length > 0 && (
+              <ul>
+                {e.bullets.map((b) => (
+                  <li key={b}>{b}</li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

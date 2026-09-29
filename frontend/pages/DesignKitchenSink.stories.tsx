@@ -2,7 +2,10 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Block } from "../components/Block";
 import { Button } from "../components/Button";
 import { Checkbox } from "../components/Checkbox";
+import { CvCanvas } from "../components/CvCanvas";
 import { CvOutline } from "../components/CvOutline";
+import { CvLedger } from "../cv/CvLedger";
+import { SAMPLE_CV } from "../cv/data";
 import { SAMPLE_OUTLINE } from "../components/cvOutlineSample";
 import { FileInput } from "../components/FileInput";
 import { Highlight } from "../components/Highlight";
@@ -104,6 +107,15 @@ function DesignKitchenSink() {
         <Text variant="heading">מתאר קורות חיים</Text>
         <div style={{ maxInlineSize: 640 }}>
           <CvOutline sections={SAMPLE_OUTLINE.slice(0, 1)} />
+        </div>
+      </section>
+
+      <section style={section}>
+        <Text variant="heading">קנבס (זום והזזה)</Text>
+        <div style={{ blockSize: 360 }}>
+          <CvCanvas label="תצוגת קורות חיים לדוגמה">
+            <CvLedger cv={SAMPLE_CV} />
+          </CvCanvas>
         </div>
       </section>
 
