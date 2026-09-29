@@ -62,6 +62,24 @@ services:
     command: scripts/agent-loop.sh claude
     volumes: *agent-volumes
 
+  # App with live reload (server restarts, page hot-reloads on save), same messages as app.
+  # http://127.0.0.1:3002. Start with: docker compose --profile dev up
+  app-dev:
+    <<: *tools
+    profiles: [dev]
+    init: true
+    command: sh -c "bun install --frozen-lockfile && bun run dev"
+    environment:
+      BUN_INSTALL_CACHE_DIR: /bun-cache
+      DEV: "1"
+      BACKEND: files
+      MESSAGES_DIR: .messages/agent
+    ports: ["127.0.0.1:3002:3000"]
+    volumes:
+      - .:/work
+      - bun-cache:/bun-cache
+      - /dev/null:/work/.env:ro
+
   # Component dev UI. Start with: docker compose --profile dev up storybook
   storybook:
     <<: *tools

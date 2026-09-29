@@ -26,7 +26,7 @@ container). The Gemini app keeps its messages in memory (`STORE=memory`); you ne
 - Stories pass the Storybook Accessibility (axe) panel with no violations; see DEVELOPING.md.
 
 ## Before merging to main
-- `bun run typecheck`, `bun run check-stories` and `bun run build-storybook` pass (in the agent container).
+- `bun run check:full` passes (in a container). While iterating, use `bun run check` and the dev loop in DEVELOPING.md.
 - Every markdown file (`*.md`) is still true for the code being merged: commands run,
   paths exist, protocol and env vars match. Update or delete stale text in the same branch.
   Keep docs short; remove text rather than add caveats.

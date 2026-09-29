@@ -7,7 +7,9 @@ if (BACKEND === "files" && STORE !== "files") {
   throw new Error("BACKEND=files needs STORE=files: the agent reads messages from disk");
 }
 const PORT = Number(process.env.PORT ?? 3000);
-// Bundled frontend, built by `bun run build` (see Dockerfile).
+// DEV=1: Bun bundles frontend/index.html on request and hot-reloads the page on save.
+// Otherwise serve the bundle built by `bun run build` (see Dockerfile).
+const DEV = process.env.DEV === "1";
 const DIST = join(import.meta.dir, "..", "dist");
 const MAX_TEXT = 20_000;
 
@@ -32,6 +34,8 @@ async function serveStatic(pathname: string) {
 
 Bun.serve({
   port: PORT,
+  development: DEV && { hmr: true },
+  routes: DEV ? { "/": (await import("../frontend/index.html")).default } : undefined,
   async fetch(req) {
     const { pathname } = new URL(req.url);
     if (pathname === "/api/messages") {
@@ -43,4 +47,4 @@ Bun.serve({
   },
 });
 
-console.log(`listening on :${PORT} (backend=${BACKEND}, store=${STORE})`);
+console.log(`listening on :${PORT} (backend=${BACKEND}, store=${STORE}${DEV ? ", dev" : ""})`);

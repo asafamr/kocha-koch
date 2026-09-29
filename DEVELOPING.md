@@ -5,14 +5,30 @@ the message protocol is in [AGENTS.md](AGENTS.md).
 
 ## Everything runs in containers
 
-Do not install Bun or AI CLIs on the host. Use:
+Do not install Bun or AI CLIs on the host.
+
+### Dev loop (fast)
+
+```sh
+docker compose --profile dev up -d               # app-dev :3002 (live reload) + Storybook :6006
+docker compose --profile dev exec storybook bun run check   # typecheck + story check, ~2 s
+```
+
+Edit files on the host. `app-dev` runs `bun --hot` with `DEV=1`: Bun bundles
+`frontend/index.html` on request, the server restarts on backend changes, and the page
+hot-reloads on frontend changes (about 1.5 s). Storybook hot-reloads stories. Neither needs an
+image rebuild. `app-dev` uses the same `.messages/agent` folder as `app`.
+
+Before merging, run `bun run check:full` (adds the static Storybook build and the app bundle,
+~30 s). Rebuild the app image (`docker compose up --build`, ~25 s) only to test the production
+setup.
+
+### Other commands
 
 ```sh
 docker compose up --build                        # app (files, :3000) + app-gemini (:3001)
 docker compose --profile claude up               # same, plus claude-responder
 docker compose run --rm agent                    # shell with bun, claude, codex; repo at /work
-docker compose run --rm agent sh -c 'bun install --frozen-lockfile && bun run typecheck && bun run check-stories'
-docker compose --profile dev up storybook        # Storybook on http://127.0.0.1:6006
 ```
 
 | Service | Image | Role |
@@ -20,6 +36,7 @@ docker compose --profile dev up storybook        # Storybook on http://127.0.0.1
 | `app` | `kocha-koch-app` | `BACKEND=files`, mounts `.messages/agent` |
 | `app-gemini` | `kocha-koch-app` | `BACKEND=gemini`, `STORE=memory`, no volume |
 | `claude-responder` | `kocha-koch-agent` | `scripts/agent-loop.sh claude` on `.messages/agent` |
+| `app-dev` | `kocha-koch-agent` | `DEV=1 bun --hot`, source mounted, :3002 |
 | `agent`, `storybook` | `kocha-koch-agent` | CLI shell, component dev UI |
 
 `BACKEND` is set per service in `compose.yaml`; `.env` holds keys and shared settings.
@@ -75,7 +92,6 @@ Storybook uses Vite, only for development.
   dialogs `role="dialog"`, `aria-modal` and a name, label every input, and announce async
   updates with `aria-live` / `role="alert"`. `@storybook/addon-a11y` runs axe on each story
   (Accessibility panel); fix violations before merging.
-- Check a change with `docker compose run --rm agent bun run build-storybook`.
 
 ## Manual test
 
