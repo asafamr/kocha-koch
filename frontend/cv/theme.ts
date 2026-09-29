@@ -20,7 +20,7 @@ const HANKEN = `"Hanken Grotesk", system-ui, sans-serif`;
 const SCHIBSTED = `"Schibsted Grotesk", system-ui, sans-serif`;
 const BRICOLAGE = `"Bricolage Grotesque", system-ui, sans-serif`;
 const NEWSREADER = `"Newsreader", Georgia, serif`;
-const INSTRUMENT_SERIF = `"Instrument Serif", Georgia, serif`;
+const LITERATA = `"Literata", Georgia, serif`;
 
 export const PALETTES = {
   Ink: { ink: "#111111", muted: "#4A4A4A", accent: "#111111", tint: "#ECECEA", rule: "#111111" },
@@ -36,8 +36,8 @@ export const PALETTES = {
 export const TYPOGRAPHY = {
   // Bricolage Grotesque name (quirky ink-trap details), quiet Hanken Grotesk body and headings.
   Bricolage: { body: HANKEN, display: BRICOLAGE, displayWeight: 700, heading: HANKEN, headingCase: "none", headingVariant: "normal", headingTracking: "0" },
-  // Elegant single-weight Instrument Serif name, Hanken body, small tracked uppercase headings.
-  Instrument: { body: HANKEN, display: INSTRUMENT_SERIF, displayWeight: 400, heading: HANKEN, headingCase: "uppercase", headingVariant: "normal", headingTracking: "0.06em" },
+  // Sober Literata book-serif name, Hanken body, small tracked uppercase headings.
+  Literata: { body: HANKEN, display: LITERATA, displayWeight: 600, heading: HANKEN, headingCase: "uppercase", headingVariant: "normal", headingTracking: "0.06em" },
   // Newsreader throughout: a contemporary, open text serif made for screen reading.
   Newsreader: { body: NEWSREADER, display: NEWSREADER, displayWeight: 500, heading: NEWSREADER, headingCase: "none", headingVariant: "normal", headingTracking: "0" },
   // Schibsted Grotesk throughout: news-house grotesque, large x-height, heavy name.
