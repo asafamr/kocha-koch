@@ -1,23 +1,25 @@
 import { type CvProps, Dates, Ltr, Page } from "./parts";
 
-// 2. Modern two-column: 32% tinted sidebar on the start side (left in English), navy accent.
-// Main column comes first in the DOM so parsers read it first; the grid places the sidebar at start.
-export function CvSidebar({ cv, palette = "Cobalt", typography = "Modern" }: CvProps) {
+// 2. Sidebar: a 31% tinted column at the start (left in English) with contact, skills and education;
+// the main column carries the name, summary and experience. Main comes first in the DOM so
+// parsers read it first; the grid places the sidebar at the start.
+export function CvSidebar({ cv, palette = "Cobalt", typography = "Schibsted" }: CvProps) {
   return (
     <Page variant="sidebar" palette={palette} typography={typography}>
       <div className="cv-main">
         <h1>{cv.name}</h1>
         <p className="cv-title">{cv.title}</p>
-        <p>{cv.summary}</p>
+        <p className="cv-summary">{cv.summary}</p>
 
         <h2>Experience</h2>
         {cv.experience.map((j) => (
           <section key={j.company} className="cv-entry">
-            <strong>
-              {j.role}, {j.company}
-            </strong>
+            <div className="cv-row">
+              <strong>{j.role}</strong>
+              <Dates>{j.dates}</Dates>
+            </div>
             <div className="cv-meta">
-              <Dates>{j.dates}</Dates> · {j.location}
+              {j.company}, {j.location}
             </div>
             <ul>
               {j.bullets.map((b) => (
@@ -43,27 +45,26 @@ export function CvSidebar({ cv, palette = "Cobalt", typography = "Modern" }: CvP
 
         <h2>Skills</h2>
         {cv.skills.map((s) => (
-          <p key={s.label}>
-            <strong>{s.label}</strong>
-            <br />
+          <p key={s.label} className="cv-side-item">
+            <span className="cv-meta">{s.label}</span>
             <bdi>{s.items}</bdi>
           </p>
         ))}
 
         <h2>Education</h2>
         {cv.education.map((e) => (
-          <p key={e.degree}>
+          <p key={e.degree} className="cv-side-item">
             <strong>{e.degree}</strong>
-            <br />
-            {e.school}, <Dates>{e.dates}</Dates>
+            <span>{e.school}</span>
+            <Dates>{e.dates}</Dates>
           </p>
         ))}
 
         <h2>Military Service</h2>
-        <p>
+        <p className="cv-side-item">
           <strong>{cv.military.role}</strong>
-          <br />
-          {cv.military.unit}, <Dates>{cv.military.dates}</Dates>
+          <span>{cv.military.unit}</span>
+          <Dates>{cv.military.dates}</Dates>
         </p>
       </aside>
     </Page>

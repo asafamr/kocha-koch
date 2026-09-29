@@ -66,7 +66,7 @@ or the containers cannot write to `.messages/`.
 | `frontend/components/` | design components (Button, Text, Paragraph, Checkbox, Block, Highlight, StageGauge, Message, TypingIndicator, TextField, TextArea, FileInput); images in `components/assets/` (kocha-face.webp: mild smile, frame at 0.6 s of kohi `assets/landing-video/kocha-landing-v7.mp4`), `design.css` (tokens, type scale, fonts, modal) |
 | `frontend/modals/` | modals built from components; `ConsentModal` |
 | `frontend/pages/` | pages: `AppPage` (stage gauge on top; stage 0 `IntakeForm`, later stages CV 70% left and scrollable chat 30% right) and the `DesignKitchenSink` story (tokens and every component) |
-| `frontend/cv/` | CV styles (English): `data.ts` (`CvData`, `SAMPLE_CV`), `theme.ts` (5 palettes, 5 typography options as CSS variables), `parts.tsx` (A4 `Page`, `Ltr`, `Dates`), styles `CvTimeline`, `CvSidebar`, `CvBars`, `CvCompact`, `CvBand`, and `cv.css` (pt/mm, one A4 page, overflow cut) |
+| `frontend/cv/` | CV styles (English): `data.ts` (`CvData`, `SAMPLE_CV`), `theme.ts` (5 palettes, 5 typography options as CSS variables), `parts.tsx` (A4 `Page`, `Ltr`, `Dates`), styles `CvLedger`, `CvSidebar`, `CvBars`, `CvCompact`, `CvLede`, `CvMargin`, and `cv.css` (pt/mm, one A4 page, overflow cut) |
 | `.storybook/` | Storybook (`@storybook/react-vite`), dev only |
 | `scripts/check-stories.sh` | fails if a component in `frontend/components/` or `frontend/modals/` has no `.stories.tsx` next to it |
 | `scripts/agent-loop.sh` | runs `claude -p` or `codex exec` while `$MESSAGES_DIR` (default `.messages/agent`) has pending messages |
@@ -86,12 +86,15 @@ Storybook uses Vite, only for development.
 - Storybook has four sections: **Pages** (`frontend/pages/`, including the design and CV kitchen sinks), **Components**
   (`frontend/components/`, titles `Components/<Name>`), **Modals** (`frontend/modals/`,
   titles `Modals/<Name>`) and **CV Styles** (`frontend/cv/`, titles `CV Styles/<n> <Name>`).
-- CV styles are English, one A4 page each, from research on common formats: timeline, two-column
-  sidebar, tinted heading bars, compact technical ("Jake's Resume") and a header band.
+- CV styles are English, one A4 page each, from research on common formats: a typographic ledger (label column plus content), two-column
+  sidebar (tinted), tinted heading bars, compact technical ("Jake's Resume"), a one-column "lede" with a large summary, and a two-column "margin" (narrow untinted column at the end).
   Colors and fonts come from `theme.ts` as `--cv-*` variables, so every style takes any palette
-  (Ink, Slate, Navy, Sand & Brick, Forest) and any typography (Modern, Classic, Editorial,
-  Bookish, Technical). Stories have controls for both; **Pages → CV Kitchen Sink** shows them all.
-  CV fonts: Inter and Source Serif 4 (variable, from fontsource) plus JetBrains Mono.
+  (Ink, Slate, Cobalt, Vermilion, Mulberry) and any typography (Bricolage, Instrument,
+  Newsreader, Schibsted, Editorial). Stories have controls for both; **Pages → CV Kitchen Sink**
+  shows them all. CV fonts (`cv-fonts.css`): Bricolage Grotesque, Hanken Grotesk, Schibsted
+  Grotesk, Newsreader, Instrument Serif; all SIL OFL 1.1 from fontsource, so self-hosting and
+  embedding in generated PDFs are allowed. Chosen for non-native readers: tall x-height, open
+  apertures, clear I/l/1.
 - Every component in `frontend/components/` has `Foo.stories.tsx` next to it, one story per
   state, and appears on the kitchen-sink page. `bun run check-stories` checks the story file.
 - Components take data and callbacks as props. Only `App` holds state.

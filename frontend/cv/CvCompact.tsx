@@ -3,7 +3,7 @@ import { contactItems, type CvProps, Dates, Joined, Page } from "./parts";
 // 4. Compact technical ("Jake's Resume"): dense serif single column, small-caps headings,
 // two-row entries with the role in italics.
 
-export function CvCompact({ cv, palette = "Ink", typography = "Classic" }: CvProps) {
+export function CvCompact({ cv, palette = "Ink", typography = "Newsreader" }: CvProps) {
   return (
     <Page variant="compact" palette={palette} typography={typography}>
       <header>

@@ -14,9 +14,13 @@ export type Typography = {
   headingTracking: string;
 };
 
-const INTER = `"Inter", Arial, sans-serif`;
-const SERIF = `"Source Serif 4", Georgia, serif`;
-const MONO = `"JetBrains Mono", ui-monospace, monospace`;
+// Fonts: all SIL OFL 1.1 from fontsource, declared in cv-fonts.css. Chosen for legibility for
+// non-native readers (tall x-height, open apertures, clear I/l/1); the name may be more distinctive.
+const HANKEN = `"Hanken Grotesk", system-ui, sans-serif`;
+const SCHIBSTED = `"Schibsted Grotesk", system-ui, sans-serif`;
+const BRICOLAGE = `"Bricolage Grotesque", system-ui, sans-serif`;
+const NEWSREADER = `"Newsreader", Georgia, serif`;
+const INSTRUMENT_SERIF = `"Instrument Serif", Georgia, serif`;
 
 export const PALETTES = {
   Ink: { ink: "#111111", muted: "#4A4A4A", accent: "#111111", tint: "#ECECEA", rule: "#111111" },
@@ -30,16 +34,16 @@ export const PALETTES = {
 } satisfies Record<string, Palette>;
 
 export const TYPOGRAPHY = {
-  // Inter throughout, tracked uppercase headings. Neutral and very legible.
-  Modern: { body: INTER, display: INTER, displayWeight: 700, heading: INTER, headingCase: "uppercase", headingVariant: "normal", headingTracking: "0.12em" },
-  // Source Serif throughout, small-caps headings. Traditional, close to LaTeX CVs.
-  Classic: { body: SERIF, display: SERIF, displayWeight: 700, heading: SERIF, headingCase: "none", headingVariant: "small-caps", headingTracking: "0.02em" },
-  // Serif name, sans body and headings. Editorial header, plain body.
-  Editorial: { body: INTER, display: SERIF, displayWeight: 600, heading: INTER, headingCase: "uppercase", headingVariant: "normal", headingTracking: "0.12em" },
-  // Sans name and headings, serif body. Book-like reading text.
-  Bookish: { body: SERIF, display: INTER, displayWeight: 800, heading: INTER, headingCase: "uppercase", headingVariant: "normal", headingTracking: "0.1em" },
-  // Mono headings and name, sans body. For technical roles.
-  Technical: { body: INTER, display: MONO, displayWeight: 400, heading: MONO, headingCase: "uppercase", headingVariant: "normal", headingTracking: "0.04em" },
+  // Bricolage Grotesque name (quirky ink-trap details), quiet Hanken Grotesk body and headings.
+  Bricolage: { body: HANKEN, display: BRICOLAGE, displayWeight: 700, heading: HANKEN, headingCase: "none", headingVariant: "normal", headingTracking: "0" },
+  // Elegant single-weight Instrument Serif name, Hanken body, small tracked uppercase headings.
+  Instrument: { body: HANKEN, display: INSTRUMENT_SERIF, displayWeight: 400, heading: HANKEN, headingCase: "uppercase", headingVariant: "normal", headingTracking: "0.06em" },
+  // Newsreader throughout: a contemporary, open text serif made for screen reading.
+  Newsreader: { body: NEWSREADER, display: NEWSREADER, displayWeight: 500, heading: NEWSREADER, headingCase: "none", headingVariant: "normal", headingTracking: "0" },
+  // Schibsted Grotesk throughout: news-house grotesque, large x-height, heavy name.
+  Schibsted: { body: SCHIBSTED, display: SCHIBSTED, displayWeight: 800, heading: SCHIBSTED, headingCase: "none", headingVariant: "normal", headingTracking: "-0.01em" },
+  // Newsreader name over a Schibsted body, small tracked uppercase headings.
+  Editorial: { body: SCHIBSTED, display: NEWSREADER, displayWeight: 600, heading: SCHIBSTED, headingCase: "uppercase", headingVariant: "normal", headingTracking: "0.08em" },
 } satisfies Record<string, Typography>;
 
 export type PaletteName = keyof typeof PALETTES;

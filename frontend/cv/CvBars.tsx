@@ -12,7 +12,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function CvBars({ cv, palette = "Ink", typography = "Modern" }: CvProps) {
+export function CvBars({ cv, palette = "Ink", typography = "Instrument" }: CvProps) {
   return (
     <Page variant="bars" palette={palette} typography={typography}>
       <header className="cv-row">

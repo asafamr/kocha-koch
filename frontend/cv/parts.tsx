@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { CvData } from "./data";
 import { themeVars, type PaletteName, type TypographyName } from "./theme";
+import "./cv-fonts.css";
 import "./cv.css";
 
 // Props every CV style takes: the content plus an optional palette and typography.

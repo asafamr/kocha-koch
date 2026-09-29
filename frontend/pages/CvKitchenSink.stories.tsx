@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { CSSProperties, ReactNode } from "react";
-import { CvTimeline } from "../cv/CvTimeline";
+import { CvLedger } from "../cv/CvLedger";
 import { SAMPLE_CV } from "../cv/data";
 import "../cv/cv.css";
 import { PALETTES, themeVars, TYPOGRAPHY, type PaletteName, type TypographyName } from "../cv/theme";
 
 // CV styling kitchen sink (English): the five palettes and five typography options from cv/theme.ts,
-// each shown as tokens, a specimen, and a small Timeline CV using it.
+// each shown as tokens, a specimen, and a small Ledger CV using it.
 const palettes = Object.keys(PALETTES) as PaletteName[];
 const typographies = Object.keys(TYPOGRAPHY) as TypographyName[];
 const ROLES = ["ink", "muted", "accent", "tint", "rule"] as const;
@@ -17,7 +17,7 @@ const card: CSSProperties = { background: "#fff", border: "1px solid #d9d5ca", p
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section style={{ display: "grid", gap: 12, marginBlockEnd: 40 }}>
-      <h2 style={{ margin: 0, font: "700 18px/1.2 Inter, sans-serif" }}>{title}</h2>
+      <h2 style={{ margin: 0, font: "700 18px/1.2 \"Hanken Grotesk\", sans-serif" }}>{title}</h2>
       {children}
     </section>
   );
@@ -32,20 +32,20 @@ function Mini({ label, children }: { label: string; children: ReactNode }) {
           {children}
         </div>
       </div>
-      <figcaption style={{ font: "500 13px Inter, sans-serif" }}>{label}</figcaption>
+      <figcaption style={{ font: "500 13px \"Hanken Grotesk\", sans-serif" }}>{label}</figcaption>
     </figure>
   );
 }
 
 function CvKitchenSink() {
   return (
-    <main lang="en" dir="ltr" style={{ padding: 32, background: "#F4F2ED", minBlockSize: "100vh", color: "#111", font: "14px/1.5 Inter, sans-serif" }}>
-      <h1 style={{ margin: "0 0 24px", font: "700 28px/1.2 Inter, sans-serif" }}>CV styling</h1>
+    <main lang="en" dir="ltr" style={{ padding: 32, background: "#F4F2ED", minBlockSize: "100vh", color: "#111", font: "14px/1.5 \"Hanken Grotesk\", sans-serif" }}>
+      <h1 style={{ margin: "0 0 24px", font: "700 28px/1.2 \"Hanken Grotesk\", sans-serif" }}>CV styling</h1>
 
       <Section title="Palettes">
         <div style={grid}>
           {palettes.map((name) => (
-            <div key={name} style={{ ...card, ...themeVars(name, "Modern") }}>
+            <div key={name} style={{ ...card, ...themeVars(name, "Schibsted") }}>
               <strong>{name}</strong>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
                 {ROLES.map((role) => (
@@ -55,7 +55,7 @@ function CvKitchenSink() {
                   </div>
                 ))}
               </div>
-              <div style={{ color: "var(--cv-accent)", font: "700 11px Inter, sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+              <div style={{ color: "var(--cv-accent)", font: "700 11px \"Hanken Grotesk\", sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>
                 Experience
               </div>
               <div style={{ color: "var(--cv-ink)" }}>Senior Full Stack Developer</div>
@@ -71,7 +71,7 @@ function CvKitchenSink() {
             const t = TYPOGRAPHY[name];
             return (
               <div key={name} style={{ ...card, ...themeVars("Ink", name) }}>
-                <strong style={{ fontFamily: "Inter, sans-serif" }}>{name}</strong>
+                <strong style={{ fontFamily: "\"Hanken Grotesk\", sans-serif" }}>{name}</strong>
                 <div style={{ fontFamily: "var(--cv-font-display)", fontWeight: t.displayWeight, fontSize: 28, lineHeight: 1.1 }}>Noa Levi</div>
                 <div
                   style={{
@@ -93,21 +93,21 @@ function CvKitchenSink() {
         </div>
       </Section>
 
-      <Section title="Palettes on the Timeline style">
+      <Section title="Palettes on the Ledger style">
         <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
           {palettes.map((p) => (
             <Mini key={p} label={p}>
-              <CvTimeline cv={SAMPLE_CV} palette={p} />
+              <CvLedger cv={SAMPLE_CV} palette={p} />
             </Mini>
           ))}
         </div>
       </Section>
 
-      <Section title="Typography on the Timeline style">
+      <Section title="Typography on the Ledger style">
         <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
           {typographies.map((t) => (
             <Mini key={t} label={t}>
-              <CvTimeline cv={SAMPLE_CV} typography={t} />
+              <CvLedger cv={SAMPLE_CV} typography={t} />
             </Mini>
           ))}
         </div>
