@@ -3,8 +3,14 @@ import { Block } from "../components/Block";
 import { Button } from "../components/Button";
 import { Checkbox } from "../components/Checkbox";
 
-export function ConsentModal({ onContinue }: { onContinue: (agreed: boolean) => void }) {
-  const [agreed, setAgreed] = useState(false);
+export function ConsentModal({
+  onContinue,
+  defaultAgreed = false,
+}: {
+  onContinue: (agreed: boolean) => void;
+  defaultAgreed?: boolean;
+}) {
+  const [agreed, setAgreed] = useState(defaultAgreed);
   return (
     <div className="ds-modal">
       <Block role="dialog" aria-modal="true" aria-label="הסכמה לשמירת מידע">

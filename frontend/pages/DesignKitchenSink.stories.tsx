@@ -4,6 +4,7 @@ import { Button } from "../components/Button";
 import { Checkbox } from "../components/Checkbox";
 import { Highlight } from "../components/Highlight";
 import { Paragraph } from "../components/Paragraph";
+import { StageGauge } from "../components/StageGauge";
 import { Text, type TextVariant } from "../components/Text";
 
 // One page with the tokens and every design component. Values live in components/design.css.
@@ -14,7 +15,7 @@ const section = { display: "grid", gap: "1rem", marginBottom: "2.5rem" } as cons
 
 function DesignKitchenSink() {
   return (
-    <div style={{ background: "var(--paper)", padding: "2rem", minHeight: "100vh" }}>
+    <main style={{ background: "var(--paper)", padding: "2rem", minHeight: "100vh" }}>
       <section style={section}>
         <Text variant="display">שפת עיצוב</Text>
       </section>
@@ -79,6 +80,11 @@ function DesignKitchenSink() {
       </section>
 
       <section style={section}>
+        <Text variant="heading">מד שלבים</Text>
+        <StageGauge label="שלבי העבודה" stages={["איסוף מידע", "כוונון עדין", "עיצוב", "ייצוא"]} current={1} />
+      </section>
+
+      <section style={section}>
         <Text variant="heading">בלוק</Text>
         <Block>
           <Text variant="heading">כותרת בלוק</Text>
@@ -86,7 +92,7 @@ function DesignKitchenSink() {
           <Button>פעולה</Button>
         </Block>
       </section>
-    </div>
+    </main>
   );
 }
 

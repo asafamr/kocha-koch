@@ -5,7 +5,7 @@ import { ConsentModal } from "./ConsentModal";
 const meta = {
   title: "Modals/Consent",
   component: ConsentModal,
-  args: { onContinue: fn() },
+  args: { onContinue: fn(), defaultAgreed: true },
   parameters: { layout: "fullscreen" },
 } satisfies Meta<typeof ConsentModal>;
 export default meta;
