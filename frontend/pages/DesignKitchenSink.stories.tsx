@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Block } from "../components/Block";
 import { Button } from "../components/Button";
 import { Checkbox } from "../components/Checkbox";
+import { CvOutline } from "../components/CvOutline";
+import { SAMPLE_OUTLINE } from "../components/cvOutlineSample";
 import { FileInput } from "../components/FileInput";
 import { Highlight } from "../components/Highlight";
 import { Message } from "../components/Message";
@@ -95,6 +97,13 @@ function DesignKitchenSink() {
           <FileInput label="קורות חיים נוכחיים (PDF)" accept="application/pdf" file={null} onChange={() => {}} />
           <TextField label="תפקיד מבוקש" placeholder="למשל: מפתח פרונטאנד בכיר" />
           <TextArea label="תיאור המשרה המלא (לא חובה)" placeholder="הדביקו כאן את תיאור המשרה" rows={3} />
+        </div>
+      </section>
+
+      <section style={section}>
+        <Text variant="heading">מתאר קורות חיים</Text>
+        <div style={{ maxInlineSize: 640 }}>
+          <CvOutline sections={SAMPLE_OUTLINE.slice(0, 1)} />
         </div>
       </section>
 

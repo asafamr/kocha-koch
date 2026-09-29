@@ -163,6 +163,8 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 .app-page-cv { grid-area: cv; }
 .app-page-chat { grid-area: chat; }
 .app-page-cv > .ds-block, .app-page-chat > .ds-block { block-size: 100%; box-sizing: border-box; border: 0; }
+.app-page-cv > .ds-block { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 0.75rem; }
+.app-page-cv-scroll { overflow-y: auto; padding-inline-end: 0.5rem; }
 .app-page-chat > .ds-block { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 0.75rem; }
 .app-page-chat-scroll { overflow-y: auto; display: flex; flex-direction: column-reverse; }
 .app-page-chat-list { display: grid; gap: 0.75rem; }
@@ -211,3 +213,16 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 /* AppPage stage 0: the intake form spans both columns and scrolls on its own */
 .app-page-form { grid-column: 1 / -1; grid-row: 2; overflow-y: auto; }
 .intake { display: grid; gap: 1.25rem; max-inline-size: 640px; margin-inline: auto; padding-block-end: 1rem; }
+
+/* CvOutline: sections -> entries -> bullets */
+.ds-outline { display: grid; gap: 1.5rem; }
+.ds-outline-title {
+  margin: 0 0 0.6rem; padding-block-end: 0.35rem; border-block-end: 2px solid var(--ink);
+  font: 800 var(--fs-lg)/1.3 var(--f-body); color: var(--ink);
+}
+.ds-outline-entry { margin-block-end: 0.9rem; }
+.ds-outline-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.ds-outline-head strong { font: 700 var(--fs-base)/1.4 var(--f-body); color: var(--ink); }
+.ds-outline-meta { font: var(--fs-sm)/1.4 var(--f-body); color: var(--muted); white-space: nowrap; }
+.ds-outline ul { margin: 0.35rem 0 0; padding-inline-start: 1.25rem; display: grid; gap: 0.25rem; }
+.ds-outline li { font: var(--fs-md)/1.55 var(--f-body); color: var(--ink); }

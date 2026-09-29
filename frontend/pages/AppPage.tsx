@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Block } from "../components/Block";
+import { CvOutline } from "../components/CvOutline";
+import { SAMPLE_OUTLINE } from "../components/cvOutlineSample";
 import { Message } from "../components/Message";
-import { Paragraph } from "../components/Paragraph";
 import { StageGauge } from "../components/StageGauge";
 import { Text } from "../components/Text";
 import { TypingIndicator } from "../components/TypingIndicator";
@@ -43,7 +44,10 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
           <section className="app-page-cv" aria-label="קורות חיים">
             <Block>
               <Text variant="heading">קורות חיים</Text>
-              <Paragraph muted>מקום שמור לרכיב קורות החיים.</Paragraph>
+              {/* tabIndex: a scrollable region must be reachable by keyboard */}
+              <div className="app-page-cv-scroll" tabIndex={0} aria-label="סעיפי קורות החיים">
+                <CvOutline sections={SAMPLE_OUTLINE} />
+              </div>
             </Block>
           </section>
 
