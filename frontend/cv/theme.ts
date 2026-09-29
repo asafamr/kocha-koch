@@ -21,9 +21,12 @@ const MONO = `"JetBrains Mono", ui-monospace, monospace`;
 export const PALETTES = {
   Ink: { ink: "#111111", muted: "#4A4A4A", accent: "#111111", tint: "#ECECEA", rule: "#111111" },
   Slate: { ink: "#1D1D1B", muted: "#555555", accent: "#3A4F66", tint: "#EEF0F2", rule: "#C9CED4" },
-  Navy: { ink: "#1A1A1A", muted: "#555555", accent: "#1F3A5F", tint: "#F1F4F8", rule: "#C8D1DC" },
-  "Sand & Brick": { ink: "#1F1E1C", muted: "#5E574E", accent: "#9A3B2A", tint: "#E8E1D5", rule: "#D6CCBD" },
-  Forest: { ink: "#1B1F1C", muted: "#56605A", accent: "#2F5D46", tint: "#E6EDE8", rule: "#C5D1C9" },
+  // Vivid ultramarine on cool paper (Linear/Stripe-docs style single strong color).
+  Cobalt: { ink: "#0F1226", muted: "#565A6E", accent: "#2338C8", tint: "#EDEFFB", rule: "#C9CEEA" },
+  // Signal red-orange on warm blush-grey (Swiss poster / Monocle print accent).
+  Vermilion: { ink: "#1A1210", muted: "#66605C", accent: "#C2280F", tint: "#F7EFEC", rule: "#E3D3CD" },
+  // Deep berry on pale rose-grey (editorial / fashion print).
+  Mulberry: { ink: "#1E1219", muted: "#6A5D66", accent: "#7C1D55", tint: "#F6EEF3", rule: "#DDCBD6" },
 } satisfies Record<string, Palette>;
 
 export const TYPOGRAPHY = {

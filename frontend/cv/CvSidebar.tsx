@@ -2,7 +2,7 @@ import { type CvProps, Dates, Ltr, Page } from "./parts";
 
 // 2. Modern two-column: 32% tinted sidebar on the start side (left in English), navy accent.
 // Main column comes first in the DOM so parsers read it first; the grid places the sidebar at start.
-export function CvSidebar({ cv, palette = "Navy", typography = "Modern" }: CvProps) {
+export function CvSidebar({ cv, palette = "Cobalt", typography = "Modern" }: CvProps) {
   return (
     <Page variant="sidebar" palette={palette} typography={typography}>
       <div className="cv-main">

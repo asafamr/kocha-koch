@@ -1,7 +1,7 @@
 import { type CvProps, Dates, Ltr, Page } from "./parts";
 
 // 5. Accent header band: full-bleed light sand band, name and title at start, contact stacked at end.
-export function CvBand({ cv, palette = "Sand & Brick", typography = "Editorial" }: CvProps) {
+export function CvBand({ cv, palette = "Vermilion", typography = "Editorial" }: CvProps) {
   return (
     <Page variant="band" palette={palette} typography={typography}>
       <header className="cv-head">
