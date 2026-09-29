@@ -6,7 +6,7 @@ const meta = {
   component: StageGauge,
   args: {
     label: "שלבי העבודה",
-    stages: ["מָה, מוּ, מִי", "כִּוְנוּן", "עִצּוּב", "יִצּוּא"],
+    stages: ["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"],
     current: 0,
   },
 } satisfies Meta<typeof StageGauge>;

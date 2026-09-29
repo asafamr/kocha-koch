@@ -81,7 +81,7 @@ function DesignKitchenSink() {
 
       <section style={section}>
         <Text variant="heading">מד שלבים</Text>
-        <StageGauge label="שלבי העבודה" stages={["מָה, מוּ, מִי", "כִּוְנוּן", "עִצּוּב", "יִצּוּא"]} current={1} />
+        <StageGauge label="שלבי העבודה" stages={["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"]} current={1} />
       </section>
 
       <section style={section}>
