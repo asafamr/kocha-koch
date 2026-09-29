@@ -3,9 +3,11 @@ import { Block } from "../components/Block";
 import { Button } from "../components/Button";
 import { Checkbox } from "../components/Checkbox";
 import { Highlight } from "../components/Highlight";
+import { Message } from "../components/Message";
 import { Paragraph } from "../components/Paragraph";
 import { StageGauge } from "../components/StageGauge";
 import { Text, type TextVariant } from "../components/Text";
+import { TypingIndicator } from "../components/TypingIndicator";
 
 // One page with the tokens and every design component. Values live in components/design.css.
 const COLORS = ["paper", "surface", "ink", "muted", "faint", "hair", "marker", "audio", "critical"];
@@ -15,7 +17,7 @@ const section = { display: "grid", gap: "1rem", marginBottom: "2.5rem" } as cons
 
 function DesignKitchenSink() {
   return (
-    <main style={{ background: "var(--paper)", padding: "2rem", minHeight: "100vh" }}>
+    <main style={{ background: "var(--surface)", padding: "2rem", minHeight: "100vh" }}>
       <section style={section}>
         <Text variant="display">שפת עיצוב</Text>
       </section>
@@ -82,6 +84,15 @@ function DesignKitchenSink() {
       <section style={section}>
         <Text variant="heading">מד שלבים</Text>
         <StageGauge label="שלבי העבודה" stages={["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"]} current={1} />
+      </section>
+
+      <section style={section}>
+        <Text variant="heading">הודעות</Text>
+        <div style={{ display: "grid", gap: "0.75rem", maxInlineSize: 480 }}>
+          <Message from="kocha">היי! אני קוחה. ספרו לי קצת על עצמכם.</Message>
+          <Message from="user">אני מפתח תוכנה, חמש שנים בפרונטאנד.</Message>
+          <TypingIndicator />
+        </div>
       </section>
 
       <section style={section}>

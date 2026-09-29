@@ -63,7 +63,7 @@ or the containers cannot write to `.messages/`.
 | `frontend/index.html`, `main.tsx` | entry point, bundled by `bun run build` into `dist/` |
 | `frontend/api.ts` | `Api` type and `httpApi`; the only place that calls the server |
 | `frontend/App.tsx` | the chat page: polls `api.load()` every 2 s, sends through `api.send()`, built from `components/` |
-| `frontend/components/` | design components (Button, Text, Paragraph, Checkbox, Block, Highlight, StageGauge), `design.css` (tokens, type scale, fonts, modal) |
+| `frontend/components/` | design components (Button, Text, Paragraph, Checkbox, Block, Highlight, StageGauge, Message, TypingIndicator); images in `components/assets/` (kocha-face.webp from kohi), `design.css` (tokens, type scale, fonts, modal) |
 | `frontend/modals/` | modals built from components; `ConsentModal` |
 | `frontend/pages/` | pages: `AppPage` (stage gauge on top, CV 70% left, scrollable chat 30% right; placeholders) and the `DesignKitchenSink` story (tokens and every component) |
 | `.storybook/` | Storybook (`@storybook/react-vite`), dev only |

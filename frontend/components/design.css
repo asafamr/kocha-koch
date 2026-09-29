@@ -52,6 +52,7 @@
   --fs-2xs: 0.75rem;    /* 12px fine print */
   --fs-xs: 0.8125rem;   /* 13px captions */
   --fs-sm: 0.875rem;    /* 14px secondary body */
+  --fs-md: 0.9375rem;   /* 15px dense body, chat */
   --fs-base: 1rem;      /* 16px body */
   --fs-lg: 1.125rem;    /* 18px lead */
   --fs-xl: 1.375rem;    /* 22px section heading */
@@ -68,7 +69,7 @@
   }
 }
 
-body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 var(--f-body); }
+body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 var(--f-body); }
 
 /* Text */
 .ds-text { margin: 0; font-family: var(--f-body); color: var(--ink); }
@@ -114,7 +115,7 @@ body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 va
 .ds-checkbox input:disabled { border-color: var(--hair); background: var(--hair); }
 
 /* Block (kohi .card) */
-.ds-block { background: var(--surface); border: 2px solid var(--ink); padding: 1.25rem; }
+.ds-block { background: var(--paper); border: 2px solid var(--ink); padding: 1.25rem; }
 
 /* Modal: dims the page and centers its content */
 .ds-modal { position: fixed; inset: 0; display: grid; place-items: center; padding: 1.5rem; background: rgb(11 11 10 / 0.45); }
@@ -152,7 +153,7 @@ body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 va
 /* AppPage: stage gauge on top; CV 70% left, chat 30% right (grid is LTR so CV stays left; content inside is RTL).
    Frames end at the viewport; only the chat messages scroll inside their frame. */
 .app-page {
-  block-size: 100dvh; box-sizing: border-box; padding: 1.5rem; gap: 1.5rem; background: var(--paper);
+  block-size: 100dvh; box-sizing: border-box; padding: 1.5rem; gap: 1.5rem; background: var(--surface);
   display: grid; grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas: "stages stages" "cv chat"; grid-template-columns: 7fr 3fr;
   direction: ltr;
@@ -163,7 +164,26 @@ body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 va
 .app-page-chat { grid-area: chat; }
 .app-page-cv > .ds-block, .app-page-chat > .ds-block { block-size: 100%; box-sizing: border-box; border: 0; }
 .app-page-chat > .ds-block { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 0.75rem; }
-.app-page-chat-scroll { overflow-y: auto; }
+.app-page-chat-scroll { overflow-y: auto; display: flex; flex-direction: column-reverse; }
+.app-page-chat-list { display: grid; gap: 0.75rem; }
 
 /* Visually hidden, still read by screen readers */
 .ds-sr-only { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Message: kocha at the start side with avatar and light bubble; user at the end side, ink bubble */
+.ds-msg { display: flex; align-items: flex-end; gap: 0.5rem; max-inline-size: 85%; }
+.ds-msg-kocha { justify-self: start; }
+.ds-msg-user { justify-self: end; }
+.ds-msg-bubble { padding: 0.5rem 0.75rem; font: var(--fs-md)/1.5 var(--f-body); white-space: pre-wrap; }
+.ds-msg-kocha .ds-msg-bubble { background: var(--surface); color: var(--ink); border: 1px solid var(--hair); }
+.ds-msg-user .ds-msg-bubble { background: var(--ink); color: var(--paper); }
+/* kohi's .warming-face */
+.ds-avatar { inline-size: 36px; block-size: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--hair); flex: none; }
+
+/* TypingIndicator: three dots; still when the user asks for reduced motion */
+.ds-typing { display: flex; gap: 4px; padding-block: 0.9rem; }
+.ds-typing span { inline-size: 6px; block-size: 6px; border-radius: 50%; background: var(--muted); animation: ds-typing 1.2s infinite; }
+.ds-typing span:nth-child(2) { animation-delay: 0.2s; }
+.ds-typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes ds-typing { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ds-typing span { animation: none; opacity: 0.6; } }
