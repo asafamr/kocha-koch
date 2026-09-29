@@ -45,10 +45,12 @@ or the containers cannot write to `.messages/`.
 | `src/gemini.ts` | `BACKEND=gemini`: sends the thread to Gemini, adds the reply |
 | `frontend/index.html`, `main.tsx` | entry point, bundled by `bun run build` into `dist/` |
 | `frontend/api.ts` | `Api` type and `httpApi`; the only place that calls the server |
-| `frontend/App.tsx` | polls `api.load()` every 2 s, sends through `api.send()` |
-| `frontend/components/` | presentational React components, props in, no fetching |
+| `frontend/App.tsx` | the chat page: polls `api.load()` every 2 s, sends through `api.send()`, built from `components/` |
+| `frontend/components/` | design components (Button, Text, Paragraph, Checkbox, Block, Highlight), `design.css` (tokens, type scale, fonts, modal) |
+| `frontend/modals/` | modals built from components; `ConsentModal` |
+| `frontend/pages/` | Storybook pages; `DesignKitchenSink.stories.tsx` shows tokens and every component |
 | `.storybook/` | Storybook (`@storybook/react-vite`), dev only |
-| `scripts/check-stories.sh` | fails if a `.tsx` component has no `.stories.tsx` next to it |
+| `scripts/check-stories.sh` | fails if a component in `frontend/components/` or `frontend/modals/` has no `.stories.tsx` next to it |
 | `scripts/agent-loop.sh` | runs `claude -p` or `codex exec` while `$MESSAGES_DIR` (default `.messages/agent`) has pending messages |
 
 ## Frontend and Storybook
@@ -56,11 +58,23 @@ or the containers cannot write to `.messages/`.
 React 19 + TypeScript, bundled with Bun's built-in bundler (no Vite in the app build).
 Storybook uses Vite, only for development.
 
-- Every component has a story file next to it: `Foo.tsx` → `Foo.stories.tsx`, with one story
-  per state (empty, pending, error). `bun run check-stories` enforces this.
-- Components take data and callbacks as props. Only `App` holds state, and it gets the
-  server through its `api` prop, so its stories use a fake `Api`.
-- Shared sample data for stories is in `frontend/components/fixtures.ts`.
+- The design language comes from `../kohi/packages/ui` (colors, fonts, type scale, square
+  ink-bordered components), with Hebrew and Latin fonts. Change tokens in
+  `frontend/components/design.css`.
+- Storybook is Hebrew and right-to-left for now: `.storybook/preview.ts` sets `dir="rtl"`
+  and stories use Hebrew text. Components stay direction-neutral (logical CSS properties,
+  `Text variant="mono"` is always LTR), so switching Storybook to English means changing
+  `preview.ts` and the story text only.
+- Storybook has three sections: **Pages** (`frontend/pages/`), **Components**
+  (`frontend/components/`, titles `Components/<Name>`) and **Modals** (`frontend/modals/`,
+  titles `Modals/<Name>`).
+- Every component in `frontend/components/` has `Foo.stories.tsx` next to it, one story per
+  state, and appears on the kitchen-sink page. `bun run check-stories` checks the story file.
+- Components take data and callbacks as props. Only `App` holds state.
+- Accessibility: use native elements (`button`, `label` + `input`, headings, `mark`), give
+  dialogs `role="dialog"`, `aria-modal` and a name, label every input, and announce async
+  updates with `aria-live` / `role="alert"`. `@storybook/addon-a11y` runs axe on each story
+  (Accessibility panel); fix violations before merging.
 - Check a change with `docker compose run --rm agent bun run build-storybook`.
 
 ## Manual test

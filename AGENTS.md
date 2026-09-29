@@ -21,7 +21,9 @@ container). The Gemini app keeps its messages in memory (`STORE=memory`); you ne
 - Run everything in containers (see DEVELOPING.md). Do not run Bun or AI CLIs on the host.
 - Keep it minimal: no new dependencies or frameworks without a reason.
 - Both stores (files, memory) have the same interface in `store.ts`. Change both, not one.
-- Every React component in `frontend/` has a `.stories.tsx` next to it covering its states.
+- Every component in `frontend/components/` has a `.stories.tsx` next to it and is on the Pages/Design Kitchen Sink page. Build UI from these components.
+- Every modal in `frontend/modals/` has a story under `Modals/`.
+- Stories pass the Storybook Accessibility (axe) panel with no violations; see DEVELOPING.md.
 
 ## Before merging to main
 - `bun run typecheck`, `bun run check-stories` and `bun run build-storybook` pass (in the agent container).

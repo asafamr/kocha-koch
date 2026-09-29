@@ -12,6 +12,7 @@
     "build-storybook": "storybook build -o storybook-static"
   },
   "devDependencies": {
+    "@storybook/addon-a11y": "^10.6.0",
     "@storybook/react-vite": "^10.6.0",
     "@types/bun": "latest",
     "@types/react": "^19.3.0",
