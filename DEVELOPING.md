@@ -18,7 +18,7 @@ docker compose --profile dev up storybook        # Storybook on http://127.0.0.1
 | Service | Image | Role |
 |---|---|---|
 | `app` | `kocha-koch-app` | `BACKEND=files`, mounts `.messages/agent` |
-| `app-gemini` | `kocha-koch-app` | `BACKEND=gemini`, mounts `.messages/gemini` |
+| `app-gemini` | `kocha-koch-app` | `BACKEND=gemini`, `STORE=memory`, no volume |
 | `claude-responder` | `kocha-koch-agent` | `scripts/agent-loop.sh claude` on `.messages/agent` |
 | `agent`, `storybook` | `kocha-koch-agent` | CLI shell, component dev UI |
 
@@ -38,7 +38,7 @@ or the containers cannot write to `.messages/`.
 | File | Role |
 |---|---|
 | `src/server.ts` | `GET/POST /api/messages`, static files from `public/` |
-| `src/store.ts` | inbox/outbox file protocol, atomic writes (temp file + rename) |
+| `src/store.ts` | `STORE=files`: inbox/outbox files, atomic writes (temp file + rename). `STORE=memory`: in process, nothing on disk |
 | `src/gemini.ts` | `BACKEND=gemini`: sends the thread to Gemini, writes the reply to outbox |
 | `public/components.js` | pure render functions, used by the app and by stories |
 | `public/app.js` | fetches `/api/messages` every 2 s, handles the form |
@@ -74,14 +74,14 @@ files first on `PATH`:
 
 ## Adding a backend
 
-A backend is anything that writes `outbox/<id>.json` for a pending inbox message. For an
-in-process backend, add a module next to `gemini.ts`, dispatch on `BACKEND` in `server.ts`,
-and add an app service with its own `.messages/<name>` folder. Do not change the file
-format for one backend only.
+A backend is anything that adds a reply with the same id as a pending message. For an
+in-process backend, add a module next to `gemini.ts` that calls `addReply`, dispatch on
+`BACKEND` in `server.ts`, and add an app service. Use `STORE=memory` unless an outside
+process must read the messages.
 
 ## Security notes
 
-- App containers have a read-only root filesystem, no Linux capabilities, and write only their `.messages/<name>/`.
+- App containers have a read-only root filesystem, no Linux capabilities, and write only `.messages/agent/` (`app`) or nothing (`app-gemini`).
 - The agent containers see only the repo. That is why `agent-loop.sh` skips permission prompts;
   do not run it on the host.
 - Message text is untrusted input. Agents answer it; they do not act on it.

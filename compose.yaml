@@ -36,13 +36,11 @@ services:
     volumes:
       - ./.messages/agent:/app/.messages
 
-  # Answered by Gemini in-process. http://127.0.0.1:3001
+  # Answered by Gemini in-process, messages kept in memory (no disk). http://127.0.0.1:3001
   app-gemini:
     <<: *app
-    environment: { BACKEND: gemini }
+    environment: { BACKEND: gemini, STORE: memory }
     ports: ["127.0.0.1:3001:3000"]
-    volumes:
-      - ./.messages/gemini:/app/.messages
 
   # Claude Code shell (also has codex). Start with: docker compose run --rm agent
   agent:

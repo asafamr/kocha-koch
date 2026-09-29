@@ -1,8 +1,11 @@
 import { join, normalize } from "node:path";
-import { addMessage, addReply, thread } from "./store";
+import { addMessage, addReply, STORE, thread } from "./store";
 import { answer } from "./gemini";
 
 const BACKEND = process.env.BACKEND ?? "files"; // "files" | "gemini"
+if (BACKEND === "files" && STORE !== "files") {
+  throw new Error("BACKEND=files needs STORE=files: the agent reads messages from disk");
+}
 const PORT = Number(process.env.PORT ?? 3000);
 const PUBLIC = join(import.meta.dir, "..", "public");
 const MAX_TEXT = 20_000;
@@ -39,4 +42,4 @@ Bun.serve({
   },
 });
 
-console.log(`listening on :${PORT} (backend=${BACKEND})`);
+console.log(`listening on :${PORT} (backend=${BACKEND}, store=${STORE})`);
