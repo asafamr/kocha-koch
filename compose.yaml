@@ -1,0 +1,57 @@
+# Works with `docker compose` and `podman compose`.
+# Both images run as uid 1000. Rootless podman: set USERNS_MODE=keep-id in .env
+# so that uid maps to your host user and ./data stays writable.
+x-hardening: &hardening
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  userns_mode: ${USERNS_MODE:-}
+
+# agent and storybook share one image and one bun package cache.
+x-tools: &tools
+  <<: *hardening
+  image: kocha-koch-agent
+  build: { context: ., dockerfile: Dockerfile.agent }
+  environment:
+    BUN_INSTALL_CACHE_DIR: /bun-cache
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+
+services:
+  app:
+    build: .
+    <<: *hardening
+    init: true   # bun as PID 1 ignores SIGTERM
+    read_only: true
+    tmpfs: [/tmp]
+    ports: ["127.0.0.1:3000:3000"]
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./data:/app/data
+
+  # Claude Code / Codex sandbox. Start with: docker compose run --rm agent
+  agent:
+    <<: *tools
+    profiles: [agent]
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/work
+      - bun-cache:/bun-cache
+      - agent-home:/home/node   # keeps CLI logins between runs
+
+  # Component dev UI. Start with: docker compose --profile dev up storybook
+  storybook:
+    <<: *tools
+    profiles: [dev]
+    init: true
+    command: sh -c "bun install --frozen-lockfile && bun run storybook --host 0.0.0.0"
+    ports: ["127.0.0.1:6006:6006"]
+    volumes:
+      - .:/work
+      - bun-cache:/bun-cache
+
+volumes:
+  agent-home:
+  bun-cache:

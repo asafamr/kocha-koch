@@ -1,0 +1,9 @@
+# Sandbox for running Claude Code / Codex against this repo.
+# The container sees only the repo (mounted at /work), never the host home dir.
+FROM node:22-slim
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates curl unzip \
+    && rm -rf /var/lib/apt/lists/*
+RUN npm install -g @anthropic-ai/claude-code @openai/codex bun
+USER node
+WORKDIR /work
+CMD ["bash"]
