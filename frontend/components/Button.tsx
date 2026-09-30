@@ -1,5 +1,10 @@
 import type { ButtonHTMLAttributes } from "react";
 
-export function Button({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button className={`ds-button ${className}`} {...props} />;
+// primary: marker yellow (default). secondary: ink background, for a second strong action.
+export function Button({
+  className = "",
+  variant = "primary",
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" }) {
+  return <button className={`ds-button${variant === "secondary" ? " ds-button-secondary" : ""} ${className}`} {...props} />;
 }

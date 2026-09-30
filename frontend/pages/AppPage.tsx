@@ -16,6 +16,7 @@ import { PALETTES, TYPOGRAPHY, type PaletteName, type TypographyName } from "../
 const TEMPLATE_NAMES = Object.keys(TEMPLATES) as TemplateName[];
 const PALETTE_NAMES = Object.keys(PALETTES) as PaletteName[];
 const TYPOGRAPHY_NAMES = Object.keys(TYPOGRAPHY) as TypographyName[];
+import { ExportPanel } from "./ExportPanel";
 import { IntakeForm } from "./IntakeForm";
 
 const STAGES = ["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"];
@@ -65,16 +66,18 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
                   <CvOutline sections={SAMPLE_OUTLINE} />
                 </div>
               ) : (
-                // Design (and later): the laid-out page on a zoom/pan canvas, with template,
-                // palette and typography pickers in the canvas tray.
+                // Design and export: the laid-out page on a zoom/pan canvas. In design, template,
+                // palette and typography pickers sit in the canvas tray.
                 <CvCanvas
                   label="תצוגת קורות חיים"
                   controls={
+                    stage === 2 && (
                     <>
                       <Select compact label="תבנית" value={template} options={TEMPLATE_NAMES} labels={TEMPLATE_LABELS} onChange={setTemplate} />
                       <Select compact label="צבעים" value={palette} options={PALETTE_NAMES} labels={PALETTE_LABELS} onChange={setPalette} />
                       <Select compact label="גופן" value={typography} options={TYPOGRAPHY_NAMES} labels={TYPOGRAPHY_LABELS} onChange={setTypography} />
                     </>
+                    )
                   }
                 >
                   <Template cv={SAMPLE_CV} palette={palette} typography={typography} />
@@ -83,6 +86,16 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
             </Block>
           </section>
 
+          {stage === 3 ? (
+            <section className="app-page-chat" aria-label="ייצוא">
+              <Block>
+                <Text variant="heading">ייצוא</Text>
+                {/* Print CSS keeps only the CV page, so "Save as PDF" in the dialog exports it.
+                    TODO: replace with the server renderer (PDF) and a real booking link. */}
+                <ExportPanel onExport={() => window.print()} onBookPractice={() => {}} />
+              </Block>
+            </section>
+          ) : (
           <section className="app-page-chat" aria-label="צ'אט">
             <Block>
               <Text variant="heading">צ'אט</Text>
@@ -100,6 +113,7 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
               </div>
             </Block>
           </section>
+          )}
         </>
       )}
     </main>

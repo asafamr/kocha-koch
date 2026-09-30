@@ -257,3 +257,19 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 .ds-select-compact { display: flex; align-items: center; gap: 6px; }
 .ds-select-compact label { font-size: var(--fs-xs); color: var(--muted); }
 .ds-select-compact select { font-size: var(--fs-sm); padding: 0.2rem 0.35rem; border-width: 1px; }
+
+/* Button secondary: ink background, for a second strong action next to a primary one */
+.ds-button-secondary { background: var(--ink); color: var(--surface); }
+
+/* AppPage export stage: panel in the chat column */
+.export-panel { display: grid; gap: 1rem; justify-items: stretch; align-content: start; }
+.export-panel .ds-msg { max-inline-size: 100%; }
+
+/* Printing (export to PDF): only the CV page, at actual A4 size, no canvas transform */
+@page { size: A4; margin: 0; }
+@media print {
+  body * { visibility: hidden; }
+  .ds-canvas-page, .ds-canvas-page * { visibility: visible; }
+  .ds-canvas-stage { transform: none !important; }
+  .ds-canvas-page { position: fixed; inset: 0 auto auto 0; box-shadow: none; }
+}

@@ -77,6 +77,7 @@ function DesignKitchenSink() {
         <Text variant="heading">כפתור</Text>
         <div style={{ display: "flex", gap: "1rem" }}>
           <Button>שליחה</Button>
+          <Button variant="secondary">משני</Button>
           <Button disabled>לא זמין</Button>
         </div>
       </section>
