@@ -7,8 +7,14 @@ import { Message } from "../components/Message";
 import { StageGauge } from "../components/StageGauge";
 import { Text } from "../components/Text";
 import { TypingIndicator } from "../components/TypingIndicator";
-import { CvLedger } from "../cv/CvLedger";
+import { Select } from "../components/Select";
 import { SAMPLE_CV } from "../cv/data";
+import { TEMPLATES, type TemplateName } from "../cv/templates";
+import { PALETTES, TYPOGRAPHY, type PaletteName, type TypographyName } from "../cv/theme";
+
+const TEMPLATE_NAMES = Object.keys(TEMPLATES) as TemplateName[];
+const PALETTE_NAMES = Object.keys(PALETTES) as PaletteName[];
+const TYPOGRAPHY_NAMES = Object.keys(TYPOGRAPHY) as TypographyName[];
 import { IntakeForm } from "./IntakeForm";
 
 const STAGES = ["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"];
@@ -30,6 +36,11 @@ const SAMPLE_CHAT: { from: "kocha" | "user"; text: string }[] = [
 // The grid itself is LTR so CV stays physically left and chat right; each area is RTL inside.
 export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
   const [stage, setStage] = useState(initialStage);
+  // Design-stage theming: which template, palette and typography the CV renders with.
+  const [template, setTemplate] = useState<TemplateName>("Ledger");
+  const [palette, setPalette] = useState<PaletteName>("Slate");
+  const [typography, setTypography] = useState<TypographyName>("Bricolage");
+  const Template = TEMPLATES[template];
 
   return (
     <main className="app-page">
@@ -53,9 +64,19 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
                   <CvOutline sections={SAMPLE_OUTLINE} />
                 </div>
               ) : (
-                // Design (and later): the laid-out page on a zoom/pan canvas.
-                <CvCanvas label="תצוגת קורות חיים">
-                  <CvLedger cv={SAMPLE_CV} />
+                // Design (and later): the laid-out page on a zoom/pan canvas, with template,
+                // palette and typography pickers in the canvas tray.
+                <CvCanvas
+                  label="תצוגת קורות חיים"
+                  controls={
+                    <>
+                      <Select compact label="תבנית" value={template} options={TEMPLATE_NAMES} onChange={setTemplate} />
+                      <Select compact label="צבעים" value={palette} options={PALETTE_NAMES} onChange={setPalette} />
+                      <Select compact label="גופן" value={typography} options={TYPOGRAPHY_NAMES} onChange={setTypography} />
+                    </>
+                  }
+                >
+                  <Template cv={SAMPLE_CV} palette={palette} typography={typography} />
                 </CvCanvas>
               )}
             </Block>

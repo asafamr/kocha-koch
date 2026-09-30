@@ -11,6 +11,7 @@ import { FileInput } from "../components/FileInput";
 import { Highlight } from "../components/Highlight";
 import { Message } from "../components/Message";
 import { Paragraph } from "../components/Paragraph";
+import { Select } from "../components/Select";
 import { StageGauge } from "../components/StageGauge";
 import { Text, type TextVariant } from "../components/Text";
 import { TextArea } from "../components/TextArea";
@@ -100,6 +101,8 @@ function DesignKitchenSink() {
           <FileInput label="קורות חיים נוכחיים (PDF)" accept="application/pdf" file={null} onChange={() => {}} />
           <TextField label="תפקיד מבוקש" placeholder="למשל: מפתח פרונטאנד בכיר" />
           <TextArea label="תיאור המשרה המלא (לא חובה)" placeholder="הדביקו כאן את תיאור המשרה" rows={3} />
+          <Select label="תבנית" value="Ledger" options={["Ledger", "Sidebar", "Bars"]} onChange={() => {}} />
+          <Select compact label="צבעים" value="Slate" options={["Ink", "Slate", "Cobalt"]} onChange={() => {}} />
         </div>
       </section>
 

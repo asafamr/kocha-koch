@@ -7,10 +7,12 @@ const clamp = (z: number) => Math.min(MAX, Math.max(MIN, z));
 
 // A page (e.g. a CV) on a gray canvas with zoom and pan, like a design tool.
 // Drag or wheel to pan, Ctrl/Cmd + wheel to zoom at the cursor, tray buttons to zoom/fit.
+// `controls` (e.g. template/palette pickers) sit at the start of the tray, top-right.
 // Keyboard (canvas focused): arrows pan, + / - zoom, 0 fits.
-export function CvCanvas({ label, children }: { label: string; children: ReactNode }) {
+export function CvCanvas({ label, controls, children }: { label: string; controls?: ReactNode; children: ReactNode }) {
   const viewport = useRef<HTMLDivElement>(null);
   const page = useRef<HTMLDivElement>(null);
+  const tray = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number } | null>(null);
   const [view, setView] = useState({ zoom: 1, x: 0, y: 0 });
   const viewRef = useRef(view);
@@ -19,12 +21,14 @@ export function CvCanvas({ label, children }: { label: string; children: ReactNo
   const setPan = (f: (p: { x: number; y: number }) => { x: number; y: number }) =>
     setView((v) => ({ ...v, ...f(v) }));
 
-  // Scale the page to fit the viewport with a margin, centered.
+  // Scale the page to fit the viewport below the tray, with a margin, centered.
   const fit = useCallback(() => {
     const v = viewport.current, p = page.current;
     if (!v || !p) return;
-    const z = clamp(Math.min(v.clientWidth / p.offsetWidth, v.clientHeight / p.offsetHeight) * 0.9);
-    setView({ zoom: z, x: (v.clientWidth - p.offsetWidth * z) / 2, y: (v.clientHeight - p.offsetHeight * z) / 2 });
+    const top = (tray.current?.offsetHeight ?? 0) + 24; // tray sits at top: 12px
+    const h = v.clientHeight - top - 12;
+    const z = clamp(Math.min(v.clientWidth / p.offsetWidth, h / p.offsetHeight) * 0.92);
+    setView({ zoom: z, x: (v.clientWidth - p.offsetWidth * z) / 2, y: top + (h - p.offsetHeight * z) / 2 });
   }, []);
 
   useLayoutEffect(fit, [fit]);
@@ -107,7 +111,8 @@ export function CvCanvas({ label, children }: { label: string; children: ReactNo
           </div>
         </div>
       </div>
-      <div className="ds-canvas-tray" role="toolbar" aria-label="זום">
+      <div ref={tray} className="ds-canvas-tray" role="toolbar" aria-label="עיצוב וזום">
+        {controls && <div className="ds-canvas-controls">{controls}</div>}
         <button type="button" onClick={() => zoomTo(zoom / STEP)} aria-label="הקטנה">−</button>
         <output aria-live="polite">{Math.round(zoom * 100)}%</output>
         <button type="button" onClick={() => zoomTo(zoom * STEP)} aria-label="הגדלה">+</button>
