@@ -9,6 +9,7 @@ import { Text } from "../components/Text";
 import { TypingIndicator } from "../components/TypingIndicator";
 import { Select } from "../components/Select";
 import { SAMPLE_CV } from "../cv/data";
+import { PALETTE_LABELS, TEMPLATE_LABELS, TYPOGRAPHY_LABELS } from "../cv/labels";
 import { TEMPLATES, type TemplateName } from "../cv/templates";
 import { PALETTES, TYPOGRAPHY, type PaletteName, type TypographyName } from "../cv/theme";
 
@@ -70,9 +71,9 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
                   label="תצוגת קורות חיים"
                   controls={
                     <>
-                      <Select compact label="תבנית" value={template} options={TEMPLATE_NAMES} onChange={setTemplate} />
-                      <Select compact label="צבעים" value={palette} options={PALETTE_NAMES} onChange={setPalette} />
-                      <Select compact label="גופן" value={typography} options={TYPOGRAPHY_NAMES} onChange={setTypography} />
+                      <Select compact label="תבנית" value={template} options={TEMPLATE_NAMES} labels={TEMPLATE_LABELS} onChange={setTemplate} />
+                      <Select compact label="צבעים" value={palette} options={PALETTE_NAMES} labels={PALETTE_LABELS} onChange={setPalette} />
+                      <Select compact label="גופן" value={typography} options={TYPOGRAPHY_NAMES} labels={TYPOGRAPHY_LABELS} onChange={setTypography} />
                     </>
                   }
                 >

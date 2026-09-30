@@ -224,7 +224,7 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 /* CvCanvas: gray canvas, page transformed by zoom/pan, tray of zoom controls at the bottom */
 .ds-canvas { position: relative; block-size: 100%; min-block-size: 0; }
 .ds-canvas-viewport {
-  position: absolute; inset: 0; overflow: hidden; background: #d9d6cf; cursor: grab; touch-action: none;
+  position: absolute; inset: 0; overflow: hidden; user-select: none; -webkit-user-select: none; /* drag pans, never selects */ background: #d9d6cf; cursor: grab; touch-action: none;
 }
 .ds-canvas-viewport:active { cursor: grabbing; }
 .ds-canvas-viewport:focus-visible { outline: 3px solid var(--audio); outline-offset: -3px; }
