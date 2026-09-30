@@ -1,15 +1,17 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Block } from "../components/Block";
 import { CvCanvas } from "../components/CvCanvas";
 import { CvOutline } from "../components/CvOutline";
-import { SAMPLE_OUTLINE } from "../components/cvOutlineSample";
 import { Message } from "../components/Message";
 import { StageGauge } from "../components/StageGauge";
 import { Text } from "../components/Text";
 import { TypingIndicator } from "../components/TypingIndicator";
 import { Select } from "../components/Select";
+import { CvDocumentView } from "../cv/CvDocumentView";
 import { SAMPLE_CV } from "../cv/data";
+import type { CvDocument } from "../cv/document";
 import { PALETTE_LABELS, TEMPLATE_LABELS, TYPOGRAPHY_LABELS } from "../cv/labels";
+import { cvToOutline } from "../cv/outline";
 import { TEMPLATES, type TemplateName } from "../cv/templates";
 import { PALETTES, TYPOGRAPHY, type PaletteName, type TypographyName } from "../cv/theme";
 
@@ -42,7 +44,11 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
   const [template, setTemplate] = useState<TemplateName>("Ledger");
   const [palette, setPalette] = useState<PaletteName>("Slate");
   const [typography, setTypography] = useState<TypographyName>("Bricolage");
-  const Template = TEMPLATES[template];
+  // The CV the canvas shows: data + theme (+ patch, later from the AI).
+  const doc = useMemo<CvDocument>(
+    () => ({ data: SAMPLE_CV, theme: { template, palette, typography } }),
+    [template, palette, typography],
+  );
 
   return (
     <main className="app-page">
@@ -63,7 +69,7 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
               {stage === 1 ? (
                 // Fine-tuning: plain structured content. tabIndex: scrollable regions need keyboard access.
                 <div className="app-page-cv-scroll" tabIndex={0} aria-label="סעיפי קורות החיים">
-                  <CvOutline sections={SAMPLE_OUTLINE} />
+                  <CvOutline sections={cvToOutline(doc.data)} />
                 </div>
               ) : (
                 // Design and export: the laid-out page on a zoom/pan canvas. In design, template,
@@ -80,7 +86,7 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
                     )
                   }
                 >
-                  <Template cv={SAMPLE_CV} palette={palette} typography={typography} />
+                  <CvDocumentView doc={doc} />
                 </CvCanvas>
               )}
             </Block>
