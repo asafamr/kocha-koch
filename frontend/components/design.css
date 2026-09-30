@@ -165,7 +165,7 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 .app-page-cv > .ds-block, .app-page-chat > .ds-block { block-size: 100%; box-sizing: border-box; border: 0; }
 .app-page-cv > .ds-block { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 0.75rem; }
 .app-page-cv-scroll { overflow-y: auto; padding-inline-end: 0.5rem; }
-.app-page-chat > .ds-block { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 0.75rem; }
+.app-page-chat > .ds-block { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 0.75rem; }
 .app-page-chat-scroll { overflow-y: auto; display: flex; flex-direction: column-reverse; }
 .app-page-chat-list { display: grid; gap: 0.75rem; }
 
@@ -261,15 +261,24 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 /* Button secondary: ink background, for a second strong action next to a primary one */
 .ds-button-secondary { background: var(--ink); color: var(--surface); }
 
-/* AppPage export stage: panel in the chat column */
-.export-panel { display: grid; gap: 1rem; justify-items: stretch; align-content: start; }
+/* AppPage export stage: centered like the intake form */
+.export-actions { display: flex; justify-content: center; gap: 1rem; }
 .export-panel .ds-msg { max-inline-size: 100%; }
+/* Laid out off-screen (not display:none) so its fonts load before printing */
+.print-only { position: fixed; left: -10000px; top: 0; visibility: hidden; }
 
-/* Printing (export to PDF): only the CV page, at actual A4 size, no canvas transform */
+/* Printing (export to PDF): only the CV page, at actual A4 size */
 @page { size: A4; margin: 0; }
 @media print {
   body * { visibility: hidden; }
-  .ds-canvas-page, .ds-canvas-page * { visibility: visible; }
-  .ds-canvas-stage { transform: none !important; }
-  .ds-canvas-page { position: fixed; inset: 0 auto auto 0; box-shadow: none; }
+  .print-only { left: 0; }
+  .print-only, .print-only * { visibility: visible; }
+  .print-only { position: fixed; inset: 0 auto auto 0; }
 }
+
+/* ChatInput: textarea and send button at the bottom of a chat */
+.ds-chat-input { display: flex; gap: 0.5rem; align-items: stretch; }
+.ds-chat-input textarea { flex: 1; resize: none; }
+
+/* CV pane header: heading and the Next button on one row */
+.app-page-cv-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }

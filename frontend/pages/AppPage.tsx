@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { Block } from "../components/Block";
+import { Button } from "../components/Button";
+import { ChatInput } from "../components/ChatInput";
 import { CvCanvas } from "../components/CvCanvas";
 import { CvOutline } from "../components/CvOutline";
 import { Message } from "../components/Message";
@@ -8,6 +10,7 @@ import { Text } from "../components/Text";
 import { TypingIndicator } from "../components/TypingIndicator";
 import { Select } from "../components/Select";
 import { CvDocumentView } from "../cv/CvDocumentView";
+import { downloadCvHtml } from "../cv/exportHtml";
 import { SAMPLE_CV } from "../cv/data";
 import type { CvDocument } from "../cv/document";
 import { PALETTE_LABELS, TEMPLATE_LABELS, TYPOGRAPHY_LABELS } from "../cv/labels";
@@ -40,6 +43,8 @@ const SAMPLE_CHAT: { from: "kocha" | "user"; text: string }[] = [
 // The grid itself is LTR so CV stays physically left and chat right; each area is RTL inside.
 export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
   const [stage, setStage] = useState(initialStage);
+  // Chat messages; sending only appends locally until the chat is wired to the backend.
+  const [chat, setChat] = useState(SAMPLE_CHAT);
   // Design-stage theming: which template, palette and typography the CV renders with.
   const [template, setTemplate] = useState<TemplateName>("Ledger");
   const [palette, setPalette] = useState<PaletteName>("Slate");
@@ -61,19 +66,33 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
         <section className="app-page-form" aria-label={STAGES[0]}>
           <IntakeForm onNext={() => setStage(1)} />
         </section>
+      ) : stage === 3 ? (
+        // Export, laid out like the intake form. PDF: print dialog with print-only CV.
+        // TODO: server renderer for PDF, and a real booking link.
+        <section className="app-page-form" aria-label={STAGES[3]}>
+          <ExportPanel
+            doc={doc}
+            onExportPdf={() => window.print()}
+            onExportHtml={() => downloadCvHtml(doc)}
+            onBookPractice={() => {}}
+          />
+        </section>
       ) : (
         <>
           <section className="app-page-cv" aria-label="קורות חיים">
             <Block>
-              <Text variant="heading">קורות חיים</Text>
+              <div className="app-page-cv-head">
+                <Text variant="heading">קורות חיים</Text>
+                <Button onClick={() => setStage(stage + 1)}>הבא</Button>
+              </div>
               {stage === 1 ? (
                 // Fine-tuning: plain structured content. tabIndex: scrollable regions need keyboard access.
                 <div className="app-page-cv-scroll" tabIndex={0} aria-label="סעיפי קורות החיים">
                   <CvOutline sections={cvToOutline(doc.data)} />
                 </div>
               ) : (
-                // Design and export: the laid-out page on a zoom/pan canvas. In design, template,
-                // palette and typography pickers sit in the canvas tray.
+                // Design: the laid-out page on a zoom/pan canvas, with template, palette and
+                // typography pickers in the canvas tray.
                 <CvCanvas
                   label="תצוגת קורות חיים"
                   controls={
@@ -92,16 +111,6 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
             </Block>
           </section>
 
-          {stage === 3 ? (
-            <section className="app-page-chat" aria-label="ייצוא">
-              <Block>
-                <Text variant="heading">ייצוא</Text>
-                {/* Print CSS keeps only the CV page, so "Save as PDF" in the dialog exports it.
-                    TODO: replace with the server renderer (PDF) and a real booking link. */}
-                <ExportPanel onExport={() => window.print()} onBookPractice={() => {}} />
-              </Block>
-            </section>
-          ) : (
           <section className="app-page-chat" aria-label="צ'אט">
             <Block>
               <Text variant="heading">צ'אט</Text>
@@ -109,7 +118,7 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
                   column-reverse pins the view to the newest message; the inner list keeps reading order. */}
               <div className="app-page-chat-scroll" tabIndex={0} aria-label="הודעות">
                 <div className="app-page-chat-list">
-                  {SAMPLE_CHAT.map((m, i) => (
+                  {chat.map((m, i) => (
                     <Message key={i} from={m.from}>
                       {m.text}
                     </Message>
@@ -117,9 +126,9 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
                   <TypingIndicator />
                 </div>
               </div>
+              <ChatInput onSend={(text) => setChat((c) => [...c, { from: "user", text }])} />
             </Block>
           </section>
-          )}
         </>
       )}
     </main>

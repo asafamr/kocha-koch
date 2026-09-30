@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Block } from "../components/Block";
 import { Button } from "../components/Button";
+import { ChatInput } from "../components/ChatInput";
 import { Checkbox } from "../components/Checkbox";
 import { CvCanvas } from "../components/CvCanvas";
 import { CvOutline } from "../components/CvOutline";
@@ -129,6 +130,7 @@ function DesignKitchenSink() {
           <Message from="kocha">היי! אני קוחה. ספרו לי קצת על עצמכם.</Message>
           <Message from="user">אני מפתח תוכנה, חמש שנים בפרונטאנד.</Message>
           <TypingIndicator />
+          <ChatInput onSend={() => {}} />
         </div>
       </section>
 
