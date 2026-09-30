@@ -116,9 +116,34 @@ export function CvCanvas({ label, controls, children }: { label: string; control
         <button type="button" onClick={() => zoomTo(zoom / STEP)} aria-label="הקטנה">−</button>
         <output aria-live="polite">{Math.round(zoom * 100)}%</output>
         <button type="button" onClick={() => zoomTo(zoom * STEP)} aria-label="הגדלה">+</button>
-        <button type="button" onClick={fit}>התאמה</button>
-        <button type="button" onClick={() => zoomTo(1)}>100%</button>
+        <button type="button" onClick={fit} aria-label="התאמה למסך" title="התאמה למסך">
+          <FitIcon />
+        </button>
+        <button type="button" onClick={() => zoomTo(1)} aria-label="גודל אמיתי (100%)" title="גודל אמיתי (100%)">
+          <ActualSizeIcon />
+        </button>
       </div>
     </div>
+  );
+}
+
+// Four corner brackets: fit the page to the view.
+function FitIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M2 6V2h4M12 2h4v4M16 12v4h-4M6 16H2v-4" />
+    </svg>
+  );
+}
+
+// "1:1" in a frame: show the page at actual size.
+function ActualSizeIcon() {
+  return (
+    <svg width="20" height="18" viewBox="0 0 20 18" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+      <rect x="1" y="2" width="18" height="14" rx="1" />
+      <path d="M6 6v6M14 6v6" strokeLinecap="round" />
+      <circle cx="10" cy="7.5" r="0.5" fill="currentColor" />
+      <circle cx="10" cy="10.5" r="0.5" fill="currentColor" />
+    </svg>
   );
 }
