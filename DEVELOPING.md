@@ -63,7 +63,7 @@ or the containers cannot write to `.messages/`.
 | `frontend/index.html`, `main.tsx` | entry point, bundled by `bun run build` into `dist/` |
 | `frontend/api.ts` | `Api` type and `httpApi`; the only place that calls the server |
 | `frontend/App.tsx` | the chat page: polls `api.load()` every 2 s, sends through `api.send()`, built from `components/` |
-| `frontend/components/` | design components (Button, Text, Paragraph, Checkbox, Block, Highlight, StageGauge, Message, TypingIndicator, TextField, TextArea, FileInput, CvOutline, CvCanvas); images in `components/assets/` (kocha-face.webp: mild smile, frame at 0.6 s of kohi `assets/landing-video/kocha-landing-v7.mp4`), `design.css` (tokens, type scale, fonts, modal) |
+| `frontend/components/` | design components (Button, Text, Paragraph, Checkbox, Block, Highlight, StageGauge, Message, TypingIndicator, TextField, TextArea, FileInput, CvOutline, CvCanvas); images in `components/assets/` (kocha-face.webp: frontal smile, frame at 2.5 s of kohi `assets/landing-video/kocha-landing.mp4`), `design.css` (tokens, type scale, fonts, modal) |
 | `frontend/modals/` | modals built from components; `ConsentModal` |
 | `frontend/pages/` | pages: `AppPage` (stage gauge on top; stage 0 `IntakeForm`; stage 1 (fine-tuning) plain `CvOutline` + chat; stage 2+ (design) the CV on a zoom/pan `CvCanvas` + chat) and the `DesignKitchenSink` story (tokens and every component) |
 | `frontend/cv/` | CV styles (English): `data.ts` (`CvData`, `SAMPLE_CV`), `theme.ts` (5 palettes, 5 typography options as CSS variables), `parts.tsx` (A4 `Page`, `Ltr`, `Dates`), styles `CvLedger`, `CvSidebar`, `CvBars`, `CvCompact`, `CvLede`, `CvMargin`, and `cv.css` (pt/mm, one A4 page, overflow cut) |
