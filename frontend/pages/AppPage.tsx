@@ -5,6 +5,8 @@ import { ChatInput } from "../components/ChatInput";
 import { CvCanvas } from "../components/CvCanvas";
 import { CvOutline } from "../components/CvOutline";
 import { Message } from "../components/Message";
+import { PrepPoints } from "../components/PrepPoints";
+import { PREP_SAMPLES } from "../components/prepPointsSample";
 import { StageGauge } from "../components/StageGauge";
 import { Text } from "../components/Text";
 import { TypingIndicator } from "../components/TypingIndicator";
@@ -23,6 +25,9 @@ const PALETTE_NAMES = Object.keys(PALETTES) as PaletteName[];
 const TYPOGRAPHY_NAMES = Object.keys(TYPOGRAPHY) as TypographyName[];
 import { ExportPanel } from "./ExportPanel";
 import { IntakeForm } from "./IntakeForm";
+
+// The sample CV is a senior hands-on profile.
+const PREP = PREP_SAMPLES["senior/hands-on"];
 
 const STAGES = ["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"];
 
@@ -45,6 +50,8 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
   const [stage, setStage] = useState(initialStage);
   // Chat messages; sending only appends locally until the chat is wired to the backend.
   const [chat, setChat] = useState(SAMPLE_CHAT);
+  // Prep points the candidate marked as not relevant.
+  const [dismissed, setDismissed] = useState<string[]>([]);
   // Design-stage theming: which template, palette and typography the CV renders with.
   const [template, setTemplate] = useState<TemplateName>("Ledger");
   const [palette, setPalette] = useState<PaletteName>("Slate");
@@ -88,6 +95,15 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
               {stage === 1 ? (
                 // Fine-tuning: plain structured content. tabIndex: scrollable regions need keyboard access.
                 <div className="app-page-cv-scroll" tabIndex={0} aria-label="סעיפי קורות החיים">
+                  {/* Private to the candidate, never part of the CV. Sample until the AI is wired in. */}
+                  <details className="app-page-prep" open>
+                    <summary>לקראת הראיון</summary>
+                    <PrepPoints
+                      strengths={PREP.strengths}
+                      points={PREP.points.filter((pt) => !dismissed.includes(pt.id))}
+                      onDismiss={(id) => setDismissed((d) => [...d, id])}
+                    />
+                  </details>
                   <CvOutline sections={cvToOutline(doc.data)} />
                 </div>
               ) : (

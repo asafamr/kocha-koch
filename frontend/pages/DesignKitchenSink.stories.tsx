@@ -12,6 +12,8 @@ import { FileInput } from "../components/FileInput";
 import { Highlight } from "../components/Highlight";
 import { Message } from "../components/Message";
 import { Paragraph } from "../components/Paragraph";
+import { PrepPoints } from "../components/PrepPoints";
+import { PREP_SAMPLES } from "../components/prepPointsSample";
 import { Select } from "../components/Select";
 import { StageGauge } from "../components/StageGauge";
 import { Text, type TextVariant } from "../components/Text";
@@ -112,6 +114,17 @@ function DesignKitchenSink() {
         <Text variant="heading">מתאר קורות חיים</Text>
         <div style={{ maxInlineSize: 640 }}>
           <CvOutline sections={SAMPLE_OUTLINE.slice(0, 1)} />
+        </div>
+      </section>
+
+      <section style={section}>
+        <Text variant="heading">לקראת הראיון</Text>
+        <div style={{ maxInlineSize: 560 }}>
+          <PrepPoints
+            strengths={PREP_SAMPLES["senior/hands-on"].strengths}
+            points={PREP_SAMPLES["senior/hands-on"].points.slice(0, 2)}
+            onDismiss={() => {}}
+          />
         </div>
       </section>
 

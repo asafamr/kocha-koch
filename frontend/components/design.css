@@ -282,3 +282,23 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 
 /* CV pane header: heading and the Next button on one row */
 .app-page-cv-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+
+/* PrepPoints: gentle cards. Hairline borders and muted labels, nothing that reads as a warning. */
+.ds-prep { display: grid; gap: 1.25rem; font: var(--fs-md)/1.6 var(--f-body); color: var(--ink); }
+.ds-prep-title { margin: 0 0 0.5rem; font: 700 var(--fs-sm)/1.4 var(--f-body); color: var(--muted); }
+.ds-prep ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.ds-prep-strengths li { padding-inline-start: 0.75rem; border-inline-start: 3px solid var(--marker); }
+.ds-prep-points li { background: var(--surface); border: 1px solid var(--hair); padding: 0.75rem 1rem; }
+.ds-prep-points p { margin: 0; }
+.ds-prep-question { font-weight: 700; }
+.ds-prep-prepare { color: var(--ink); margin-block-start: 0.2rem; }
+.ds-prep-foot { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-block-start: 0.5rem; font-size: var(--fs-xs); color: var(--muted); }
+.ds-prep-foot button { font: inherit; color: var(--muted); background: none; border: 0; padding: 0.15rem 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.ds-prep-foot button:hover { color: var(--ink); }
+.ds-prep-foot button:focus-visible { outline: 3px solid var(--audio); outline-offset: 2px; }
+.ds-prep-empty { margin: 0; color: var(--muted); }
+
+/* AppPage fine-tuning: prep points in a collapsible section above the outline */
+.app-page-prep { margin-block-end: 1.5rem; padding-block-end: 1.25rem; border-block-end: 1px solid var(--hair); }
+.app-page-prep > summary { cursor: pointer; font: 800 var(--fs-lg)/1.4 var(--f-body); margin-block-end: 0.75rem; }
+.app-page-prep > summary:focus-visible { outline: 3px solid var(--audio); outline-offset: 2px; }
