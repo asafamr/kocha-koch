@@ -4,9 +4,10 @@ import { Button } from "../components/Button";
 import { ChatInput } from "../components/ChatInput";
 import { CvCanvas } from "../components/CvCanvas";
 import { CvOutline } from "../components/CvOutline";
+import { Drawer } from "../components/Drawer";
 import { Message } from "../components/Message";
 import { PrepPoints } from "../components/PrepPoints";
-import { PREP_SAMPLES } from "../components/prepPointsSample";
+import { PREP_SAMPLES, SENIORITY_LABELS, TRACK_LABELS, type Seniority, type Track } from "../components/prepPointsSample";
 import { StageGauge } from "../components/StageGauge";
 import { Text } from "../components/Text";
 import { TypingIndicator } from "../components/TypingIndicator";
@@ -25,9 +26,6 @@ const PALETTE_NAMES = Object.keys(PALETTES) as PaletteName[];
 const TYPOGRAPHY_NAMES = Object.keys(TYPOGRAPHY) as TypographyName[];
 import { ExportPanel } from "./ExportPanel";
 import { IntakeForm } from "./IntakeForm";
-
-// The sample CV is a senior hands-on profile.
-const PREP = PREP_SAMPLES["senior/hands-on"];
 
 const STAGES = ["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"];
 
@@ -51,7 +49,18 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
   // Chat messages; sending only appends locally until the chat is wired to the backend.
   const [chat, setChat] = useState(SAMPLE_CHAT);
   // Prep points the candidate marked as not relevant.
+  // Improvement tips depend on seniority and track (the sample CV is senior hands-on).
+  const [seniority, setSeniority] = useState<Seniority>("senior");
+  const [track, setTrack] = useState<Track>("hands-on");
   const [dismissed, setDismissed] = useState<string[]>([]);
+  const prep = PREP_SAMPLES[`${seniority}/${track}`];
+  const prepPoints = prep.points.filter((pt) => !dismissed.includes(pt.id));
+  function changeProfile(s: Seniority, t: Track) {
+    // No junior management profile: picking management from junior moves to mid.
+    setSeniority(t === "management" && s === "junior" ? "mid" : s);
+    setTrack(t);
+    setDismissed([]);
+  }
   // Design-stage theming: which template, palette and typography the CV renders with.
   const [template, setTemplate] = useState<TemplateName>("Ledger");
   const [palette, setPalette] = useState<PaletteName>("Slate");
@@ -94,17 +103,36 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
               </div>
               {stage === 1 ? (
                 // Fine-tuning: plain structured content. tabIndex: scrollable regions need keyboard access.
-                <div className="app-page-cv-scroll" tabIndex={0} aria-label="סעיפי קורות החיים">
+                <div className="app-page-cv-body">
+                  <div className="app-page-cv-scroll" tabIndex={0} aria-label="סעיפי קורות החיים">
+                    <CvOutline sections={cvToOutline(doc.data)} />
+                  </div>
                   {/* Private to the candidate, never part of the CV. Sample until the AI is wired in. */}
-                  <details className="app-page-prep" open>
-                    <summary>לקראת הראיון</summary>
+                  <Drawer title="טיפים לשיפור" count={prepPoints.length}>
+                    <div className="app-page-prep-profile">
+                      <Select
+                        compact
+                        label="רמה"
+                        value={seniority}
+                        options={track === "management" ? (["mid", "senior"] as const) : (["junior", "mid", "senior"] as const)}
+                        labels={SENIORITY_LABELS}
+                        onChange={(s) => changeProfile(s, track)}
+                      />
+                      <Select
+                        compact
+                        label="מסלול"
+                        value={track}
+                        options={["hands-on", "management"] as const}
+                        labels={TRACK_LABELS}
+                        onChange={(t) => changeProfile(seniority, t)}
+                      />
+                    </div>
                     <PrepPoints
-                      strengths={PREP.strengths}
-                      points={PREP.points.filter((pt) => !dismissed.includes(pt.id))}
+                      strengths={prep.strengths}
+                      points={prepPoints}
                       onDismiss={(id) => setDismissed((d) => [...d, id])}
                     />
-                  </details>
-                  <CvOutline sections={cvToOutline(doc.data)} />
+                  </Drawer>
                 </div>
               ) : (
                 // Design: the laid-out page on a zoom/pan canvas, with template, palette and

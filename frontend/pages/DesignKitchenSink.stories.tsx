@@ -5,6 +5,7 @@ import { ChatInput } from "../components/ChatInput";
 import { Checkbox } from "../components/Checkbox";
 import { CvCanvas } from "../components/CvCanvas";
 import { CvOutline } from "../components/CvOutline";
+import { Drawer } from "../components/Drawer";
 import { CvLedger } from "../cv/CvLedger";
 import { SAMPLE_CV } from "../cv/data";
 import { SAMPLE_OUTLINE } from "../components/cvOutlineSample";
@@ -118,13 +119,23 @@ function DesignKitchenSink() {
       </section>
 
       <section style={section}>
-        <Text variant="heading">לקראת הראיון</Text>
+        <Text variant="heading">טיפים לשיפור</Text>
         <div style={{ maxInlineSize: 560 }}>
           <PrepPoints
             strengths={PREP_SAMPLES["senior/hands-on"].strengths}
             points={PREP_SAMPLES["senior/hands-on"].points.slice(0, 2)}
             onDismiss={() => {}}
           />
+        </div>
+      </section>
+
+      <section style={section}>
+        <Text variant="heading">מגירה צפה</Text>
+        <div style={{ position: "relative", blockSize: 260, maxInlineSize: 560, background: "var(--paper)", padding: 16 }}>
+          <Paragraph muted>תוכן שמתחת למגירה.</Paragraph>
+          <Drawer title="טיפים לשיפור" count={2} defaultOpen>
+            <Paragraph>תוכן המגירה.</Paragraph>
+          </Drawer>
         </div>
       </section>
 
