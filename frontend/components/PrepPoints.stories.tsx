@@ -12,6 +12,7 @@ function Demo({ seniority, track }: { seniority: Seniority; track: Track }) {
   return (
     <PrepPoints
       strengths={sample.strengths}
+      jobFit={sample.jobFit.filter((p) => !dismissed.includes(p.id))}
       points={sample.points.filter((p) => !dismissed.includes(p.id))}
       onDismiss={(id) => setDismissed((d) => [...d, id])}
     />

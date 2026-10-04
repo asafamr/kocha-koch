@@ -55,6 +55,7 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
   const [dismissed, setDismissed] = useState<string[]>([]);
   const prep = PREP_SAMPLES[`${seniority}/${track}`];
   const prepPoints = prep.points.filter((pt) => !dismissed.includes(pt.id));
+  const jobFit = prep.jobFit.filter((pt) => !dismissed.includes(pt.id));
   function changeProfile(s: Seniority, t: Track) {
     // No junior management profile: picking management from junior moves to mid.
     setSeniority(t === "management" && s === "junior" ? "mid" : s);
@@ -108,8 +109,9 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
                     <CvOutline sections={cvToOutline(doc.data)} />
                   </div>
                   {/* Private to the candidate, never part of the CV. Sample until the AI is wired in. */}
-                  <Drawer title="טיפים לשיפור" count={prepPoints.length}>
+                  <Drawer title="טיפים לשיפור" count={jobFit.length + prepPoints.length} placement="top">
                     <div className="app-page-prep-profile">
+                      <p className="app-page-prep-target" dir="auto">משרה לדוגמה: {prep.target}</p>
                       <Select
                         compact
                         label="רמה"
@@ -129,6 +131,7 @@ export function AppPage({ initialStage = 0 }: { initialStage?: number }) {
                     </div>
                     <PrepPoints
                       strengths={prep.strengths}
+                      jobFit={jobFit}
                       points={prepPoints}
                       onDismiss={(id) => setDismissed((d) => [...d, id])}
                     />

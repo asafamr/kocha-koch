@@ -31,3 +31,4 @@ type Story = StoryObj<typeof meta>;
 
 export const Closed: Story = {};
 export const Open: Story = { args: { defaultOpen: true } };
+export const TopOpen: Story = { args: { defaultOpen: true, placement: "top" } };

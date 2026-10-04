@@ -1,10 +1,11 @@
 import type { PrepEvidence, PrepPoint, PrepStrength } from "./PrepPoints";
 
-// Sample output of the prep-points prompt per seniority and track, until the AI is wired in.
+// Sample output of the prep-points prompt per seniority and track (with an example target job),
+// until the AI is wired in.
 // Management has no junior level.
 export type Seniority = "junior" | "mid" | "senior";
 export type Track = "hands-on" | "management";
-export type PrepSample = { strengths: PrepStrength[]; points: PrepPoint[] };
+export type PrepSample = { target: string; strengths: PrepStrength[]; jobFit: PrepPoint[]; points: PrepPoint[] };
 
 export const SENIORITY_LABELS: Record<Seniority, string> = { junior: "ג'וניור", mid: "מיד", senior: "בכיר" };
 export const TRACK_LABELS: Record<Track, string> = { "hands-on": "מקצועי", management: "ניהולי" };
@@ -17,6 +18,16 @@ const GAP_STUDIES: PrepEvidence[] = [
 const JOB_HOPPING_STUDY: PrepEvidence[] = [
   { label: "החלפות עבודה תכופות וזימון לראיון, לא בהייטק · Cohn, Maréchal, Schneider & Weber (2021)", url: "https://www.ifo.de/DocDL/cesifo1_wp7976.pdf" },
 ];
+// Job fit: ATS keyword filters match exact words; screening checks basic requirements (tips B1, B9).
+const EXACT_TERMS: PrepEvidence[] = [
+  { label: "סינון מועמדים לפי מילות מפתח מדויקות · Greenhouse, Talent Filtering", url: "https://support.greenhouse.io/hc/en-us/articles/27104809835291-Talent-Filtering" },
+];
+const HARD_REQUIREMENTS: PrepEvidence[] = [
+  { label: "דחייה אוטומטית לפי תשובות לשאלות סינון · Greenhouse, Auto-reject", url: "https://support.greenhouse.io/hc/en-us/articles/360000653472-Auto-reject" },
+  { label: "שלב הסינון לדרישות בסיס · Workday, Recruiting Subprocesses", url: "https://doc.workday.com/workday-education/en-us/course-manuals/recruiting-for-administrators/recruiting-subprocesses.html" },
+  { label: "מועמדים שנפסלים בסינון אוטומטי · Fuller et al., Hidden Workers, HBS ו־Accenture (2021)", url: "https://www.hbs.edu/ris/Publication%20Files/hiddenworkers09032021_Fuller_white_paper_33a2047f-41dd-47b1-9a8d-bd08cf3bfa94.pdf" },
+];
+
 // Accomplishment statements and numbers raise CV ratings (knowledge base tip A1).
 const SCOPE_STUDIES: PrepEvidence[] = [
   { label: "מאפייני קורות חיים שמנבאים זימון לראיון · Thoms, McMasters, Roberts & Dombkowski (1999)", url: "https://link.springer.com/article/10.1023/A:1022974232557" },
@@ -29,6 +40,23 @@ const JUNIOR_ENTRY: PrepEvidence[] = [
 
 export const PREP_SAMPLES: Record<string, PrepSample> = {
   "junior/hands-on": {
+    target: "Junior Backend Developer: Python, SQL, Docker",
+    jobFit: [
+      {
+        id: "jobfit-required-skill-missing",
+        question: "המשרה מבקשת Docker. איפה זה מופיע?",
+        prepare: "Docker לא מופיע בקורות החיים. אם השתמשתם בו בפרויקט, כתבו את המילה בשורה של הפרויקט. אם לא, הכינו משפט על איך תלמדו אותו.",
+        basis: "research",
+        evidence: EXACT_TERMS,
+      },
+      {
+        id: "jobfit-required-skill-hidden",
+        question: "SQL ברשימת הדרישות. רואים מהר שיש לכם ניסיון?",
+        prepare: "SQL מופיע אצלכם רק ברשימת הכישורים. הוסיפו אותו לשורת הפרויקט שבה השתמשתם בו.",
+        basis: "research",
+        evidence: HARD_REQUIREMENTS,
+      },
+    ],
     strengths: [{ text: "תואר במדעי המחשב: כדאי לציין את פרויקט הגמר ומה בניתם בו." }],
     points: [
       {
@@ -55,6 +83,16 @@ export const PREP_SAMPLES: Record<string, PrepSample> = {
     ],
   },
   "mid/hands-on": {
+    target: "Full Stack Developer: React, Node.js, AWS, 3+ שנים",
+    jobFit: [
+      {
+        id: "jobfit-required-skill-missing",
+        question: "המשרה מבקשת AWS. איפה זה מופיע?",
+        prepare: "AWS לא מופיע בקורות החיים. אם עבדתם עם שירותי ענן אחרים, ציינו אותם במילים של המשרה רק אם זה נכון, והכינו משפט על ההבדלים.",
+        basis: "research",
+        evidence: EXACT_TERMS,
+      },
+    ],
     strengths: [{ text: "ניסיון ב־React ו־Node.js בשתי חברות: כדאי להציג אותו ראשון." }],
     points: [
       {
@@ -80,6 +118,29 @@ export const PREP_SAMPLES: Record<string, PrepSample> = {
     ],
   },
   "senior/hands-on": {
+    target: "Senior Frontend Engineer: TypeScript, React, GraphQL, בדיקות אוטומטיות",
+    jobFit: [
+      {
+        id: "jobfit-required-skill-missing",
+        question: "המשרה מבקשת GraphQL. איפה זה מופיע?",
+        prepare: "GraphQL לא מופיע בקורות החיים. אם עבדתם איתו, כתבו אותו במילה הזו בשורה של הפרויקט. אם לא, הכינו משפט על הניסיון הקרוב ביותר, למשל REST APIs.",
+        basis: "research",
+        evidence: EXACT_TERMS,
+      },
+      {
+        id: "jobfit-required-skill-hidden",
+        question: "בדיקות אוטומטיות בדרישות. רואים את זה מהר?",
+        prepare: "הדרישה מופיעה במשרה אבל לא בשורות שלכם. אם כתבתם בדיקות, למשל ב־Jest או Playwright, הוסיפו את זה לשורת הישג.",
+        basis: "research",
+        evidence: HARD_REQUIREMENTS,
+      },
+      {
+        id: "jobfit-term-mismatch",
+        question: "במשרה כתוב Frontend Engineer, ובקורות החיים Full Stack Developer.",
+        prepare: "אם רוב העבודה שלכם הייתה בצד הלקוח, אפשר לכתוב את זה בשורת הכותרת, למשל Full Stack Developer, frontend focus.",
+        basis: "practice",
+      },
+    ],
     strengths: [
       { text: "ממר״ם: אפשר לתאר כתשתיות ותפעול מערכות גדולות, במונחים אזרחיים." },
       { text: "תואר במדעי המחשב מאוניברסיטת תל אביב ושבע שנות ניסיון: מספיק שורה אחת לכל אחד." },
@@ -107,6 +168,16 @@ export const PREP_SAMPLES: Record<string, PrepSample> = {
     ],
   },
   "mid/management": {
+    target: "Team Lead: ניהול צוות, גיוס, React",
+    jobFit: [
+      {
+        id: "jobfit-required-skill-hidden",
+        question: "המשרה מבקשת ניסיון בגיוס. רואים את זה?",
+        prepare: "אם השתתפתם בראיונות או גייסתם, כתבו כמה אנשים ובאיזה תפקיד. זו דרישה שמסננים לפיה.",
+        basis: "research",
+        evidence: HARD_REQUIREMENTS,
+      },
+    ],
     strengths: [{ text: "הובלת צוות של שלושה מפתחים: כדאי לכתוב כמה אנשים, ממתי ומה הצוות השיג." }],
     points: [
       {
@@ -124,6 +195,16 @@ export const PREP_SAMPLES: Record<string, PrepSample> = {
     ],
   },
   "senior/management": {
+    target: "Engineering Manager: ניהול מנהלים, 5+ שנות ניהול, תקציב",
+    jobFit: [
+      {
+        id: "jobfit-years-requirement",
+        question: "המשרה מבקשת 5 שנות ניהול. כמה יש לכם?",
+        prepare: "כתבו את שנות הניהול במספר רק אם הוא עומד בדרישה או עולה עליה. אם לא, הדגישו את היקף הצוותים במקום.",
+        basis: "research",
+        evidence: HARD_REQUIREMENTS,
+      },
+    ],
     strengths: [{ text: "ניהול קבוצה של שני צוותים: כדאי להוסיף כמה אנשים גייסתם ומה היה תחום האחריות." }],
     points: [
       {

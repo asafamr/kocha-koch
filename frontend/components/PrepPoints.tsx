@@ -16,10 +16,12 @@ const BASIS_LABEL = { research: "מבוסס מחקר", practice: "מניסיון
 
 export function PrepPoints({
   strengths = [],
+  jobFit = [],
   points,
   onDismiss,
 }: {
   strengths?: PrepStrength[];
+  jobFit?: PrepPoint[]; // fit to this job ad: required skills and wording
   points: PrepPoint[];
   onDismiss: (id: string) => void;
 }) {
@@ -36,11 +38,27 @@ export function PrepPoints({
         </section>
       )}
 
+      {jobFit.length > 0 && (
+        <section aria-label="התאמה למשרה">
+          <h3 className="ds-prep-title">התאמה למשרה</h3>
+          <PointList points={jobFit} onDismiss={onDismiss} />
+        </section>
+      )}
+
       <section aria-label="שאלות שכדאי להתכונן אליהן">
         <h3 className="ds-prep-title">שאלות שכדאי להתכונן אליהן</h3>
         {points.length === 0 ? (
           <p className="ds-prep-empty">אין כרגע שאלות להתכונן אליהן.</p>
         ) : (
+          <PointList points={points} onDismiss={onDismiss} />
+        )}
+      </section>
+    </div>
+  );
+}
+
+function PointList({ points, onDismiss }: { points: PrepPoint[]; onDismiss: (id: string) => void }) {
+  return (
           <ul className="ds-prep-points">
             {points.map((p) => (
               <li key={p.id}>
@@ -69,8 +87,5 @@ export function PrepPoints({
               </li>
             ))}
           </ul>
-        )}
-      </section>
-    </div>
   );
 }

@@ -300,11 +300,11 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 
 /* AppPage fine-tuning: outline scrolls; the tips drawer floats along the bottom of the pane */
 .app-page-cv-body { position: relative; min-block-size: 0; }
-.app-page-cv-body > .app-page-cv-scroll { block-size: 100%; box-sizing: border-box; padding-block-end: 4.5rem; }
+.app-page-cv-body > .app-page-cv-scroll { block-size: 100%; box-sizing: border-box; padding-block-start: 4.25rem; }
 
 /* Drawer: floats at the bottom of a position: relative container */
 .ds-drawer {
-  position: absolute; inset-inline: 12px; inset-block-end: 12px; max-block-size: calc(100% - 24px);
+  position: absolute; max-block-size: calc(100% - 24px);
   display: grid; grid-template-rows: auto minmax(0, 1fr);
   background: var(--surface); border: 2px solid var(--ink); box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
 }
@@ -318,9 +318,12 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
   display: inline-grid; place-items: center; min-inline-size: 1.5rem; block-size: 1.5rem; margin-inline-start: 0.5rem;
   background: var(--marker); color: #0B0B0A; font: 700 var(--fs-xs)/1 var(--f-body); border-radius: 999px;
 }
-/* Chevron points up when closed (opens upward), down when open */
+.ds-drawer-bottom { inset-inline: 12px; inset-block-end: 12px; }
+/* Top: same corner as the design-stage canvas tray (physical top right) */
+.ds-drawer-top { top: 12px; right: 12px; inline-size: min(560px, calc(100% - 24px)); }
+/* Chevron points the way the drawer opens: up for bottom, down for top; flips when open */
 .ds-drawer-chevron { inline-size: 0.55rem; block-size: 0.55rem; border: solid var(--ink); border-width: 2px 2px 0 0; transform: rotate(-45deg); margin-block-start: 0.25rem; }
-.ds-drawer.is-open .ds-drawer-chevron { transform: rotate(135deg); margin-block-start: -0.25rem; }
+.ds-drawer-bottom.is-open .ds-drawer-chevron, .ds-drawer-top:not(.is-open) .ds-drawer-chevron { transform: rotate(135deg); margin-block-start: -0.25rem; }
 .ds-drawer-body { overflow-y: auto; padding: 0.25rem 1rem 1rem; border-block-start: 1px solid var(--hair); }
 
 /* PrepPoints evidence: expandable source links */
@@ -333,3 +336,4 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 
 /* Tips drawer: seniority and track pickers above the tips */
 .app-page-prep-profile { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; padding-block: 0.75rem; margin-block-end: 0.75rem; border-block-end: 1px solid var(--hair); }
+.app-page-prep-target { flex-basis: 100%; margin: 0; font-size: var(--fs-xs); color: var(--muted); }

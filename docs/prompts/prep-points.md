@@ -2,7 +2,8 @@
 
 Used in the fine-tuning stage. Input: the CV (`CvDocument.data`), the target role, the job
 description if given, and the candidate's seniority and track. Output: what is worth
-highlighting, and up to 4 questions a recruiter may ask with how to prepare a story for each.
+highlighting, up to 3 job-fit items (required skills and wording against the job ad), and up to
+4 questions a recruiter may ask with how to prepare a story for each.
 Evidence and sources: `docs/cv-weak-points-research.md`. UI: `frontend/components/PrepPoints.tsx`.
 
 ---
@@ -34,6 +35,26 @@ You are on the candidate's side. You never rate the person.
 6. At most 4 points, the most useful first. Fewer is fine. If nothing applies, return none.
 7. Never suggest hiding, inventing or stretching anything. Dates stay as they are.
 8. Write in the language of the app (Hebrew). Keep each field to one or two short sentences.
+
+## Job fit
+
+Compare the CV with the target role and the job description, if given. At most 3 items, in a
+separate `jobFit` list. Kinds:
+
+- `required-skill-missing`: a required skill or tool from the ad does not appear in the CV.
+  If the candidate has it, they should write it in the ad's exact words in the relevant line;
+  if not, prepare a sentence on the closest experience and how they would learn it.
+- `required-skill-hidden`: a requirement the candidate meets appears only in a skills list or
+  is hard to find. Move it into an achievement line.
+- `term-mismatch`: the CV uses different words for the same thing (title, tool, method).
+  Suggest the ad's wording only where it is true of the candidate's work.
+- `years-requirement`: the ad asks for N years. State the years only if they meet or exceed it;
+  otherwise lead with scope.
+
+Never suggest adding a skill the candidate does not have. Without a job description, use the
+target role only, and return fewer items or none. `basis: "research"` for missing or hidden
+requirements and exact wording (knowledge base tips B1, B9: ATS keyword filters match exact
+words, and screening checks basic requirements); `term-mismatch` on titles is `practice`.
 
 ## Seniority and track
 
@@ -84,6 +105,7 @@ JSON only:
 {
   "profile": { "seniority": "junior" | "mid" | "senior", "track": "hands-on" | "management" },
   "strengths": [{ "text": "what to highlight and how to say it" }],
+  "jobFit": [{ "id": "...", "kind": "required-skill-missing | required-skill-hidden | term-mismatch | years-requirement", "question": "...", "prepare": "...", "basis": "research | practice", "evidence": [] }],
   "points": [
     {
       "id": "kebab-case-id",

@@ -1,23 +1,26 @@
 import { useId, useState, type ReactNode } from "react";
 
-// A drawer that floats along the bottom of its container (which must be position: relative).
-// Closed: a slim handle with the title and an optional count. Open: slides up over the content
-// and scrolls on its own.
+// A drawer that floats in its container (which must be position: relative): along the bottom
+// (opens upward), or at the top right like the design-stage tray (opens downward).
+// Closed: a slim handle with the title and an optional count. Open: overlays the content and
+// scrolls on its own.
 export function Drawer({
   title,
   count,
   defaultOpen = false,
+  placement = "bottom",
   children,
 }: {
   title: string;
   count?: number;
   defaultOpen?: boolean;
+  placement?: "bottom" | "top";
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const id = useId();
   return (
-    <div className={`ds-drawer${open ? " is-open" : ""}`}>
+    <div className={`ds-drawer ds-drawer-${placement}${open ? " is-open" : ""}`}>
       <button type="button" className="ds-drawer-handle" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
         <span>
           {title}
