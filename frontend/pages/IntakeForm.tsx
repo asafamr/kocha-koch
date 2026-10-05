@@ -11,7 +11,7 @@ export type Intake = { cv: File; role: string; jobDescription: string; consent: 
 
 // Stage 1: kocha's opening words, then current CV, target role, optional job description, consent.
 // Next is enabled once a CV file and a target role are present.
-export function IntakeForm({ onNext }: { onNext: (intake: Intake) => void }) {
+export function IntakeForm({ onNext, sending = false }: { onNext: (intake: Intake) => void; sending?: boolean }) {
   const [cv, setCv] = useState<File | null>(null);
   const [role, setRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
@@ -51,7 +51,7 @@ export function IntakeForm({ onNext }: { onNext: (intake: Intake) => void }) {
         onChange={(e) => setJobDescription(e.target.value)}
       />
       <Checkbox label={CONSENT_LABEL} checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-      <Button type="submit" disabled={!ready} style={{ justifySelf: "center" }}>
+      <Button type="submit" disabled={!ready || sending} style={{ justifySelf: "center" }}>
         הבא
       </Button>
     </form>

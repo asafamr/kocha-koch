@@ -1,5 +1,5 @@
 import { join, normalize } from "node:path";
-import { addMessage, addReply, STORE, thread } from "./store";
+import { addMessage, addReply, saveUpload, STORE, thread } from "./store";
 import { answer } from "./gemini";
 
 const BACKEND = process.env.BACKEND ?? "files"; // "files" | "gemini"
@@ -25,6 +25,36 @@ async function postMessage(req: Request) {
   return Response.json(msg, { status: 201 });
 }
 
+// The intake form: target role, optional job description, consent, and the current CV as a PDF.
+// The PDF is saved under uploads/ and the message carries its path for the agent to read.
+const MAX_PDF = 5 * 1024 * 1024;
+async function postIntake(req: Request) {
+  const form = await req.formData().catch(() => null);
+  const role = String(form?.get("role") ?? "").trim();
+  const jobDescription = String(form?.get("jobDescription") ?? "").trim();
+  const consent = form?.get("consent") === "true";
+  const cv = form?.get("cv");
+  if (!role || role.length > 200 || jobDescription.length > MAX_TEXT) {
+    return Response.json({ error: "bad role or job description" }, { status: 400 });
+  }
+  if (!(cv instanceof File) || cv.size === 0 || cv.size > MAX_PDF) {
+    return Response.json({ error: "cv must be a PDF up to 5 MB" }, { status: 400 });
+  }
+  const bytes = new Uint8Array(await cv.arrayBuffer());
+  if (new TextDecoder().decode(bytes.subarray(0, 5)) !== "%PDF-") {
+    return Response.json({ error: "cv must be a PDF" }, { status: 400 });
+  }
+  const cvFile = await saveUpload("pdf", bytes);
+  const text = [`תפקיד מבוקש: ${role}`, jobDescription ? "צירפתי את תיאור המשרה." : "", `קורות חיים: ${cv.name}`]
+    .filter(Boolean)
+    .join("\n");
+  const msg = await addMessage(text, { role, jobDescription, consent, cvFile });
+  if (BACKEND === "gemini") {
+    answer(msg.id).catch((e) => addReply(msg.id, `error: ${e.message}`, "server"));
+  }
+  return Response.json(msg, { status: 201 });
+}
+
 async function serveStatic(pathname: string) {
   const path = normalize(join(DIST, pathname === "/" ? "index.html" : pathname));
   if (!path.startsWith(DIST)) return new Response("forbidden", { status: 403 });
@@ -42,6 +72,9 @@ Bun.serve({
       if (req.method === "GET") return Response.json({ backend: BACKEND, messages: await thread() });
       if (req.method === "POST") return postMessage(req);
       return new Response("method not allowed", { status: 405 });
+    }
+    if (pathname === "/api/intake") {
+      return req.method === "POST" ? postIntake(req) : new Response("method not allowed", { status: 405 });
     }
     return serveStatic(pathname);
   },

@@ -57,15 +57,14 @@ or the containers cannot write to `.messages/`.
 
 | File | Role |
 |---|---|
-| `src/server.ts` | `GET/POST /api/messages`, static files from `dist/` |
-| `src/store.ts` | `STORE=files`: inbox/outbox files, atomic writes (temp file + rename). `STORE=memory`: in process, nothing on disk. Types shared with the frontend |
+| `src/server.ts` | `GET/POST /api/messages`, `POST /api/intake` (multipart: role, job description, consent, CV PDF up to 5 MB), static files from `dist/` |
+| `src/store.ts` | `STORE=files`: inbox/outbox files, atomic writes (temp file + rename), uploads in `uploads/`. `STORE=memory`: in process, nothing on disk. Types shared with the frontend |
 | `src/gemini.ts` | `BACKEND=gemini`: sends the thread to Gemini, adds the reply |
 | `frontend/index.html`, `main.tsx` | entry point, bundled by `bun run build` into `dist/` |
-| `frontend/api.ts` | `Api` type and `httpApi`; the only place that calls the server |
-| `frontend/App.tsx` | the chat page: polls `api.load()` every 2 s, sends through `api.send()`, built from `components/` |
+| `frontend/api.ts` | `Api` type and `httpApi`; the only place that calls the server. `readCv`/`readTips` check the `cv` and `tips` a reply carries |
 | `frontend/components/` | design components (Button, Text, Paragraph, Checkbox, Block, Highlight, StageGauge, Message, TypingIndicator, TextField, TextArea, FileInput, Select, CvOutline, CvCanvas, ChatInput, PrepPoints, Drawer); images in `components/assets/` (kocha-face.webp: frontal smile, frame at 2.5 s of kohi `assets/landing-video/kocha-landing.mp4`), `design.css` (tokens, type scale, fonts, modal) |
 | `frontend/modals/` | modals built from components; `ConsentModal` |
-| `frontend/pages/` | pages: `AppPage` (stage gauge on top; stage 0 `IntakeForm`; stage 1 (fine-tuning) plain `CvOutline` + chat; stage 2 (design) the CV on a zoom/pan `CvCanvas` + chat, with template/palette/typography pickers in the top-right tray; stage 3 (export) a centered `ExportPanel` like the intake (kocha thanks, export PDF via print CSS of a print-only copy, export HTML via `cv/exportHtml.ts` as one self-contained file, camera-practice CTA); stages 1-2 have a Next button and `ChatInput` under the chat; stage 1 also shows improvement tips (`PrepPoints`) in a `Drawer` floating at the top right like the design tray, with seniority and hands-on/management pickers (job fit to the ad, questions a recruiter may ask, how to prepare, expandable source links; prompt in `docs/prompts/prep-points.md`, evidence in `docs/cv-weak-points-research.md`); `cv/templates.ts` maps template names to components) and the `DesignKitchenSink` story (tokens and every component) |
+| `frontend/pages/` | pages: `AppPage` (the app; polls `api.load()` every 2 s and shows the latest CV and tips from the replies; resumes at stage 1 if an intake exists; stage gauge on top; stage 0 `IntakeForm`; stage 1 (fine-tuning) plain `CvOutline` + chat; stage 2 (design) the CV on a zoom/pan `CvCanvas` + chat, with template/palette/typography pickers in the top-right tray; stage 3 (export) a centered `ExportPanel` like the intake (kocha thanks, export PDF via print CSS of a print-only copy, export HTML via `cv/exportHtml.ts` as one self-contained file, camera-practice CTA); stages 1-2 have a Next button and `ChatInput` under the chat; stage 1 also shows improvement tips (`PrepPoints`) in a `Drawer` floating at the top right like the design tray, with seniority and hands-on/management pickers (job fit to the ad, questions a recruiter may ask, how to prepare, expandable source links; prompt in `docs/prompts/prep-points.md`, evidence in `docs/cv-weak-points-research.md`); `cv/templates.ts` maps template names to components) and the `DesignKitchenSink` story (tokens and every component); `fakeApi.ts` gives stories a fixed thread |
 | `frontend/cv/` | `document.ts` (a CV = data + theme + patch, see `docs/cv-document.md`), `CvDocumentView`, `outline.ts` (data -> fine-tuning outline), `templates.ts`, `labels.ts`. CV styles (English): `data.ts` (`CvData`, `SAMPLE_CV`), `theme.ts` (5 palettes, 5 typography options as CSS variables), `parts.tsx` (A4 `Page`, `Ltr`, `Dates`), styles `CvLedger`, `CvSidebar`, `CvBars`, `CvCompact`, `CvLede`, `CvMargin`, and `cv.css` (pt/mm, one A4 page, overflow cut) |
 | `.storybook/` | Storybook (`@storybook/react-vite`), dev only |
 | `scripts/check-stories.sh` | fails if a component in `frontend/components/` or `frontend/modals/` has no `.stories.tsx` next to it |
@@ -97,7 +96,7 @@ Storybook uses Vite, only for development.
   apertures, clear I/l/1.
 - Every component in `frontend/components/` has `Foo.stories.tsx` next to it, one story per
   state, and appears on the kitchen-sink page. `bun run check-stories` checks the story file.
-- Components take data and callbacks as props. Only `App` holds state.
+- Components take data and callbacks as props. Only `AppPage` holds state.
 - Accessibility: use native elements (`button`, `label` + `input`, headings, `mark`), give
   dialogs `role="dialog"`, `aria-modal` and a name, label every input, and announce async
   updates with `aria-live` / `role="alert"`. `@storybook/addon-a11y` runs axe on each story
@@ -108,8 +107,10 @@ Storybook uses Vite, only for development.
 ```sh
 curl -XPOST localhost:3000/api/messages -H 'content-type: application/json' -d '{"text":"hi"}'
 ls .messages/agent/inbox          # new <id>.json
-# write .messages/agent/outbox/<id>.json as {id, ts, text, by}, then:
+# write .messages/agent/outbox/<id>.json as {id, ts, text, by} (add cv/tips, see AGENTS.md), then:
 curl localhost:3000/api/messages  # message now has a reply
+curl -XPOST localhost:3000/api/intake -F role='Backend Engineer' -F jobDescription= -F consent=true -F cv=@cv.pdf
+ls .messages/agent/uploads        # the PDF; the inbox message has intake.cvFile
 ```
 
 On :3001 the reply comes from Gemini. API errors (e.g. a missing key) are written as the

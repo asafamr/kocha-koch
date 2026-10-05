@@ -6,8 +6,15 @@ Dev workflow, code map and test steps: [DEVELOPING.md](DEVELOPING.md).
 ## Message protocol
 Messages for you are in `.messages/agent/` (mounted at `.messages/` inside the app
 container). The Gemini app keeps its messages in memory (`STORE=memory`); you never see them.
-- User message: `inbox/<id>.json` = `{ id, ts, text }`. Written by the server only.
-- Reply: `outbox/<id>.json` = `{ id, ts, text, by }`, same `<id>` as the message.
+- User message: `inbox/<id>.json` = `{ id, ts, text, intake? }`. Written by the server only.
+  The first message comes from the intake form: `intake` = `{ role, jobDescription, consent, cvFile }`,
+  where `cvFile` (e.g. `uploads/<id>.pdf`) is the user's current CV, relative to `.messages/agent/`.
+- Reply: `outbox/<id>.json` = `{ id, ts, text, by, cv?, tips? }`, same `<id>` as the message.
+  `text` is Hebrew chat. `cv` = `{ data?, theme?, patch? }` (`docs/cv-document.md`); `data` is a
+  full `CvData` (`frontend/cv/data.ts`), English. `tips` = `{ profile, target, strengths, jobFit, points }`
+  (`docs/prompts/prep-points.md`). The page shows the latest `cv.data` and `tips` any reply sent.
+- Answer the intake with `cv.data` and `tips`. A message starting `עדכון פרופיל:` means the user
+  changed seniority or track: send new `tips`.
 - A message is pending while its outbox file does not exist.
 
 ## Answering messages

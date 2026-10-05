@@ -1,14 +1,17 @@
 # kocha-koch
 
-React chat frontend on a Bun server. Each message is written to an inbox folder and the reply is
-read from an outbox folder. Two instances run side by side:
+Builds a one-page CV tailored to a job. The user uploads a CV, names the target role and chats
+with kocha (Hebrew UI, English CV). React frontend on a Bun server. Each message is written to an
+inbox folder and the reply, which can carry a new CV and tips, is read from an outbox folder.
+Two instances run side by side:
 
 | URL | Answered by | Messages |
 |---|---|---|
 | http://127.0.0.1:3000 | Claude Code (or Codex) through files | `.messages/agent/` |
 | http://127.0.0.1:3001 | Gemini, in the server | in memory only, lost on restart |
 
-Protocol details are in [AGENTS.md](AGENTS.md).
+Protocol details are in [AGENTS.md](AGENTS.md). Gemini gets only the message text for now: no
+PDF, and its replies carry no CV or tips.
 
 ## Run
 

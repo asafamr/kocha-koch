@@ -1,7 +1,7 @@
 import type { PrepEvidence, PrepPoint, PrepStrength } from "./PrepPoints";
 
 // Sample output of the prep-points prompt per seniority and track (with an example target job),
-// until the AI is wired in.
+// used by stories and the fake API.
 // Management has no junior level.
 export type Seniority = "junior" | "mid" | "senior";
 export type Track = "hands-on" | "management";

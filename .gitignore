@@ -4,6 +4,7 @@ node_modules/
 !.env.example
 .messages/*/inbox/
 .messages/*/outbox/
+.messages/*/uploads/
 storybook-static
 dist
 *.log

@@ -104,6 +104,7 @@ JSON only:
 ```json
 {
   "profile": { "seniority": "junior" | "mid" | "senior", "track": "hands-on" | "management" },
+  "target": "the target role and its key requirements, one line",
   "strengths": [{ "text": "what to highlight and how to say it" }],
   "jobFit": [{ "id": "...", "kind": "required-skill-missing | required-skill-hidden | term-mismatch | years-requirement", "question": "...", "prepare": "...", "basis": "research | practice", "evidence": [] }],
   "points": [

@@ -167,7 +167,9 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 .app-page-cv-scroll { overflow-y: auto; padding-inline-end: 0.5rem; }
 .app-page-chat > .ds-block { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 0.75rem; }
 .app-page-chat-scroll { overflow-y: auto; display: flex; flex-direction: column-reverse; }
-.app-page-chat-list { display: grid; gap: 0.75rem; }
+.app-page-chat-list, .app-page-chat-turn { display: grid; gap: 0.75rem; }
+.app-page-error { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.app-page-error:empty { display: none; }
 
 /* Visually hidden, still read by screen readers */
 .ds-sr-only { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
