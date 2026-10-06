@@ -6,10 +6,11 @@ const MODEL = process.env.GEMINI_MODEL ?? "gemini-3.8-flash";
 const KEY = process.env.GEMINI_API_KEY;
 const ROOT = join(import.meta.dir, "..");
 const MAX_ROUNDS = 4; // model turns per reply: up to 3 lookups, then the answer
-// Cost knobs, measured in docs/gemini-costs.md. Thinking level: low (default; gemini-3.8-flash
-// has no minimal), medium or high; "default" leaves it to the model. GEMINI_CACHE: explicit
+// Knobs, measured in docs/gemini-costs.md. Thinking level: high (default), medium or low
+// (gemini-3.8-flash has no minimal); "default" leaves it to the model. GEMINI_CACHE: explicit
 // (default) caches the instructions and tools for an hour; "none" sends them with every call.
-const THINKING = (process.env.GEMINI_THINKING_LEVEL ?? "low") === "default" ? undefined : (process.env.GEMINI_THINKING_LEVEL ?? "low");
+const LEVEL = process.env.GEMINI_THINKING_LEVEL ?? "high";
+const THINKING = LEVEL === "default" ? undefined : LEVEL;
 const EXPLICIT_CACHE = (process.env.GEMINI_CACHE ?? "explicit") === "explicit";
 const API = "https://generativelanguage.googleapis.com/v1beta";
 
@@ -55,6 +56,10 @@ const TOOLS = [
 type Part = Record<string, unknown>;
 type Content = { role: "user" | "model"; parts: Part[] };
 
+// Live progress of answers being written, by message id, for the page's typing indicator.
+export type Progress = { phase: "thinking" | "lookup" | "writing"; startedAt: number; thinkingTokens: number; thought?: string };
+export const progress = new Map<string, Progress>();
+
 // One user turn: the message text, and for the intake its fields and the CV PDF.
 async function userParts(m: ThreadItem): Promise<Part[]> {
   const parts: Part[] = [{ text: m.text }];
@@ -92,43 +97,73 @@ async function cachedInstructions(): Promise<string | null> {
   return c.name;
 }
 
-async function generate(contents: Content[]): Promise<any> {
-  const generationConfig = THINKING ? { thinkingConfig: { thinkingLevel: THINKING } } : undefined;
-  const cached = await cachedInstructions();
+// One model turn, streamed so progress (thinking tokens, the latest thought heading) shows while
+// it runs. Returns the turn's parts, as received, and its usage.
+async function generate(id: string, contents: Content[], thinkingBefore: number, useCache = true): Promise<{ parts: Part[]; usage: any }> {
+  const generationConfig = { thinkingConfig: { ...(THINKING ? { thinkingLevel: THINKING } : {}), includeThoughts: true } };
+  const cached = useCache ? await cachedInstructions() : null;
   const body = cached
     ? { cachedContent: cached, contents, generationConfig }
     : { systemInstruction: { parts: [{ text: await loadInstructions() }] }, contents, tools: TOOLS, generationConfig };
-  const res = await fetch(`${API}/models/${MODEL}:generateContent`, {
+  const res = await fetch(`${API}/models/${MODEL}:streamGenerateContent?alt=sse`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-goog-api-key": KEY! },
     body: JSON.stringify(body),
   });
-  if (!res.ok) {
+  if (!res.ok || !res.body) {
     const err = await res.text();
     if (cached) {
       // The cache may have expired or been rejected: drop it and send the instructions inline.
       console.error(`gemini with cache failed ${res.status}: ${err.slice(0, 300)}`);
       cache = null;
-      return generateInline(contents, generationConfig);
+      return generate(id, contents, thinkingBefore, false);
     }
     throw new Error(`Gemini ${res.status}: ${err}`);
   }
-  return res.json();
-}
 
-async function generateInline(contents: Content[], generationConfig: unknown): Promise<any> {
-  const res = await fetch(`${API}/models/${MODEL}:generateContent`, {
-    method: "POST",
-    headers: { "content-type": "application/json", "x-goog-api-key": KEY! },
-    body: JSON.stringify({ systemInstruction: { parts: [{ text: await loadInstructions() }] }, contents, tools: TOOLS, generationConfig }),
-  });
-  if (!res.ok) throw new Error(`Gemini ${res.status}: ${await res.text()}`);
-  return res.json();
+  const parts: Part[] = [];
+  let usage: any = {};
+  let buffer = "";
+  const decoder = new TextDecoder();
+  // Server-sent events: "data: {json}" lines, events separated by a blank line (CRLF or LF).
+  const events = async function* () {
+    for await (const chunk of res.body as unknown as AsyncIterable<Uint8Array>) {
+      buffer += decoder.decode(chunk, { stream: true }).replace(/\r\n/g, "\n");
+      let end;
+      while ((end = buffer.indexOf("\n\n")) >= 0) {
+        yield buffer.slice(0, end);
+        buffer = buffer.slice(end + 2);
+      }
+    }
+    if (buffer.trim()) yield buffer;
+  };
+  for await (const event of events()) {
+    {
+      const data = event.split("\n").filter((l) => l.startsWith("data:")).map((l) => l.slice(5)).join("");
+      if (!data.trim()) continue;
+      const msg: any = JSON.parse(data);
+      if (msg.error) throw new Error(`Gemini stream: ${JSON.stringify(msg.error)}`);
+      const got: Part[] = msg.candidates?.[0]?.content?.parts ?? [];
+      parts.push(...got);
+      if (msg.usageMetadata) usage = msg.usageMetadata;
+      const p = progress.get(id);
+      if (p) {
+        p.thinkingTokens = thinkingBefore + (usage.thoughtsTokenCount ?? 0);
+        for (const part of got) {
+          if (part.thought && typeof part.text === "string") {
+            // Thought summaries start with a bold heading: keep it as the progress note.
+            const heading = part.text.match(/\*\*(.+?)\*\*/)?.[1] ?? part.text.split("\n")[0];
+            if (heading.trim()) p.thought = heading.trim().slice(0, 120);
+          } else if (part.text) p.phase = "writing";
+        }
+      }
+    }
+  }
+  return { parts, usage };
 }
 
 // Usage per model turn, so cost and caching show in the logs.
-function logUsage(id: string, round: number, data: any, ms: number, note: string) {
-  const u = data.usageMetadata ?? {};
+function logUsage(id: string, round: number, u: any, ms: number, note: string) {
   console.log(
     `gemini ${id} round ${round}: in=${u.promptTokenCount ?? "?"} cached=${u.cachedContentTokenCount ?? 0} ` +
       `out=${u.candidatesTokenCount ?? 0} thinking=${u.thoughtsTokenCount ?? 0} ${ms}ms ${note}`,
@@ -149,39 +184,47 @@ function parseReply(raw: string): { text?: unknown; cv?: unknown; tips?: unknown
 // the same id, with the CV and tips the model sent. Works with either store.
 export async function answer(id: string) {
   if (!KEY) throw new Error("GEMINI_API_KEY is not set");
-
-  const contents: Content[] = [];
-  for (const m of (await thread()).filter((m) => m.id <= id)) {
-    contents.push({ role: "user", parts: await userParts(m) });
-    if (m.reply) {
-      const { text, cv, tips } = m.reply;
-      contents.push({ role: "model", parts: [{ text: JSON.stringify({ text, cv, tips }) }] });
-    }
-  }
-
-  for (let round = 1; round <= MAX_ROUNDS; round++) {
-    const started = Date.now();
-    const data = await generate(contents);
-    const parts: Part[] = data.candidates?.[0]?.content?.parts ?? [];
-    const calls = parts.filter((p) => p.functionCall).map((p) => p.functionCall as { name: string; args?: { ids?: string[] } });
-    logUsage(id, round, data, Date.now() - started, calls.length ? `lookup ${calls.flatMap((c) => c.args?.ids ?? []).join(",")}` : "answer");
-
-    if (calls.length && round < MAX_ROUNDS) {
-      // Send the model's turn back unchanged (it carries thought signatures), then the results.
-      contents.push({ role: "model", parts });
-      const responses = await Promise.all(
-        calls.map(async (c) => ({
-          functionResponse: { name: c.name, response: { result: await lookup(ROOT, c.args?.ids ?? []) } },
-        })),
-      );
-      contents.push({ role: "user", parts: responses });
-      continue;
+  progress.set(id, { phase: "thinking", startedAt: Date.now(), thinkingTokens: 0 });
+  try {
+    const contents: Content[] = [];
+    for (const m of (await thread()).filter((m) => m.id <= id)) {
+      contents.push({ role: "user", parts: await userParts(m) });
+      if (m.reply) {
+        const { text, cv, tips } = m.reply;
+        contents.push({ role: "model", parts: [{ text: JSON.stringify({ text, cv, tips }) }] });
+      }
     }
 
-    const raw = parts.map((p) => (typeof p.text === "string" && !p.thought ? p.text : "")).join("");
-    const reply = parseReply(raw);
-    const text = typeof reply.text === "string" && reply.text ? reply.text : "(empty response)";
-    await addReply(id, text, `gemini:${MODEL}`, { cv: reply.cv, tips: reply.tips });
-    return;
+    let thinkingSoFar = 0;
+    for (let round = 1; round <= MAX_ROUNDS; round++) {
+      const started = Date.now();
+      const { parts, usage } = await generate(id, contents, thinkingSoFar);
+      thinkingSoFar += usage.thoughtsTokenCount ?? 0;
+      const calls = parts.filter((p) => p.functionCall).map((p) => p.functionCall as { name: string; args?: { ids?: string[] } });
+      logUsage(id, round, usage, Date.now() - started, calls.length ? `lookup ${calls.flatMap((c) => c.args?.ids ?? []).join(",")}` : "answer");
+
+      if (calls.length && round < MAX_ROUNDS) {
+        const p = progress.get(id);
+        if (p) Object.assign(p, { phase: "lookup", thinkingTokens: thinkingSoFar });
+        // Send the model's turn back unchanged (it carries thought signatures), then the results.
+        contents.push({ role: "model", parts });
+        const responses = await Promise.all(
+          calls.map(async (c) => ({
+            functionResponse: { name: c.name, response: { result: await lookup(ROOT, c.args?.ids ?? []) } },
+          })),
+        );
+        contents.push({ role: "user", parts: responses });
+        if (p) p.phase = "thinking";
+        continue;
+      }
+
+      const raw = parts.map((p) => (typeof p.text === "string" && !p.thought ? p.text : "")).join("");
+      const reply = parseReply(raw);
+      const text = typeof reply.text === "string" && reply.text ? reply.text : "(empty response)";
+      await addReply(id, text, `gemini:${MODEL}`, { cv: reply.cv, tips: reply.tips });
+      return;
+    }
+  } finally {
+    progress.delete(id);
   }
 }

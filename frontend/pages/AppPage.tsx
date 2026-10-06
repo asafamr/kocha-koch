@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { httpApi, readCv, readTips, type Api, type Snapshot } from "../api";
+import { httpApi, readCv, readTips, type Api, type Snapshot, type ThreadItem } from "../api";
 import { Block } from "../components/Block";
 import { Button } from "../components/Button";
 import { ChatInput } from "../components/ChatInput";
@@ -55,6 +55,15 @@ function loadSaved(key?: string): Saved {
     themeKey: typeof v.themeKey === "string" ? v.themeKey : undefined,
     dismissed: Array.isArray(v.dismissed) ? v.dismissed.filter((d) => typeof d === "string") : undefined,
   };
+}
+
+// The typing indicator's progress line for a Gemini answer: phase, seconds, thinking tokens.
+const PHASES = { thinking: "חושבת", lookup: "בודקת מקורות", writing: "כותבת" } as const;
+function progressText(p?: ThreadItem["progress"]): { detail?: string; note?: string } {
+  if (!p) return {};
+  const parts = [PHASES[p.phase], `${p.seconds} שנ׳`];
+  if (p.thinkingTokens > 0) parts.push(`${p.thinkingTokens.toLocaleString("he-IL")} טוקני חשיבה`);
+  return { detail: parts.join(" · "), note: p.thought };
 }
 
 // Full-height grid: stage gauge on top; below it the current stage's view.
@@ -371,7 +380,7 @@ export function AppPage({
                       {m.reply && <Message from="kocha">{m.reply.text}</Message>}
                     </div>
                   ))}
-                  {waiting && <TypingIndicator />}
+                  {waiting && <TypingIndicator {...progressText(messages[messages.length - 1].progress)} />}
                 </div>
               </div>
               <ChatInput onSend={send} />

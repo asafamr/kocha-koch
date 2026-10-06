@@ -20,6 +20,7 @@ Reply with one JSON object and nothing else:
 ```
 
 - `text` (required): what you did, what changed and why, and any question. Short, plain, warm.
+  Address the user in Hebrew plural (אתם, תוכלו), as the app does; never guess their gender.
 - `cv` (optional): only when the CV changes. `data` is the whole `CvData` (not a diff), built
   by `cv-content.md`. Add `theme` only when asked. `patch` per `cv-document.md`.
 - `tips` (optional): only when the tips change, built by `prep-points.md`, with sources copied

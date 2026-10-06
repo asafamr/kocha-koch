@@ -189,6 +189,8 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 
 /* TypingIndicator: three dots; still when the user asks for reduced motion */
 .ds-typing { display: flex; gap: 4px; padding-block: 0.9rem; }
+.ds-typing-detail { font-size: var(--fs-xs); color: var(--muted); font-variant-numeric: tabular-nums; }
+.ds-typing-note { font-size: var(--fs-xs); color: var(--muted); font-style: italic; margin-block-start: 0.2rem; max-inline-size: 28ch; }
 .ds-typing span { inline-size: 6px; block-size: 6px; border-radius: 50%; background: var(--muted); animation: ds-typing 1.2s infinite; }
 .ds-typing span:nth-child(2) { animation-delay: 0.2s; }
 .ds-typing span:nth-child(3) { animation-delay: 0.4s; }

@@ -1,6 +1,6 @@
 import { join, normalize } from "node:path";
 import { addMessage, addReply, resetStore, saveUpload, STORE, thread } from "./store";
-import { answer } from "./gemini";
+import { answer, progress } from "./gemini";
 import { htmlToPdf, MAX_HTML, pdfAvailable, printPage } from "./pdf";
 
 const BACKEND = process.env.BACKEND ?? "files"; // "files" | "gemini"
@@ -70,6 +70,16 @@ async function postPdf(req: Request) {
   }
 }
 
+// Pending messages the Gemini backend is answering get their live progress (typing indicator).
+function withProgress(messages: Awaited<ReturnType<typeof thread>>) {
+  return messages.map((m) => {
+    const p = !m.reply && progress.get(m.id);
+    if (!p) return m;
+    const { phase, thinkingTokens, thought } = p;
+    return { ...m, progress: { phase, thinkingTokens, thought, seconds: Math.round((Date.now() - p.startedAt) / 1000) } };
+  });
+}
+
 async function serveStatic(pathname: string) {
   const path = normalize(join(DIST, pathname === "/" ? "index.html" : pathname));
   if (!path.startsWith(DIST)) return new Response("forbidden", { status: 403 });
@@ -84,7 +94,7 @@ Bun.serve({
   async fetch(req, server) {
     const { pathname } = new URL(req.url);
     if (pathname === "/api/messages") {
-      if (req.method === "GET") return Response.json({ backend: BACKEND, messages: await thread() });
+      if (req.method === "GET") return Response.json({ backend: BACKEND, messages: withProgress(await thread()) });
       if (req.method === "POST") return postMessage(req);
       return new Response("method not allowed", { status: 405 });
     }

@@ -38,6 +38,7 @@ export function ExportPanel({
       {prep && (
         <>
           <Message from="kocha">לפני שיחת הגיוס, אלה שאלות שכדאי להכין עליהן תשובה קצרה:</Message>
+          <h2 className="ds-sr-only">הכנה לשיחת הגיוס</h2>
           {prep}
         </>
       )}
