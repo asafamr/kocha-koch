@@ -142,7 +142,7 @@ export function AppPage({
   }, [messages]);
 
   // Design-stage theming. A theme kocha suggests is applied once; the user can change it after.
-  const [template, setTemplate] = useState<TemplateName>(saved.template ?? "Ledger");
+  const [template, setTemplate] = useState<TemplateName>(saved.template ?? TEMPLATE_NAMES[0]);
   const [palette, setPalette] = useState<PaletteName>(saved.palette ?? "Slate");
   const [typography, setTypography] = useState<TypographyName>(saved.typography ?? "Bricolage");
   const [themeKey, setThemeKey] = useState(saved.themeKey); // the suggestion already applied
@@ -220,7 +220,7 @@ export function AppPage({
     }
     setSnapshot((s) => ({ backend: s?.backend ?? "", messages: [] }));
     setStage(0);
-    setTemplate("Ledger");
+    setTemplate(TEMPLATE_NAMES[0]);
     setPalette("Slate");
     setTypography("Bricolage");
     setThemeKey(undefined);

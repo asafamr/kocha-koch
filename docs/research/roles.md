@@ -5,7 +5,7 @@ What recruiters and hiring managers look for on CVs for specific tech roles: bac
 full-stack, data science and ML, data engineering, DevOps/SRE, QA, mobile, security, product
 management, UX/UI design and engineering management. General bullet, ATS and layout advice is
 in `docs/cv-knowledge-base.md` (cited as KB:A1 etc.), section-level evidence in
-`docs/cv-sections-research.md` (cited as SEC:<heading>) and Israeli weak points in
+`docs/cv-sections-research.md` (cited as SR:<slug>) and Israeli weak points in
 `docs/cv-weak-points-research.md` (cited as WP:1.6 etc.); this file only adds what is specific
 to a role. The evidence is mostly practitioner: job postings, hiring-manager and recruiter
 guides, career-service pages, Israeli recruitment agencies and some vendor blogs. One source is a
@@ -40,7 +40,7 @@ user only touched; never let AI tailoring add skills the user lacks. See KB:B8, 
 
 **Tip.** For developer, data and security roles, link a GitHub, live demo or published app in the
 contact block or on the project name, but only when the linked work is readable and current.
-Evidence on GitHub links: SEC:GitHub or portfolio link, WP:1.6.
+Evidence on GitHub links: SR:github-or-portfolio, WP:1.6.
 
 **Why.**
 - Wix: "The most important thing is what they're able to create." [Q29]
@@ -162,7 +162,7 @@ target title only where honest (KB:B3).
 **Why.**
 - An Israeli DevOps recruiter at Medulla: companies search for "כל מה שקשור לטכנולוגיות ה-Micro services: Kubernetes, Infrastracture as a code" [Q11].
 - Her advice to employers: "תהיו פתוחים לראות אנשים שאין להם את הטייטל הנחשק אבל נגעו ועבדו עם טכנולוגיות רלוונטיות" (be open to people without the title who worked with the relevant technologies) [Q11].
-- For certifications in cloud and DevOps roles see SEC:Certifications.
+- For certifications in cloud and DevOps roles see SR:certifications.
 
 ### RL14 `qa-what-why-improved`: QA/automation: say what you tested, why, and what improved
 **Evidence: practitioner**
@@ -191,7 +191,7 @@ the result (run time, escaped defects, flaky tests removed).
 **Evidence: practitioner**
 
 **Tip.** List concrete security work: assessments run, findings or CVEs, bug bounties, CTFs, home
-labs, tools on GitHub, talks and write-ups. Certifications go on one line (SEC:Certifications).
+labs, tools on GitHub, talks and write-ups. Certifications go on one line (SR:certifications).
 
 **Why.**
 - Miessler: "Your primary focus needs to be convincing the hiring manager that you can be useful on day one." [Q16]

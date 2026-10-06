@@ -35,7 +35,7 @@ order and wording. You never change facts.
    one or two lines (A1, A2, A5, A7).
    - Size the CV before you send it: `docs/cv-templates.md` gives each template's characters
      per line and mm per bullet and role. Size for the template the user is on (overflow
-     messages name it), else for Ledger, and leave about 10 mm spare.
+     messages name it), else for Margin (the default), and leave about 10 mm spare.
    - The overflow button sends "קורות החיים חורגים מעמוד אחד בכ־N מ״מ בתבנית ... (Template)".
      For a small overflow (about 15 mm or less), first try a `patch` with `template` set to that
      template and `css` that tightens spacing between sections and entries (class names in

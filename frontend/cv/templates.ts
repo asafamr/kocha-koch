@@ -7,14 +7,14 @@ import { CvMargin } from "./CvMargin";
 import { CvSidebar } from "./CvSidebar";
 import type { CvProps } from "./parts";
 
-// All CV templates by name, for pickers in the design stage.
+// All CV templates by name, in picker order; the first is the app's default.
 export const TEMPLATES = {
+  Margin: CvMargin,
   Ledger: CvLedger,
   Sidebar: CvSidebar,
   Bars: CvBars,
   Compact: CvCompact,
   Lede: CvLede,
-  Margin: CvMargin,
 } satisfies Record<string, ComponentType<CvProps>>;
 
 export type TemplateName = keyof typeof TEMPLATES;
