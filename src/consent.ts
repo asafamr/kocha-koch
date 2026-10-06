@@ -1,8 +1,8 @@
 // What the intake asks consent for: one unchecked box per purpose, as in kocha's safe-side
 // consent design (docs/kocha-handoff.md). Purpose names are kocha's (packages/consent in its
-// repo); each text version must be registered there too. Change `version` whenever the text
-// changes; each recorded consent keeps the version it was given under. Shared by the server and
-// the frontend.
+// repo), and the `he-1` texts below are registered there verbatim: change a text only together
+// with a new `version` there and here. Each recorded consent keeps the version it was given
+// under. Shared by the server and the frontend.
 
 export type ConsentPurpose = "cv_processing" | "marketing_email";
 

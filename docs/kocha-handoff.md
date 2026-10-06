@@ -1,6 +1,17 @@
 # Proposal: handing a CV-tool user to kocha.co.il
 
-Status: kocha-koch side built; kocha's endpoint proposed, not built. The endpoint belongs in kocha's control server (kohi,
+Status: kocha-koch side built. kocha's endpoint is being built on kohi `refactor/integration`
+with this wire format (decided 2026-10-06):
+
+- CV-tool users are ingested as leads without an invite (the tool is a lead magnet).
+- The 201 always carries `url` =
+  `https://kocha.co.il/join?utm_source=cv-tool&utm_medium=export&utm_campaign=kocha-koch#cv=<token>`;
+  this side opens it as-is.
+- Marketing consent is sent to Brevo as false until the email is verified by a Google sign-in.
+- Purposes `cv_processing` and `marketing_email`, version `he-1`, registered in kocha's
+  `packages/consent` with the texts of `src/consent.ts`, verbatim: change both together.
+- Originals up to 5 MB; `originalCv` may be null.
+- Shared secret: Secret Manager `kocha-cv-handoff-secret`, the same value on both sides. The endpoint belongs in kocha's control server (kohi,
 `apps/control`, Django); this repo only calls it. It follows kohi's own design: the CRM
 allowlist in `kocha/crm.py` ("never transcript, report, CV, gender or job title") and the
 safe-side consent design in `docs/legal.md` (separate unchecked consents per purpose, versioned
