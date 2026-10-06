@@ -149,6 +149,9 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 .ds-stages li.is-current .ds-stages-dot { background: var(--marker); }
 .ds-stages li.is-done, .ds-stages li.is-current { color: var(--ink); }
 .ds-stages li.is-current { font-weight: 700; }
+.ds-stages-button { display: grid; justify-items: center; gap: 0.5rem; font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.ds-stages-button:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ds-stages-button:focus-visible { outline: 3px solid var(--audio); outline-offset: 4px; }
 
 /* AppPage: stage gauge on top; CV 70% left, chat 30% right (grid is LTR so CV stays left; content inside is RTL).
    Frames end at the viewport; only the chat messages scroll inside their frame. */
@@ -266,17 +269,8 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 /* AppPage export stage: centered like the intake form */
 .export-actions { display: flex; justify-content: center; gap: 1rem; }
 .export-panel .ds-msg { max-inline-size: 100%; }
-/* Laid out off-screen (not display:none) so its fonts load before printing */
-.print-only { position: fixed; left: -10000px; top: 0; visibility: hidden; }
-
-/* Printing (export to PDF): only the CV page, at actual A4 size */
-@page { size: A4; margin: 0; }
-@media print {
-  body * { visibility: hidden; }
-  .print-only { left: 0; }
-  .print-only, .print-only * { visibility: visible; }
-  .print-only { position: fixed; inset: 0 auto auto 0; }
-}
+.export-status { margin: 0; min-block-size: 1.4em; text-align: center; font-size: var(--fs-sm); color: var(--muted); }
+.export-status.is-error { color: var(--ink); font-weight: 600; }
 
 /* ChatInput: textarea and send button at the bottom of a chat */
 .ds-chat-input { display: flex; gap: 0.5rem; align-items: stretch; }
@@ -284,6 +278,7 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 
 /* CV pane header: heading and the Next button on one row */
 .app-page-cv-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.app-page-cv-nav { display: flex; gap: 0.5rem; }
 .app-page-overflow { display: flex; align-items: center; gap: 0.75rem; margin-inline-start: auto; font-size: var(--fs-sm); color: var(--ink); }
 
 /* PrepPoints: gentle cards. Hairline borders and muted labels, nothing that reads as a warning. */

@@ -21,7 +21,7 @@ import { PALETTE_LABELS, TEMPLATE_LABELS, TYPOGRAPHY_LABELS } from "../cv/labels
 import { cvToOutline } from "../cv/outline";
 import { TEMPLATES, type TemplateName } from "../cv/templates";
 import { PALETTES, TYPOGRAPHY, type PaletteName, type TypographyName } from "../cv/theme";
-import { ExportPanel } from "./ExportPanel";
+import { ExportPanel, type PdfState } from "./ExportPanel";
 import { IntakeForm } from "./IntakeForm";
 
 const STAGES = ["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"];
@@ -114,10 +114,12 @@ export function AppPage({
     if (stage === 0 && messages.some((m) => m.intake)) setStage(1);
   }, [snapshot]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // The CV is the latest data any reply sent, with the patch that came with or after it.
+  // The CV is the latest data any reply sent, with the patches that came with or after it: the
+  // latest general one, and the latest one per template (used while that template is selected).
   const cv = useMemo(() => {
     let data: CvData | null = null;
     let patch: CvPatch | undefined;
+    let byTemplate: Partial<Record<TemplateName, CvPatch>> = {};
     let theme: { key: string; value: NonNullable<ReturnType<typeof readCv>>["theme"] } | null = null;
     for (const m of messages) {
       const c = m.reply && readCv(m.reply.cv);
@@ -125,11 +127,13 @@ export function AppPage({
       if (c.data) {
         data = c.data;
         patch = undefined;
+        byTemplate = {};
       }
-      if (c.patch) patch = c.patch;
+      if (c.patch?.template) byTemplate[c.patch.template] = c.patch;
+      else if (c.patch) patch = c.patch;
       if (c.theme) theme = { key: m.id, value: c.theme };
     }
-    return { data, patch, theme };
+    return { data, patch, byTemplate, theme };
   }, [messages]);
 
   // The latest tips any reply sent.
@@ -159,12 +163,15 @@ export function AppPage({
   const [overflowMm, setOverflowMm] = useState(0);
   const overflowing = stage === 2 && overflowMm > 0;
   function askToFit() {
-    send(`קורות החיים חורגים מעמוד אחד בכ־${overflowMm} מ״מ בתבנית ${TEMPLATE_LABELS[template]}. אפשר לקצר כך שייכנסו בעמוד אחד?`);
+    send(`קורות החיים חורגים מעמוד אחד בכ־${overflowMm} מ״מ בתבנית ${TEMPLATE_LABELS[template]} (${template}). אפשר לקצר כך שייכנסו בעמוד אחד?`);
   }
 
   const doc = useMemo<CvDocument | null>(
-    () => (cv.data ? { data: cv.data, theme: { template, palette, typography }, patch: cv.patch } : null),
-    [cv.data, cv.patch, template, palette, typography],
+    () =>
+      cv.data
+        ? { data: cv.data, theme: { template, palette, typography }, patch: cv.byTemplate[template] ?? cv.patch }
+        : null,
+    [cv.data, cv.patch, cv.byTemplate, template, palette, typography],
   );
 
   // Tips: dismissed locally; changing seniority or track asks kocha to redo them.
@@ -193,6 +200,21 @@ export function AppPage({
     api.send(text).catch(fail);
   }
 
+  const [pdf, setPdf] = useState<PdfState>({ status: "idle" });
+  async function exportPdf(d: CvDocument) {
+    setPdf({ status: "working", text: "מכין את קובץ ה־PDF…" });
+    try {
+      const name = await downloadCvPdf(d, api.pdf);
+      setPdf({ status: "done", text: `הקובץ ${name} ירד לתיקיית ההורדות.` });
+    } catch (e) {
+      const unavailable = e instanceof Error && e.message.includes("503");
+      setPdf({ status: "error", text: unavailable ? "יצירת PDF לא זמינה בשרת הזה." : "לא הצלחתי ליצור PDF. נסו שוב." });
+    }
+  }
+
+  // Stages after the intake can be opened from the gauge once the intake is sent.
+  const intakeSent = messages.some((m) => m.intake);
+
   async function submitIntake(intake: Parameters<Api["sendIntake"]>[0]) {
     setSending(true);
     try {
@@ -209,7 +231,7 @@ export function AppPage({
     <main className="app-page">
       <h1 className="ds-sr-only">קוחה</h1>
       <div className="app-page-stages">
-        <StageGauge label="שלבי העבודה" stages={STAGES} current={stage} />
+        <StageGauge label="שלבי העבודה" stages={STAGES} current={stage} onSelect={setStage} canSelect={(i) => i > 0 && intakeSent} />
         <div role="alert" className="app-page-error">
           {error && `משהו השתבש בחיבור לשרת (${error}). מנסים שוב…`}
         </div>
@@ -220,13 +242,14 @@ export function AppPage({
           <IntakeForm onNext={submitIntake} sending={sending} />
         </section>
       ) : stage === 3 ? (
-        // Export, laid out like the intake form. PDF from the server; print dialog as fallback.
+        // Export, laid out like the intake form. PDF from the server, the same in every browser.
         // TODO: a real booking link.
         <section className="app-page-form" aria-label={STAGES[3]}>
           {doc ? (
             <ExportPanel
-              doc={doc}
-              onExportPdf={() => downloadCvPdf(doc, api.pdf)}
+              pdf={pdf}
+              onExportPdf={() => exportPdf(doc)}
+              onBack={() => setStage(2)}
               onExportHtml={() => downloadCvHtml(doc)}
               onBookPractice={() => {}}
             />
@@ -248,7 +271,14 @@ export function AppPage({
                     </Button>
                   </div>
                 )}
-                <Button onClick={() => setStage(stage + 1)}>הבא</Button>
+                <div className="app-page-cv-nav">
+                  {stage > 1 && (
+                    <Button variant="secondary" onClick={() => setStage(stage - 1)}>
+                      חזרה
+                    </Button>
+                  )}
+                  <Button onClick={() => setStage(stage + 1)}>הבא</Button>
+                </div>
               </div>
               {!doc ? (
                 <p className="ds-prep-empty">{READING}</p>

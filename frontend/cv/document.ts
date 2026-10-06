@@ -24,6 +24,8 @@ export type DomOp =
 export type CvPatch = {
   css?: string; // scoped to the CV page: rules are nested under .cv-doc
   ops?: DomOp[]; // applied in order to every element each selector matches
+  // Made for one template (e.g. spacing to fit the page): applied only while it is selected.
+  template?: TemplateName;
 };
 
 export type CvDocument = { data: CvData; theme: CvTheme; patch?: CvPatch };
@@ -40,9 +42,10 @@ export function renderCvDocument(doc: CvDocument): RenderResult {
   const root = document.createElement("div");
   root.innerHTML = markup;
   annotate(root, doc.data);
-  const warnings = applyOps(root, doc.patch?.ops ?? []);
+  const patch = doc.patch?.template && doc.patch.template !== doc.theme.template ? undefined : doc.patch;
+  const warnings = applyOps(root, patch?.ops ?? []);
   sanitize(root);
-  const css = doc.patch?.css?.trim();
+  const css = patch?.css?.trim();
   const style = css ? `<style>.cv-doc{${sanitizeCss(css)}}</style>` : "";
   return { html: style + root.innerHTML, warnings };
 }

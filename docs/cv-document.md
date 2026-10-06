@@ -13,6 +13,7 @@ type CvDocument = {
   patch?: {                     // 3. edits to the full rendered page, applied last
     css?: string;               // nested under .cv-doc, so it only affects the CV
     ops?: DomOp[];              // applied in order, to every element each selector matches
+    template?: string;          // made for one template: applied only while it is selected
   };
 };
 

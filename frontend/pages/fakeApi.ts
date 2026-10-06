@@ -9,7 +9,7 @@ export function fakeApi(messages: ThreadItem[]): Api {
     load: async () => snapshot,
     send: async () => {},
     sendIntake: async () => {},
-    pdf: async () => Promise.reject(new Error("no server")), // export falls back to the print dialog
+    pdf: async () => Promise.reject(new Error("no server")), // export shows its error state
   };
 }
 

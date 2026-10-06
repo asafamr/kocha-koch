@@ -73,14 +73,12 @@ export async function downloadCvHtml(doc: CvDocument) {
   download(new Blob([await cvHtmlFile(doc)], { type: "text/html" }), `${fileBase(doc)}.html`);
 }
 
-// PDF rendered by the server (src/pdf.ts) from the same HTML file. If the server cannot render,
-// fall back to the browser's print dialog over the print-only copy of the page.
-export async function downloadCvPdf(doc: CvDocument, toPdf: (html: string) => Promise<Blob>) {
-  try {
-    download(await toPdf(await cvHtmlFile(doc)), `${fileBase(doc)}.pdf`);
-  } catch {
-    window.print();
-  }
+// PDF rendered by the server (src/pdf.ts) from the same HTML file, then downloaded. One path for
+// every browser; throws if the server cannot render. Returns the file name.
+export async function downloadCvPdf(doc: CvDocument, toPdf: (html: string) => Promise<Blob>): Promise<string> {
+  const name = `${fileBase(doc)}.pdf`;
+  download(await toPdf(await cvHtmlFile(doc)), name);
+  return name;
 }
 
 const fileBase = (doc: CvDocument) => `${doc.data.name.replace(/\s+/g, "-")}-CV`;
@@ -90,6 +88,8 @@ function download(blob: Blob, name: string) {
   const a = document.createElement("a");
   a.href = url;
   a.download = name;
+  document.body.append(a); // some browsers ignore clicks on a detached link
   a.click();
+  a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
