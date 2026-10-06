@@ -4,6 +4,6 @@ import { AppPage } from "./pages/AppPage";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <AppPage />
+    <AppPage persistKey="kocha-ui" />
   </StrictMode>,
 );

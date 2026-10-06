@@ -30,14 +30,59 @@ const PALETTE_NAMES = Object.keys(PALETTES) as PaletteName[];
 const TYPOGRAPHY_NAMES = Object.keys(TYPOGRAPHY) as TypographyName[];
 const READING = "קוחה קוראת את קורות החיים ותחזור עם גרסה ראשונה…";
 
+type Profile = { seniority: Seniority; track: Track };
+type Saved = {
+  stage?: number;
+  template?: TemplateName;
+  palette?: PaletteName;
+  typography?: TypographyName;
+  themeKey?: string;
+  dismissed?: string[];
+  profile?: Profile;
+};
+
+// Saved state, keeping only values that are still valid.
+function loadSaved(key?: string): Saved {
+  if (!key) return {};
+  let v: Saved;
+  try {
+    v = JSON.parse(localStorage.getItem(key) ?? "{}");
+  } catch {
+    return {};
+  }
+  return {
+    stage: Number.isInteger(v.stage) && v.stage! >= 0 && v.stage! < STAGES.length ? v.stage : undefined,
+    template: v.template && v.template in TEMPLATES ? v.template : undefined,
+    palette: v.palette && v.palette in PALETTES ? v.palette : undefined,
+    typography: v.typography && v.typography in TYPOGRAPHY ? v.typography : undefined,
+    themeKey: typeof v.themeKey === "string" ? v.themeKey : undefined,
+    dismissed: Array.isArray(v.dismissed) ? v.dismissed.filter((d) => typeof d === "string") : undefined,
+    profile: v.profile && v.profile.seniority in SENIORITY_LABELS && v.profile.track in TRACK_LABELS ? v.profile : undefined,
+  };
+}
+
 // Full-height grid: stage gauge on top; below it the current stage's view.
 // Stage 0 is the intake form; later stages show CV (70%, left) and chat (30%, right).
 // The grid itself is LTR so CV stays physically left and chat right; each area is RTL inside.
 // Everything comes from the server through `api`: messages, kocha's replies, and the CV and
 // tips her replies carry (see AGENTS.md). Polls instead of pushing: file watching is unreliable
 // across container volume mounts.
-export function AppPage({ api = httpApi, initialStage = 0, pollMs = 2000 }: { api?: Api; initialStage?: number; pollMs?: number }) {
-  const [stage, setStage] = useState(initialStage);
+// With `persistKey`, the stage and the user's choices (design picks, profile, dismissed tips)
+// are kept in this browser, so a reload returns to the same place. The real app passes it;
+// stories don't, so they never share saved state.
+export function AppPage({
+  api = httpApi,
+  initialStage = 0,
+  pollMs = 2000,
+  persistKey,
+}: {
+  api?: Api;
+  initialStage?: number;
+  pollMs?: number;
+  persistKey?: string;
+}) {
+  const [saved] = useState(() => loadSaved(persistKey));
+  const [stage, setStage] = useState(saved.stage ?? initialStage);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -97,12 +142,14 @@ export function AppPage({ api = httpApi, initialStage = 0, pollMs = 2000 }: { ap
   }, [messages]);
 
   // Design-stage theming. A theme kocha suggests is applied once; the user can change it after.
-  const [template, setTemplate] = useState<TemplateName>("Ledger");
-  const [palette, setPalette] = useState<PaletteName>("Slate");
-  const [typography, setTypography] = useState<TypographyName>("Bricolage");
+  const [template, setTemplate] = useState<TemplateName>(saved.template ?? "Ledger");
+  const [palette, setPalette] = useState<PaletteName>(saved.palette ?? "Slate");
+  const [typography, setTypography] = useState<TypographyName>(saved.typography ?? "Bricolage");
+  const [themeKey, setThemeKey] = useState(saved.themeKey); // the suggestion already applied
   useEffect(() => {
     const t = cv.theme?.value;
-    if (!t) return;
+    if (!t || cv.theme!.key === themeKey) return;
+    setThemeKey(cv.theme!.key);
     if (t.template && t.template in TEMPLATES) setTemplate(t.template);
     if (t.palette && t.palette in PALETTES) setPalette(t.palette);
     if (t.typography && t.typography in TYPOGRAPHY) setTypography(t.typography);
@@ -121,8 +168,18 @@ export function AppPage({ api = httpApi, initialStage = 0, pollMs = 2000 }: { ap
   );
 
   // Tips: dismissed locally; changing seniority or track asks kocha to redo them.
-  const [dismissed, setDismissed] = useState<string[]>([]);
-  const [profile, setProfile] = useState<{ seniority: Seniority; track: Track } | null>(null);
+  const [dismissed, setDismissed] = useState<string[]>(saved.dismissed ?? []);
+  const [profile, setProfile] = useState<Profile | null>(saved.profile ?? null);
+
+  useEffect(() => {
+    if (!persistKey) return;
+    const state: Saved = { stage, template, palette, typography, themeKey, dismissed, profile: profile ?? undefined };
+    try {
+      localStorage.setItem(persistKey, JSON.stringify(state));
+    } catch {
+      // Storage blocked (private mode): the page still works, it just won't remember.
+    }
+  }, [persistKey, stage, template, palette, typography, themeKey, dismissed, profile]);
   const shownProfile = profile ?? tips?.profile ?? null;
   const jobFit = (tips?.jobFit ?? []).filter((p) => !dismissed.includes(p.id));
   const points = (tips?.points ?? []).filter((p) => !dismissed.includes(p.id));
