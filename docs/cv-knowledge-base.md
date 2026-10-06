@@ -10,8 +10,8 @@ would not load are listed at the end and are not cited.
 
 ## Conventions
 
-This file follows the conventions of the kohi interview-tips vault (`/home/asaf/ws/kohi/tips`,
-`tips-en`, `docs/tips-kb.md`, `docs/tip-mining.md`):
+This file follows the conventions of kohi, kocha's interview-tips knowledge base (in kocha's
+own repository, not published here):
 
 - **Source tiers, same three as kohi.** Each source carries one:
   - `study`: primary research or a peer-reviewed paper.

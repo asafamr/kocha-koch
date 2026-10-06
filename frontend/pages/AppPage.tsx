@@ -20,6 +20,7 @@ import { PALETTE_LABELS, TEMPLATE_LABELS, TYPOGRAPHY_LABELS } from "../cv/labels
 import { cvToOutline } from "../cv/outline";
 import { TEMPLATES, type TemplateName } from "../cv/templates";
 import { PALETTES, TYPOGRAPHY, type PaletteName, type TypographyName } from "../cv/theme";
+import { kochaUrl } from "../links";
 import { ExportPanel, type PdfState } from "./ExportPanel";
 import { IntakeForm } from "./IntakeForm";
 
@@ -292,7 +293,7 @@ export function AppPage({
               pdf={pdf}
               onExportPdf={() => exportPdf(doc)}
               onExportHtml={() => downloadCvHtml(doc)}
-              onBookPractice={() => {}}
+              practiceUrl={kochaUrl("export")}
             />
           ) : (
             <p className="ds-prep-empty">{READING}</p>

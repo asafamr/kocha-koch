@@ -54,7 +54,7 @@ summaries), so a two-minute answer does not look stuck.
    costs far less than sending the docs every time.
 2. **Low thinking**: thinking tokens are billed as output ($3.75/1M). At low, gemini-3.8-flash
    reported no thinking tokens, and replies were twice as fast with the same check results.
-3. **Explicit cache**: the instructions and tool definitions are cached for an hour and billed
+3. **Explicit cache**: the instructions and tool definitions are cached (see Cache lifetime) and billed
    at a tenth of the input price. Implicit caching (automatic, 4,096-token minimum) never hit in
    these runs (`cachedContentTokenCount` stayed 0), so the explicit cache is what saves.
 
@@ -85,7 +85,7 @@ off.
 ## Spend limit
 
 `src/spend.ts` caps spend per process (one pod on Cloud Run) with a leaky bucket in dollars:
-each model turn adds its cost (from Gemini's token counts; creating the cache adds an hour of
+each model turn adds its cost (from Gemini's token counts; creating or extending the cache adds its
 storage), and the bucket drains at `GEMINI_SPEND_PER_HOUR` (default $10). It holds at most
 `GEMINI_SPEND_BURST` (default one hour's worth) and starts empty, so a new pod has the full
 allowance. While it is full, new answers get "קוחה עמוסה כרגע" until it drains. Prices are

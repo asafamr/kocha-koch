@@ -6,20 +6,20 @@ export type PdfState = { status: "idle" | "working" | "done" | "error"; text?: s
 
 // Last stage, laid out like the intake form: kocha thanks the user, export buttons (PDF, HTML)
 // with the PDF's status under them, the questions to prepare for (`prep`), then the call to
-// action for camera practice. The PDF is
-// rendered by the server (src/pdf.ts) the same way for every browser, then downloaded.
+// action: practise those questions with kocha on camera at kocha.co.il. The PDF is rendered by
+// the server (src/pdf.ts) the same way for every browser, then downloaded.
 export function ExportPanel({
   pdf,
   onExportPdf,
   onExportHtml,
-  onBookPractice,
+  practiceUrl,
   prep,
 }: {
   prep?: ReactNode;
   pdf: PdfState;
   onExportPdf: () => void;
   onExportHtml: () => void;
-  onBookPractice: () => void;
+  practiceUrl: string; // kocha.co.il, where she runs a practice interview on camera
 }) {
   return (
     <div className="intake export-panel">
@@ -42,10 +42,12 @@ export function ExportPanel({
           {prep}
         </>
       )}
-      <Message from="kocha">רוצים להגיע מוכנים לראיון? אפשר להתאמן איתי מול מצלמה.</Message>
-      <Button variant="secondary" onClick={onBookPractice} style={{ justifySelf: "center" }}>
-        הזמן מקום לאימון מול מצלמה
-      </Button>
+      <Message from="kocha">
+        רוצים להגיע מוכנים? תרגלו איתי את השאלות האלה בראיון טכני מול מצלמה, בעברית. 15 דקות, בחינם.
+      </Message>
+      <a className="ds-button ds-button-secondary export-practice" href={practiceUrl} target="_blank" rel="noopener">
+        לתרגול ב־kocha.co.il
+      </a>
     </div>
   );
 }

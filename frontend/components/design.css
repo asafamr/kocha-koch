@@ -275,6 +275,9 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 /* AppPage export stage: centered like the intake form */
 .export-actions { display: flex; justify-content: center; gap: 1rem; }
 .export-panel .ds-msg { max-inline-size: 100%; }
+.export-practice { justify-self: center; text-decoration: none; }
+.intake-privacy { margin: 0; font-size: var(--fs-xs); color: var(--muted); }
+.intake-privacy a, .intake .ds-msg a { color: inherit; text-underline-offset: 3px; }
 .export-status { margin: 0; min-block-size: 1.4em; text-align: center; font-size: var(--fs-sm); color: var(--muted); }
 .export-status.is-error { color: var(--ink); font-weight: 600; }
 
