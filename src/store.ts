@@ -19,7 +19,7 @@ export type Reply = { id: string; ts: string; text: string; by: string; cv?: unk
 // progress: set by the server for a message the Gemini backend is still answering.
 export type ThreadItem = Message & {
   reply: Reply | null;
-  progress?: { phase: "thinking" | "lookup" | "writing"; seconds: number; thinkingTokens: number; thought?: string };
+  progress?: { phase: "thinking" | "lookup" | "writing" | "verifying"; seconds: number; thinkingTokens: number; thought?: string };
 };
 
 type Store = {

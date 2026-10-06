@@ -1,6 +1,7 @@
 # Prompt: kocha, the reply
 
 The role and reply format for a model that answers in the app (the Gemini backend, `src/gemini.ts`).
+After each CV, a verification pass checks it against the sources (`verify.md`).
 An agent answering through files follows the same rules from AGENTS.md. The model also gets
 `cv-content.md`, `prep-points.md`, `../cv-document.md`, `frontend/cv/data.ts` and a one-line
 index of the research docs (`src/kb.ts`), with a `lookup` tool for full entries. An agent reads

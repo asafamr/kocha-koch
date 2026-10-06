@@ -64,6 +64,24 @@ summaries), so a two-minute answer does not look stuck.
 Storage of the cache (~11k tokens) costs about $0.006 per hour it exists; it is recreated on
 demand after it expires.
 
+## Verification pass
+
+After Gemini writes a CV, a second call at low thinking (`docs/prompts/verify.md`) compares
+every string of the CV with the sources (the uploaded CV, the intake fields, the user's chat
+messages) and returns the smallest fixes, applied by exact match. It costs about $0.0015 per
+reply (~1.6k input tokens). In the grounding benchmark it turned "Integrated MLflow for
+experiment tracking" into "Worked with MLflow" (what the user said) and put back the source's
+summary wording in place of "resilient, cost-efficient systems". It errs on the cautious side.
+
+## Cache lifetime
+
+The explicit cache (~12k tokens) bills storage for as long as it exists, whether or not anyone
+is using it, and it is shared by everyone on the pod, not tied to a session. It lives 10
+minutes, is extended when used, and is deleted when the server gets SIGTERM (Cloud Run's stop
+signal), so an idle pod pays for at most about 10 minutes ($0.001). Turns that need JSON mode
+with tools off send the instructions inline, because a cached request cannot switch the tools
+off.
+
 ## Spend limit
 
 `src/spend.ts` caps spend per process (one pod on Cloud Run) with a leaky bucket in dollars:

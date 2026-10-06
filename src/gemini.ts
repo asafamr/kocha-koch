@@ -58,7 +58,7 @@ type Part = Record<string, unknown>;
 type Content = { role: "user" | "model"; parts: Part[] };
 
 // Live progress of answers being written, by message id, for the page's typing indicator.
-export type Progress = { phase: "thinking" | "lookup" | "writing"; startedAt: number; thinkingTokens: number; thought?: string };
+export type Progress = { phase: "thinking" | "lookup" | "writing" | "verifying"; startedAt: number; thinkingTokens: number; thought?: string };
 export const progress = new Map<string, Progress>();
 
 // One user turn: the message text, and for the intake its fields and the CV PDF.
@@ -73,11 +73,17 @@ async function userParts(m: ThreadItem): Promise<Part[]> {
   return parts;
 }
 
-// Explicit cache of the instructions and tools, reused until shortly before it expires.
-let cache: { name: string; expires: number } | null = null;
+// Explicit cache of the instructions and tools. Storage is billed for as long as it exists, so
+// it lives 10 minutes, is extended when used, and is deleted when the server stops (Cloud Run
+// sends SIGTERM). An idle pod pays for at most 10 minutes.
+const CACHE_TTL_S = 600;
+let cache: { name: string; expires: number; tokens: number } | null = null;
 async function cachedInstructions(): Promise<string | null> {
   if (!EXPLICIT_CACHE) return null;
-  if (cache && cache.expires > Date.now() + 60_000) return cache.name;
+  if (cache && cache.expires > Date.now() + 60_000) {
+    if (cache.expires < Date.now() + (CACHE_TTL_S * 1000) / 2) await extendCache(cache);
+    return cache.name;
+  }
   const res = await fetch(`${API}/cachedContents`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-goog-api-key": KEY! },
@@ -85,7 +91,7 @@ async function cachedInstructions(): Promise<string | null> {
       model: `models/${MODEL}`,
       systemInstruction: { parts: [{ text: await loadInstructions() }] },
       tools: TOOLS,
-      ttl: "3600s",
+      ttl: `${CACHE_TTL_S}s`,
     }),
   });
   if (!res.ok) {
@@ -93,10 +99,30 @@ async function cachedInstructions(): Promise<string | null> {
     return null;
   }
   const c: any = await res.json();
-  cache = { name: c.name, expires: Date.parse(c.expireTime) };
-  addSpend(cacheCost(c.usageMetadata?.totalTokenCount ?? 0, 1));
+  cache = { name: c.name, expires: Date.parse(c.expireTime), tokens: c.usageMetadata?.totalTokenCount ?? 0 };
+  addSpend(cacheCost(cache.tokens, CACHE_TTL_S / 3600));
   console.log(`gemini cache ${c.name} tokens=${c.usageMetadata?.totalTokenCount ?? "?"} until ${c.expireTime}`);
   return c.name;
+}
+
+async function extendCache(c: { name: string; expires: number; tokens: number }) {
+  const res = await fetch(`${API}/${c.name}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json", "x-goog-api-key": KEY! },
+    body: JSON.stringify({ ttl: `${CACHE_TTL_S}s` }),
+  });
+  if (!res.ok) return; // it will be recreated when it expires
+  const expires = Date.parse(((await res.json()) as any).expireTime);
+  addSpend(cacheCost(c.tokens, Math.max(0, expires - c.expires) / 3_600_000));
+  c.expires = expires;
+}
+
+export async function deleteCache() {
+  if (!cache) return;
+  const name = cache.name;
+  cache = null;
+  await fetch(`${API}/${name}`, { method: "DELETE", headers: { "x-goog-api-key": KEY! } }).catch(() => {});
+  console.log(`gemini cache ${name} deleted`);
 }
 
 // One model turn, streamed so progress (thinking tokens, the latest thought heading) shows while
@@ -115,7 +141,8 @@ async function generate(
     ...(json ? { responseMimeType: "application/json" } : {}),
   };
   const toolConfig = json ? { functionCallingConfig: { mode: "NONE" } } : undefined;
-  const cached = useCache ? await cachedInstructions() : null;
+  // The cache holds the tools, and a cached request cannot switch them off: JSON turns go inline.
+  const cached = useCache && !json ? await cachedInstructions() : null;
   const body = cached
     ? { cachedContent: cached, contents, generationConfig, toolConfig }
     : { systemInstruction: { parts: [{ text: await loadInstructions() }] }, contents, tools: TOOLS, toolConfig, generationConfig };
@@ -176,6 +203,68 @@ async function generate(
   return { parts, usage };
 }
 
+// The verification pass (docs/prompts/verify.md): a cheap low-thinking call compares every
+// string of the new CV with the sources (the uploaded CV, the intake fields, the user's chat
+// messages) and returns the smallest fixes, which are applied by exact match.
+let verifyPrompt: Promise<string> | null = null;
+async function verifyCv(id: string, sources: Part[], data: unknown): Promise<unknown> {
+  const p = progress.get(id);
+  if (p) p.phase = "verifying";
+  verifyPrompt ??= Bun.file(join(ROOT, "docs/prompts/verify.md")).text();
+  const started = Date.now();
+  const res = await fetch(`${API}/models/${MODEL}:generateContent`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-goog-api-key": KEY! },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: await verifyPrompt }] },
+      contents: [{ role: "user", parts: [...sources, { text: `New CV (JSON):\n${JSON.stringify(data)}` }] }],
+      generationConfig: { responseMimeType: "application/json", thinkingConfig: { thinkingLevel: "low" } },
+    }),
+  });
+  if (!res.ok) {
+    console.error(`gemini ${id} verify failed ${res.status}`);
+    return data; // keep the unverified CV rather than fail the reply
+  }
+  const out: any = await res.json();
+  const raw = out.candidates?.[0]?.content?.parts?.map((x: any) => (x.thought ? "" : x.text ?? "")).join("") ?? "";
+  let fixes: { before: string; after: string; why?: string }[] = [];
+  try {
+    fixes = (JSON.parse(raw).fixes ?? []).filter((f: any) => typeof f?.before === "string" && typeof f?.after === "string");
+  } catch {
+    // unreadable verifier output: keep the CV as written
+  }
+  let applied = 0;
+  const fix = (v: unknown): unknown => {
+    if (typeof v === "string") {
+      const f = fixes.find((x) => x.before === v);
+      if (f) applied++;
+      return f ? f.after : v;
+    }
+    if (Array.isArray(v)) return v.map(fix);
+    if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fix(x)]));
+    return v;
+  };
+  const fixed = fix(data);
+  logUsage(id, 0, out.usageMetadata ?? {}, Date.now() - started, `verify: ${applied}/${fixes.length} fixes`);
+  for (const f of fixes) console.log(`gemini ${id} verify fix: "${f.before}" -> "${f.after}" (${f.why ?? ""})`);
+  return fixed;
+}
+
+// What the CV may claim: the user's uploaded CV, the intake fields and the user's messages.
+async function sourceParts(messages: ThreadItem[]): Promise<Part[]> {
+  const parts: Part[] = [];
+  const said: string[] = [];
+  for (const m of messages) {
+    if (m.intake) {
+      parts.push({ text: `Target role: ${m.intake.role}\nJob description:\n${m.intake.jobDescription || "(not given)"}` });
+      const pdf = await getUpload(m.intake.cvFile);
+      if (pdf) parts.push({ text: "The user's CV:" }, { inlineData: { mimeType: "application/pdf", data: Buffer.from(pdf).toString("base64") } });
+    } else said.push(m.text);
+  }
+  if (said.length) parts.push({ text: `What the user said in the chat:\n${said.map((t) => `- ${t}`).join("\n")}` });
+  return parts;
+}
+
 // Usage per model turn, so cost and caching show in the logs.
 function logUsage(id: string, round: number, u: any, ms: number, note: string) {
   const cost = turnCost(u);
@@ -220,7 +309,8 @@ export async function answer(id: string) {
   progress.set(id, { phase: "thinking", startedAt: Date.now(), thinkingTokens: 0 });
   try {
     const contents: Content[] = [];
-    for (const m of (await thread()).filter((m) => m.id <= id)) {
+    const history = (await thread()).filter((m) => m.id <= id);
+    for (const m of history) {
       contents.push({ role: "user", parts: await userParts(m) });
       if (m.reply) {
         const { text, cv, tips } = m.reply;
@@ -255,12 +345,16 @@ export async function answer(id: string) {
 
       const raw = parts.map((p) => (typeof p.text === "string" && !p.thought ? p.text : "")).join("");
       const reply = parseReply(raw);
-      if (reply === null && !json && round < MAX_ROUNDS) {
-        json = true; // ask again in JSON mode; the invalid reply is dropped
+      if (reply === null && round < MAX_ROUNDS) {
+        // Ask again in JSON mode; the invalid reply is dropped. JSON mode alone is not a guarantee
+        // (one reply closed an object with "]"), and a loose schema made the model drop cv and tips.
+        json = true;
         continue;
       }
       const text = reply ? (reply.text as string) : raw || "(empty response)";
-      await addReply(id, text, `gemini:${MODEL}`, { cv: reply?.cv, tips: reply?.tips });
+      const cv = reply?.cv as { data?: unknown } | undefined;
+      if (cv?.data) cv.data = await verifyCv(id, await sourceParts(history), cv.data);
+      await addReply(id, text, `gemini:${MODEL}`, { cv, tips: reply?.tips });
       return;
     }
   } finally {

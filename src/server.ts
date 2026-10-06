@@ -1,6 +1,6 @@
 import { join, normalize } from "node:path";
 import { addMessage, addReply, resetStore, saveUpload, STORE, thread } from "./store";
-import { answer, progress } from "./gemini";
+import { answer, deleteCache, progress } from "./gemini";
 import { htmlToPdf, MAX_HTML, pdfAvailable, printPage } from "./pdf";
 
 const BACKEND = process.env.BACKEND ?? "files"; // "files" | "gemini"
@@ -113,5 +113,10 @@ Bun.serve({
     return serveStatic(pathname);
   },
 });
+
+// Cloud Run stops a pod with SIGTERM: delete the Gemini cache first so its storage is not billed.
+for (const signal of ["SIGTERM", "SIGINT"] as const) {
+  process.on(signal, () => deleteCache().finally(() => process.exit(0)));
+}
 
 console.log(`listening on :${PORT} (backend=${BACKEND}, store=${STORE}${DEV ? ", dev" : ""}${pdfAvailable ? ", pdf" : ""})`);
