@@ -1,7 +1,7 @@
 # Prompt: points to prepare for (Israeli tech)
 
-Used in the fine-tuning stage. Input: the CV (`CvDocument.data`), the target role, the job
-description if given, and the candidate's seniority and track. Output: what is worth
+Used in the fine-tuning stage. Input: the CV (`CvDocument.data`), the target role and the job
+description if given. Seniority and track are not asked from the user: infer them (below). Output: what is worth
 highlighting, up to 3 job-fit items (required skills and wording against the job ad), and up to
 4 questions a recruiter may ask with how to prepare a story for each.
 Evidence and sources: `docs/cv-weak-points-research.md`. UI: `frontend/components/PrepPoints.tsx`.
@@ -61,6 +61,13 @@ hidden requirements and exact wording; B3 for titles.
 
 This part is common hiring practice, not measured research. Use it to choose which questions
 fit; skip any that the CV already answers.
+
+Infer the profile from the CV and the target role, and return it in `profile`:
+- **Seniority:** years of relevant experience and the level of recent titles (junior 0-2,
+  mid 2-6, senior 6+). For a career changer, judge by the target field, not total years, and
+  pick the questions for both sides (e.g. `field-change` and `role-below-last`).
+- **Track:** `management` when the target role manages people, or recent roles did and the
+  target does not say otherwise; else `hands-on`. If unclear, follow the target role.
 
 | | Hands-on | Management |
 |---|---|---|

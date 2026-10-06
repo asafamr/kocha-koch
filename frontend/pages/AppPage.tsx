@@ -8,7 +8,6 @@ import { CvOutline } from "../components/CvOutline";
 import { Drawer } from "../components/Drawer";
 import { Message } from "../components/Message";
 import { PrepPoints } from "../components/PrepPoints";
-import { SENIORITY_LABELS, TRACK_LABELS, type Seniority, type Track } from "../components/prepPointsSample";
 import { Select } from "../components/Select";
 import { StageGauge } from "../components/StageGauge";
 import { Text } from "../components/Text";
@@ -30,7 +29,6 @@ const PALETTE_NAMES = Object.keys(PALETTES) as PaletteName[];
 const TYPOGRAPHY_NAMES = Object.keys(TYPOGRAPHY) as TypographyName[];
 const READING = "קוחה קוראת את קורות החיים ותחזור עם גרסה ראשונה…";
 
-type Profile = { seniority: Seniority; track: Track };
 type Saved = {
   stage?: number;
   template?: TemplateName;
@@ -38,7 +36,6 @@ type Saved = {
   typography?: TypographyName;
   themeKey?: string;
   dismissed?: string[];
-  profile?: Profile;
 };
 
 // Saved state, keeping only values that are still valid.
@@ -57,7 +54,6 @@ function loadSaved(key?: string): Saved {
     typography: v.typography && v.typography in TYPOGRAPHY ? v.typography : undefined,
     themeKey: typeof v.themeKey === "string" ? v.themeKey : undefined,
     dismissed: Array.isArray(v.dismissed) ? v.dismissed.filter((d) => typeof d === "string") : undefined,
-    profile: v.profile && v.profile.seniority in SENIORITY_LABELS && v.profile.track in TRACK_LABELS ? v.profile : undefined,
   };
 }
 
@@ -67,7 +63,7 @@ function loadSaved(key?: string): Saved {
 // Everything comes from the server through `api`: messages, kocha's replies, and the CV and
 // tips her replies carry (see AGENTS.md). Polls instead of pushing: file watching is unreliable
 // across container volume mounts.
-// With `persistKey`, the stage and the user's choices (design picks, profile, dismissed tips)
+// With `persistKey`, the stage and the user's choices (design picks, dismissed tips)
 // are kept in this browser, so a reload returns to the same place. The real app passes it;
 // stories don't, so they never share saved state.
 export function AppPage({
@@ -174,27 +170,20 @@ export function AppPage({
     [cv.data, cv.patch, cv.byTemplate, template, palette, typography],
   );
 
-  // Tips: dismissed locally; changing seniority or track asks kocha to redo them.
+  // Tips: dismissed locally. Seniority and track are inferred by kocha (docs/prompts/prep-points.md).
   const [dismissed, setDismissed] = useState<string[]>(saved.dismissed ?? []);
-  const [profile, setProfile] = useState<Profile | null>(saved.profile ?? null);
 
   useEffect(() => {
     if (!persistKey) return;
-    const state: Saved = { stage, template, palette, typography, themeKey, dismissed, profile: profile ?? undefined };
+    const state: Saved = { stage, template, palette, typography, themeKey, dismissed };
     try {
       localStorage.setItem(persistKey, JSON.stringify(state));
     } catch {
       // Storage blocked (private mode): the page still works, it just won't remember.
     }
-  }, [persistKey, stage, template, palette, typography, themeKey, dismissed, profile]);
-  const shownProfile = profile ?? tips?.profile ?? null;
+  }, [persistKey, stage, template, palette, typography, themeKey, dismissed]);
   const jobFit = (tips?.jobFit ?? []).filter((p) => !dismissed.includes(p.id));
   const points = (tips?.points ?? []).filter((p) => !dismissed.includes(p.id));
-  function changeProfile(s: Seniority, t: Track) {
-    const next = { seniority: t === "management" && s === "junior" ? ("mid" as const) : s, track: t };
-    setProfile(next);
-    send(`עדכון פרופיל: רמה ${SENIORITY_LABELS[next.seniority]}, מסלול ${TRACK_LABELS[next.track]}. אפשר לעדכן את הטיפים בהתאם?`);
-  }
 
   function send(text: string) {
     api.send(text).catch(fail);
@@ -290,30 +279,10 @@ export function AppPage({
                   </div>
                   {/* Private to the candidate, never part of the CV. */}
                   <Drawer title="טיפים לשיפור" count={jobFit.length + points.length} placement="top">
-                    {shownProfile && (
-                      <div className="app-page-prep-profile">
-                        {tips?.target && (
-                          <p className="app-page-prep-target" dir="auto">
-                            משרה: {tips.target}
-                          </p>
-                        )}
-                        <Select
-                          compact
-                          label="רמה"
-                          value={shownProfile.seniority}
-                          options={shownProfile.track === "management" ? (["mid", "senior"] as const) : (["junior", "mid", "senior"] as const)}
-                          labels={SENIORITY_LABELS}
-                          onChange={(s) => changeProfile(s, shownProfile.track)}
-                        />
-                        <Select
-                          compact
-                          label="מסלול"
-                          value={shownProfile.track}
-                          options={["hands-on", "management"] as const}
-                          labels={TRACK_LABELS}
-                          onChange={(t) => changeProfile(shownProfile.seniority, t)}
-                        />
-                      </div>
+                    {tips?.target && (
+                      <p className="app-page-prep-target" dir="auto">
+                        משרה: {tips.target}
+                      </p>
                     )}
                     {tips ? (
                       <PrepPoints

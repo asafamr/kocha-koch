@@ -14,8 +14,9 @@ container). The Gemini app keeps its messages in memory (`STORE=memory`); you ne
   `CvData` (`frontend/cv/data.ts`), English, built by `docs/prompts/cv-content.md`. `tips` =
   `{ profile, target, strengths, jobFit, points }` (`docs/prompts/prep-points.md`). The page
   shows the latest `cv.data` and `tips` any reply sent.
-- Answer the intake with `cv.data` and `tips`. A message starting `עדכון פרופיל:` means the user
-  changed seniority or track: send new `tips`.
+- Answer the intake with `cv.data` and `tips`. Infer seniority and track yourself
+  (`docs/prompts/prep-points.md`); the user does not pick them. Send new `tips` when the CV or
+  the target changes.
 - A message is pending while its outbox file does not exist.
 
 ## Answering messages

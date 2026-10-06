@@ -7,8 +7,6 @@ export type Seniority = "junior" | "mid" | "senior";
 export type Track = "hands-on" | "management";
 export type PrepSample = { target: string; strengths: PrepStrength[]; jobFit: PrepPoint[]; points: PrepPoint[] };
 
-export const SENIORITY_LABELS: Record<Seniority, string> = { junior: "ג'וניור", mid: "מיד", senior: "בכיר" };
-export const TRACK_LABELS: Record<Track, string> = { "hands-on": "מקצועי", management: "ניהולי" };
 
 // Sources cited in docs/cv-weak-points-research.md and docs/cv-knowledge-base.md.
 const GAP_STUDIES: PrepEvidence[] = [
