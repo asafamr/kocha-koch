@@ -169,6 +169,32 @@ async function api(req: Request, pathname: string, s: Session): Promise<Response
   return new Response("not found", { status: 404 });
 }
 
+// Security headers on every response outside dev (dev's hot reload needs looser rules). The page
+// loads only its own bundle, fonts and images; inline styles are React style props.
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join("; ");
+function secure(res: Response, req: Request): Response {
+  if (DEV) return res;
+  const h = res.headers;
+  h.set("content-security-policy", CSP);
+  h.set("x-content-type-options", "nosniff");
+  h.set("x-frame-options", "DENY");
+  h.set("referrer-policy", "strict-origin-when-cross-origin");
+  h.set("permissions-policy", "camera=(), microphone=(), geolocation=()");
+  if (req.headers.get("x-forwarded-proto") === "https") h.set("strict-transport-security", "max-age=31536000");
+  return res;
+}
+
 async function serveStatic(pathname: string) {
   const path = normalize(join(DIST, pathname === "/" ? "index.html" : pathname));
   if (!path.startsWith(DIST)) return new Response("forbidden", { status: 403 });
@@ -182,11 +208,11 @@ Bun.serve({
   routes: DEV ? { "/": (await import("../frontend/index.html")).default } : undefined,
   async fetch(req, server) {
     const { pathname } = new URL(req.url);
-    if (!pathname.startsWith("/api/")) return serveStatic(pathname);
+    if (!pathname.startsWith("/api/")) return secure(await serveStatic(pathname), req);
     const s = sessionOf(req, server.requestIP(req)?.address ?? "");
     const res = await api(req, pathname, s);
     if (s.setCookie) res.headers.append("set-cookie", s.setCookie);
-    return res;
+    return secure(res, req);
   },
 });
 

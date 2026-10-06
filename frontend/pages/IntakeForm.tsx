@@ -12,7 +12,17 @@ export type Intake = { cv: File; role: string; jobDescription: string; consents:
 
 // Stage 1: kocha's opening words, then current CV, target role, optional job description, consent.
 // Next is enabled once a CV file and a target role are present.
-export function IntakeForm({ onNext, sending = false }: { onNext: (intake: Intake) => void; sending?: boolean }) {
+// `backend` says who processes the CV, for the privacy note: "gemini" (the managed version) or
+// "files" (a local run answered by the user's own AI tool).
+export function IntakeForm({
+  onNext,
+  sending = false,
+  backend,
+}: {
+  onNext: (intake: Intake) => void;
+  sending?: boolean;
+  backend?: string;
+}) {
   const [cv, setCv] = useState<File | null>(null);
   const [role, setRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
@@ -69,6 +79,11 @@ export function IntakeForm({ onNext, sending = false }: { onNext: (intake: Intak
         />
       ))}
       <p className="intake-privacy">
+        {backend === "gemini"
+          ? "קורות החיים והשיחה מעובדים בעזרת Gemini של Google, נשמרים רק בזיכרון השרת, ונמחקים אחרי 6 שעות בלי פעילות או כשלוחצים על \"התחלה מחדש\". "
+          : backend === "files"
+            ? "הכלי רץ אצלכם: קורות החיים נשמרים בתיקייה .messages במחשב שלכם ומעובדים על ידי כלי ה־AI שבחרתם. "
+            : ""}
         רוצים פרטיות מלאה? הכלי הזה הוא{" "}
         <a href={REPO_URL} target="_blank" rel="noopener">
           קוד פתוח ב־GitHub

@@ -31,7 +31,7 @@ export const sectionOrder = (cv: CvData): SectionKey[] =>
 export const SAMPLE_CV: CvData = {
   name: "Noa Levi",
   title: "Senior Full Stack Developer",
-  contact: { phone: "+972-50-321-4450", email: "noa.levi@example.com", city: "Tel Aviv", linkedin: "linkedin.com/in/noalevi" },
+  contact: { phone: "+972-50-000-0000", email: "noa.levi@example.com", city: "Tel Aviv", linkedin: "linkedin.com/in/example" },
   summary:
     "Full stack developer with 7 years of experience building large-scale SaaS products. Leads small teams, writes clean code and measures every change.",
   experience: [
@@ -72,7 +72,7 @@ export const SAMPLE_CV: CvData = {
 export const SAMPLE_CV_JUNIOR: CvData = {
   name: "Dana Mizrahi",
   title: "Junior Backend Developer",
-  contact: { phone: "+972-52-118-9034", email: "dana.mizrahi@example.com", city: "Haifa" },
+  contact: { phone: "+972-52-000-0000", email: "dana.mizrahi@example.com", city: "Haifa" },
   order: ["education", "sections", "experience", "skills"],
   experience: [
     {

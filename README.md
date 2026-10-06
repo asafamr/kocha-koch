@@ -80,3 +80,8 @@ The agent containers see only this repo, so AI CLIs run without permission promp
 touching the host. Ports bind to `127.0.0.1` only.
 
 Development, Storybook and the code map: [DEVELOPING.md](DEVELOPING.md).
+
+## License and security
+
+Apache-2.0 ([LICENSE](LICENSE)). The fonts are SIL OFL 1.1. Please report security issues
+privately to hi@kocha.co.il rather than in a public issue.
