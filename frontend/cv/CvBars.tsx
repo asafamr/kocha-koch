@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Bullets, contactItems, type CvProps, Dates, has, joined, Page } from "./parts";
+import { Bullets, contactItems, type CvProps, Dates, has, inOrder, joined, Page } from "./parts";
 
 // 3. Bars: uppercase section headings on full-width light-gray bars,
 // name and title at start with contact stacked at end, dates at the end of each row.
@@ -57,53 +57,51 @@ export function CvBars({ cv, palette = "Ink", typography = "Literata" }: CvProps
         </Section>
       )}
 
-      {has(cv.experience) && (
-        <Section title="Experience">
-          {cv.experience.map((j) => (
-            <div key={j.company + j.role} className="cv-entry">
-              <div className="cv-row">
-                <span>
-                  <strong>{j.role}</strong> | {joined(j.company, j.location)}
-                </span>
-                <Dates>{j.dates}</Dates>
+      {inOrder(cv, {
+        experience: has(cv.experience) && (
+          <Section title="Experience">
+            {cv.experience.map((j) => (
+              <div key={j.company + j.role} className="cv-entry">
+                <div className="cv-row">
+                  <span>
+                    <strong>{j.role}</strong> | {joined(j.company, j.location)}
+                  </span>
+                  <Dates>{j.dates}</Dates>
+                </div>
+                <Bullets items={j.bullets} />
               </div>
-              <Bullets items={j.bullets} />
-            </div>
-          ))}
-        </Section>
-      )}
-
-      {cv.sections?.filter((s) => has(s.entries)).map((s) => (
-        <Section key={s.title} title={s.title}>
-          {s.entries.map((e) => (
-            <Entry key={e.head} {...e} />
-          ))}
-        </Section>
-      ))}
-
-      {has(cv.education) && (
-        <Section title="Education">
-          {cv.education.map((e) => (
-            <Entry key={e.degree} head={e.degree} sub={e.school} dates={e.dates} />
-          ))}
-        </Section>
-      )}
-
-      {cv.military && (
-        <Section title="Military Service">
-          <Entry head={cv.military.role} sub={cv.military.unit} dates={cv.military.dates} />
-        </Section>
-      )}
-
-      {has(cv.skills) && (
-        <Section title="Skills">
-          {cv.skills.map((s) => (
-            <p key={s.label}>
-              <strong>{s.label}:</strong> <bdi>{s.items}</bdi>
-            </p>
-          ))}
-        </Section>
-      )}
+            ))}
+          </Section>
+        ),
+        sections: cv.sections?.filter((s) => has(s.entries)).map((s) => (
+          <Section key={s.title} title={s.title}>
+            {s.entries.map((e) => (
+              <Entry key={e.head} {...e} />
+            ))}
+          </Section>
+        )),
+        education: has(cv.education) && (
+          <Section title="Education">
+            {cv.education.map((e) => (
+              <Entry key={e.degree} head={e.degree} sub={e.school} dates={e.dates} />
+            ))}
+          </Section>
+        ),
+        military: cv.military && (
+          <Section title="Military Service">
+            <Entry head={cv.military.role} sub={cv.military.unit} dates={cv.military.dates} />
+          </Section>
+        ),
+        skills: has(cv.skills) && (
+          <Section title="Skills">
+            {cv.skills.map((s) => (
+              <p key={s.label}>
+                <strong>{s.label}:</strong> <bdi>{s.items}</bdi>
+              </p>
+            ))}
+          </Section>
+        ),
+      })}
     </Page>
   );
 }

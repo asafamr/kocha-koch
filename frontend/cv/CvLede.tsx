@@ -1,7 +1,8 @@
-import { Bullets, contactItems, type CvProps, Dates, has, joined, Page } from "./parts";
+import { Bullets, contactItems, type CvProps, Dates, has, inOrder, joined, Page } from "./parts";
 
 // 5. Lede: one column, no rules. The summary is set large as the opening statement;
-// education, service and skills sit in short columns at the foot.
+// education and service share one block of short columns (placed where cv.order puts
+// education), and skills sit in short columns too.
 function Entry({ head, sub, dates, bullets }: { head: string; sub?: string; dates?: string; bullets?: string[] }) {
   return (
     <div className="cv-entry">
@@ -37,50 +38,49 @@ export function CvLede({ cv, palette = "Vermilion", typography = "Editorial" }: 
       </header>
       {cv.summary && <p className="cv-summary">{cv.summary}</p>}
 
-      {has(cv.experience) && (
-        <>
-          <h2>Experience</h2>
-          {cv.experience.map((j) => (
-            <Entry key={j.company + j.role} head={j.role} sub={joined(j.company, j.location)} dates={j.dates} bullets={j.bullets} />
-          ))}
-        </>
-      )}
-
-      {cv.sections?.filter((s) => has(s.entries)).map((s) => [
-        <h2 key={s.title}>{s.title}</h2>,
-        ...s.entries.map((e) => <Entry key={`${s.title}/${e.head}`} {...e} />),
-      ])}
-
-      {has(foot) && (
-        <>
-          <h2>{footTitle}</h2>
-          <div className="cv-ld-cols two">
-            {foot.map((e) => (
-              <div key={e.key}>
-                <strong>{e.head}</strong>
-                {e.sub && <div className="cv-meta">{e.sub}</div>}
-                {e.dates && <Dates>{e.dates}</Dates>}
-              </div>
+      {inOrder(cv, {
+        experience: has(cv.experience) && (
+          <>
+            <h2>Experience</h2>
+            {cv.experience.map((j) => (
+              <Entry key={j.company + j.role} head={j.role} sub={joined(j.company, j.location)} dates={j.dates} bullets={j.bullets} />
             ))}
-          </div>
-        </>
-      )}
-
-      {has(cv.skills) && (
-        <>
-          <h2>Skills</h2>
-          <dl className="cv-ld-cols">
-            {cv.skills.map((s) => (
-              <div key={s.label}>
-                <dt>{s.label}</dt>
-                <dd>
-                  <bdi>{s.items}</bdi>
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </>
-      )}
+          </>
+        ),
+        sections: cv.sections?.filter((s) => has(s.entries)).map((s) => [
+          <h2 key={s.title}>{s.title}</h2>,
+          ...s.entries.map((e) => <Entry key={`${s.title}/${e.head}`} {...e} />),
+        ]),
+        education: has(foot) && (
+          <>
+            <h2>{footTitle}</h2>
+            <div className="cv-ld-cols two">
+              {foot.map((e) => (
+                <div key={e.key}>
+                  <strong>{e.head}</strong>
+                  {e.sub && <div className="cv-meta">{e.sub}</div>}
+                  {e.dates && <Dates>{e.dates}</Dates>}
+                </div>
+              ))}
+            </div>
+          </>
+        ),
+        skills: has(cv.skills) && (
+          <>
+            <h2>Skills</h2>
+            <dl className="cv-ld-cols">
+              {cv.skills.map((s) => (
+                <div key={s.label}>
+                  <dt>{s.label}</dt>
+                  <dd>
+                    <bdi>{s.items}</bdi>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </>
+        ),
+      })}
     </Page>
   );
 }

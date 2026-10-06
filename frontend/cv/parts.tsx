@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import type { CvData } from "./data";
+import { Fragment, type ReactNode } from "react";
+import type { CvData, SectionKey } from "./data";
 import { themeVars, type PaletteName, type TypographyName } from "./theme";
 import "./cv-fonts.css";
 import "./cv.css";
@@ -41,6 +41,15 @@ export function contactItems(c: CvData["contact"]): ReactNode[] {
     c.email && <Ltr key="e">{c.email}</Ltr>,
     c.linkedin && <Ltr key="l">{c.linkedin}</Ltr>,
   ].filter(Boolean);
+}
+
+// A template's section blocks: those in cv.order first, in that order, then the rest in the
+// order the template passes them (its usual layout). Two-column templates call this per column.
+export function inOrder(cv: CvData, blocks: Partial<Record<SectionKey, ReactNode>>): ReactNode[] {
+  const keys = Object.keys(blocks) as SectionKey[];
+  return [...(cv.order ?? []).filter((k) => keys.includes(k)), ...keys]
+    .filter((k, i, all) => all.indexOf(k) === i)
+    .map((k) => <Fragment key={k}>{blocks[k]}</Fragment>);
 }
 
 // Sections are optional: render one only if it has items.

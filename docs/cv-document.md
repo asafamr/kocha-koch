@@ -27,8 +27,10 @@ type DomOp =
 
 In `data` only `name` is required. A missing or empty section is left out of the page, heading
 and all. Sections the fixed fields do not cover (Projects, Certifications, Publications...) go in
-`data.sections` as `{ title, entries: [{ head, sub?, dates?, bullets? }] }`. How to fill `data`:
-`docs/prompts/cv-content.md`.
+`data.sections` as `{ title, entries: [{ head, sub?, dates?, bullets? }] }`. `data.order` sets the
+section order, e.g. `["education", "sections", "experience"]` for a junior; unlisted sections
+follow in the template's usual order, and two-column templates apply it within each column. How to fill
+`data`: `docs/prompts/cv-content.md`.
 
 ## Which layer to change
 

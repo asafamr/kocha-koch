@@ -16,7 +16,17 @@ export type CvData = {
   education?: { degree: string; school?: string; dates?: string }[];
   military?: { role: string; unit?: string; dates?: string };
   skills?: { label: string; items: string }[];
+  // Section order, e.g. ["education", "sections", "experience"] for a junior (knowledge base H6).
+  // Unlisted sections follow in the template's usual order. Two-column templates apply it per column.
+  order?: SectionKey[];
 };
+
+export type SectionKey = "experience" | "sections" | "education" | "military" | "skills";
+export const DEFAULT_ORDER: SectionKey[] = ["experience", "sections", "education", "military", "skills"];
+
+// The CV's section keys in display order (for the outline): its own order, then DEFAULT_ORDER.
+export const sectionOrder = (cv: CvData): SectionKey[] =>
+  [...(cv.order ?? []), ...DEFAULT_ORDER].filter((k, i, all) => DEFAULT_ORDER.includes(k) && all.indexOf(k) === i);
 
 export const SAMPLE_CV: CvData = {
   name: "Noa Levi",
@@ -57,11 +67,13 @@ export const SAMPLE_CV: CvData = {
 };
 
 // A junior CV with only some sections: no summary, no military service, no LinkedIn, and a
-// Projects section (knowledge base tip H6). Templates must render it without empty headings.
+// Projects section, and education first (knowledge base tip H6). Templates must render it
+// without empty headings.
 export const SAMPLE_CV_JUNIOR: CvData = {
   name: "Dana Mizrahi",
   title: "Junior Backend Developer",
   contact: { phone: "+972-52-118-9034", email: "dana.mizrahi@example.com", city: "Haifa" },
+  order: ["education", "sections", "experience", "skills"],
   experience: [
     {
       role: "Software Engineering Intern",

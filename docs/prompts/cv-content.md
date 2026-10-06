@@ -38,6 +38,12 @@ order and wording. You never change facts.
    and any question you need answered. When something on the CV could mislead a recruiter (e.g.
    an exam code that looks like a skill), say so.
 
-The templates order sections as: summary, experience, other `sections`, education, military,
-skills. Choose `theme` only when asked or when the current one cannot fit the page; check
-renderer warnings for any `patch`.
+8. **Section order.** The summary is always first. Set `order` when the default (experience,
+   other `sections`, education, military, skills) does not fit:
+   - Students and new graduates: `["education", "sections", "experience"]`, so the degree and
+     projects come before a short work history (H6).
+   - Career changers: relevant projects or courses before unrelated jobs (H5).
+   - Otherwise leave `order` out.
+
+Choose `theme` only when asked or when the current one cannot fit the page; check renderer
+warnings for any `patch`.
