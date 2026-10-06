@@ -16,7 +16,7 @@ import { TypingIndicator } from "../components/TypingIndicator";
 import { CvDocumentView } from "../cv/CvDocumentView";
 import type { CvData } from "../cv/data";
 import type { CvDocument, CvPatch } from "../cv/document";
-import { downloadCvHtml } from "../cv/exportHtml";
+import { downloadCvHtml, downloadCvPdf } from "../cv/exportHtml";
 import { PALETTE_LABELS, TEMPLATE_LABELS, TYPOGRAPHY_LABELS } from "../cv/labels";
 import { cvToOutline } from "../cv/outline";
 import { TEMPLATES, type TemplateName } from "../cv/templates";
@@ -220,13 +220,13 @@ export function AppPage({
           <IntakeForm onNext={submitIntake} sending={sending} />
         </section>
       ) : stage === 3 ? (
-        // Export, laid out like the intake form. PDF: print dialog with print-only CV.
-        // TODO: server renderer for PDF, and a real booking link.
+        // Export, laid out like the intake form. PDF from the server; print dialog as fallback.
+        // TODO: a real booking link.
         <section className="app-page-form" aria-label={STAGES[3]}>
           {doc ? (
             <ExportPanel
               doc={doc}
-              onExportPdf={() => window.print()}
+              onExportPdf={() => downloadCvPdf(doc, api.pdf)}
               onExportHtml={() => downloadCvHtml(doc)}
               onBookPractice={() => {}}
             />

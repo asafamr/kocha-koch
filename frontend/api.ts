@@ -13,6 +13,7 @@ export type Api = {
   load(): Promise<Snapshot>;
   send(text: string): Promise<void>;
   sendIntake(intake: IntakeForm): Promise<void>;
+  pdf(html: string): Promise<Blob>; // self-contained CV HTML (cv/exportHtml.ts) -> PDF
 };
 
 export const httpApi: Api = {
@@ -37,6 +38,11 @@ export const httpApi: Api = {
     form.set("consent", String(consent));
     const res = await fetch("/api/intake", { method: "POST", body: form });
     if (!res.ok) throw new Error(`intake failed: ${res.status}`);
+  },
+  async pdf(html) {
+    const res = await fetch("/api/pdf", { method: "POST", headers: { "content-type": "text/html" }, body: html });
+    if (!res.ok) throw new Error(`pdf failed: ${res.status}`);
+    return res.blob();
   },
 };
 

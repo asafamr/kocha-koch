@@ -5,7 +5,12 @@ import { SAMPLE_CV } from "../cv/data";
 // A server stand-in for stories: fixed messages; sends are accepted and dropped.
 export function fakeApi(messages: ThreadItem[]): Api {
   const snapshot: Snapshot = { backend: "fake", messages };
-  return { load: async () => snapshot, send: async () => {}, sendIntake: async () => {} };
+  return {
+    load: async () => snapshot,
+    send: async () => {},
+    sendIntake: async () => {},
+    pdf: async () => Promise.reject(new Error("no server")), // export falls back to the print dialog
+  };
 }
 
 const ts = "2026-10-05T09:00:00.000Z";

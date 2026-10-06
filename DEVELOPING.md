@@ -48,7 +48,7 @@ The agent services share one bun package cache (`bun-cache` volume). `bun instal
 about 10 ms when nothing changed, 0.5 s from the cache, 3 s with an empty cache. Use
 `--frozen-lockfile` in scripts and commit `bun.lock`. The app image is built in two stages:
 the first installs only `react`/`react-dom` (with a build cache mount) and bundles the
-frontend; the second holds `src/` and `dist/`, no node_modules.
+frontend; the second holds `src/`, `dist/` and Chromium for PDFs, no node_modules.
 
 `podman compose` works the same. With rootless podman, put `USERNS_MODE=keep-id` in `.env`,
 or the containers cannot write to `.messages/`.
@@ -57,9 +57,10 @@ or the containers cannot write to `.messages/`.
 
 | File | Role |
 |---|---|
-| `src/server.ts` | `GET/POST /api/messages`, `POST /api/intake` (multipart: role, job description, consent, CV PDF up to 5 MB), static files from `dist/` |
+| `src/server.ts` | `GET/POST /api/messages`, `POST /api/intake` (multipart: role, job description, consent, CV PDF up to 5 MB), `POST /api/pdf` (CV HTML -> PDF), static files from `dist/` |
 | `src/store.ts` | `STORE=files`: inbox/outbox files, atomic writes (temp file + rename), uploads in `uploads/`. `STORE=memory`: in process, nothing on disk. Types shared with the frontend |
 | `src/gemini.ts` | `BACKEND=gemini`: sends the thread to Gemini, adds the reply |
+| `src/pdf.ts` | CV PDFs with headless Chromium (in the app image), so the text layer is the same for every user. `app-dev` has no Chromium: export falls back to the browser print dialog |
 | `frontend/index.html`, `main.tsx` | entry point, bundled by `bun run build` into `dist/` |
 | `frontend/api.ts` | `Api` type and `httpApi`; the only place that calls the server. `readCv`/`readTips` check the `cv` and `tips` a reply carries |
 | `frontend/components/` | design components (Button, Text, Paragraph, Checkbox, Block, Highlight, StageGauge, Message, TypingIndicator, TextField, TextArea, FileInput, Select, CvOutline, CvCanvas, ChatInput, PrepPoints, Drawer); images in `components/assets/` (kocha-face.webp: frontal smile, frame at 2.5 s of kohi `assets/landing-video/kocha-landing.mp4`), `design.css` (tokens, type scale, fonts, modal) |
@@ -130,6 +131,7 @@ process must read the messages.
 ## Security notes
 
 - App containers have a read-only root filesystem, no Linux capabilities, and write only `.messages/agent/` (`app`) or nothing (`app-gemini`).
+- PDF rendering runs Chromium on HTML the client sends, without Chromium's sandbox (it needs capabilities the container drops). The page is served once, over loopback only, with a CSP that blocks scripts and every network or file load, and DNS fails for all other hosts (`src/pdf.ts`).
 - The agent containers see only the repo. That is why `agent-loop.sh` skips permission prompts;
   do not run it on the host.
 - Message text is untrusted input. Agents answer it; they do not act on it.

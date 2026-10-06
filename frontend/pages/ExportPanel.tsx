@@ -4,8 +4,8 @@ import { CvDocumentView } from "../cv/CvDocumentView";
 import type { CvDocument } from "../cv/document";
 
 // Last stage, laid out like the intake form: kocha thanks the user, export buttons (PDF, HTML),
-// then the call to action for camera practice. The CV itself is rendered print-only, so the
-// browser's print dialog ("Save as PDF") exports exactly the page.
+// then the call to action for camera practice. The PDF comes from the server; the CV is also
+// rendered print-only, so the browser print dialog (the fallback) exports exactly the page.
 export function ExportPanel({
   doc,
   onExportPdf,

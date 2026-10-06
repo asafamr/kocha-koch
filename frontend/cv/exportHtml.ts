@@ -70,11 +70,26 @@ ${css}
 }
 
 export async function downloadCvHtml(doc: CvDocument) {
-  const file = await cvHtmlFile(doc);
-  const url = URL.createObjectURL(new Blob([file], { type: "text/html" }));
+  download(new Blob([await cvHtmlFile(doc)], { type: "text/html" }), `${fileBase(doc)}.html`);
+}
+
+// PDF rendered by the server (src/pdf.ts) from the same HTML file. If the server cannot render,
+// fall back to the browser's print dialog over the print-only copy of the page.
+export async function downloadCvPdf(doc: CvDocument, toPdf: (html: string) => Promise<Blob>) {
+  try {
+    download(await toPdf(await cvHtmlFile(doc)), `${fileBase(doc)}.pdf`);
+  } catch {
+    window.print();
+  }
+}
+
+const fileBase = (doc: CvDocument) => `${doc.data.name.replace(/\s+/g, "-")}-CV`;
+
+function download(blob: Blob, name: string) {
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${doc.data.name.replace(/\s+/g, "-")}-CV.html`;
+  a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

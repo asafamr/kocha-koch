@@ -7,8 +7,10 @@ COPY frontend ./frontend
 COPY src ./src
 RUN bun run build
 
-# Stage 2: server + static bundle, no node_modules.
+# Stage 2: server + static bundle, no node_modules. Chromium renders CV PDFs (src/pdf.ts);
+# DejaVu is a fallback for glyphs the CV's embedded fonts lack.
 FROM oven/bun:1-alpine
+RUN apk add --no-cache chromium font-dejavu
 WORKDIR /app
 COPY src ./src
 COPY --from=build /app/dist ./dist

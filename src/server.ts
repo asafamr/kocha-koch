@@ -1,6 +1,7 @@
 import { join, normalize } from "node:path";
 import { addMessage, addReply, saveUpload, STORE, thread } from "./store";
 import { answer } from "./gemini";
+import { htmlToPdf, MAX_HTML, pdfAvailable, printPage } from "./pdf";
 
 const BACKEND = process.env.BACKEND ?? "files"; // "files" | "gemini"
 if (BACKEND === "files" && STORE !== "files") {
@@ -55,6 +56,20 @@ async function postIntake(req: Request) {
   return Response.json(msg, { status: 201 });
 }
 
+// The CV as a PDF: the body is the self-contained CV HTML the frontend builds (cv/exportHtml.ts).
+async function postPdf(req: Request) {
+  if (!pdfAvailable) return Response.json({ error: "pdf rendering is not available here" }, { status: 503 });
+  if (Number(req.headers.get("content-length") ?? 0) > MAX_HTML) return Response.json({ error: "too large" }, { status: 413 });
+  const html = await req.text();
+  if (!html || html.length > MAX_HTML) return Response.json({ error: "bad html" }, { status: 400 });
+  try {
+    return new Response(await htmlToPdf(html, PORT), { headers: { "content-type": "application/pdf" } });
+  } catch (e) {
+    console.error("pdf:", e);
+    return Response.json({ error: "pdf rendering failed" }, { status: 500 });
+  }
+}
+
 async function serveStatic(pathname: string) {
   const path = normalize(join(DIST, pathname === "/" ? "index.html" : pathname));
   if (!path.startsWith(DIST)) return new Response("forbidden", { status: 403 });
@@ -66,7 +81,7 @@ Bun.serve({
   port: PORT,
   development: DEV && { hmr: true },
   routes: DEV ? { "/": (await import("../frontend/index.html")).default } : undefined,
-  async fetch(req) {
+  async fetch(req, server) {
     const { pathname } = new URL(req.url);
     if (pathname === "/api/messages") {
       if (req.method === "GET") return Response.json({ backend: BACKEND, messages: await thread() });
@@ -76,8 +91,12 @@ Bun.serve({
     if (pathname === "/api/intake") {
       return req.method === "POST" ? postIntake(req) : new Response("method not allowed", { status: 405 });
     }
+    if (pathname === "/api/pdf") {
+      return req.method === "POST" ? postPdf(req) : new Response("method not allowed", { status: 405 });
+    }
+    if (pathname.startsWith("/print/")) return printPage(pathname.slice("/print/".length), server.requestIP(req)?.address);
     return serveStatic(pathname);
   },
 });
 
-console.log(`listening on :${PORT} (backend=${BACKEND}, store=${STORE}${DEV ? ", dev" : ""})`);
+console.log(`listening on :${PORT} (backend=${BACKEND}, store=${STORE}${DEV ? ", dev" : ""}${pdfAvailable ? ", pdf" : ""})`);
