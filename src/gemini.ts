@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { lookup, researchIndex } from "./kb";
+import { addSpend, bucket, cacheCost, canSpend, turnCost } from "./spend";
 import { addReply, getUpload, thread, type ThreadItem } from "./store";
 
 const MODEL = process.env.GEMINI_MODEL ?? "gemini-3.8-flash";
@@ -93,6 +94,7 @@ async function cachedInstructions(): Promise<string | null> {
   }
   const c: any = await res.json();
   cache = { name: c.name, expires: Date.parse(c.expireTime) };
+  addSpend(cacheCost(c.usageMetadata?.totalTokenCount ?? 0, 1));
   console.log(`gemini cache ${c.name} tokens=${c.usageMetadata?.totalTokenCount ?? "?"} until ${c.expireTime}`);
   return c.name;
 }
@@ -164,9 +166,13 @@ async function generate(id: string, contents: Content[], thinkingBefore: number,
 
 // Usage per model turn, so cost and caching show in the logs.
 function logUsage(id: string, round: number, u: any, ms: number, note: string) {
+  const cost = turnCost(u);
+  addSpend(cost);
+  const b = bucket();
   console.log(
     `gemini ${id} round ${round}: in=${u.promptTokenCount ?? "?"} cached=${u.cachedContentTokenCount ?? 0} ` +
-      `out=${u.candidatesTokenCount ?? 0} thinking=${u.thoughtsTokenCount ?? 0} ${ms}ms ${note}`,
+      `out=${u.candidatesTokenCount ?? 0} thinking=${u.thoughtsTokenCount ?? 0} ${ms}ms $${cost.toFixed(4)} ` +
+      `bucket=$${b.level.toFixed(3)}/$${b.capacity} ${note}`,
   );
 }
 
@@ -184,6 +190,12 @@ function parseReply(raw: string): { text?: unknown; cv?: unknown; tips?: unknown
 // the same id, with the CV and tips the model sent. Works with either store.
 export async function answer(id: string) {
   if (!KEY) throw new Error("GEMINI_API_KEY is not set");
+  if (!canSpend()) {
+    // This pod's spend limit (src/spend.ts) is used up: refuse politely until it drains.
+    console.log(`gemini ${id} refused: spend limit ($${bucket().level.toFixed(3)} in the bucket)`);
+    await addReply(id, "קוחה עמוסה כרגע. נסו לשלוח שוב בעוד כמה דקות.", "server");
+    return;
+  }
   progress.set(id, { phase: "thinking", startedAt: Date.now(), thinkingTokens: 0 });
   try {
     const contents: Content[] = [];

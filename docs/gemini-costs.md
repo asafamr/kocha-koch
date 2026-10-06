@@ -63,6 +63,17 @@ summaries), so a two-minute answer does not look stuck.
 Storage of the cache (~11k tokens) costs about $0.006 per hour it exists; it is recreated on
 demand after it expires.
 
+## Spend limit
+
+`src/spend.ts` caps spend per process (one pod on Cloud Run) with a leaky bucket in dollars:
+each model turn adds its cost (from Gemini's token counts; creating the cache adds an hour of
+storage), and the bucket drains at `GEMINI_SPEND_PER_HOUR` (default $10). It holds at most
+`GEMINI_SPEND_BURST` (default one hour's worth) and starts empty, so a new pod has the full
+allowance. While it is full, new answers get "קוחה עמוסה כרגע" until it drains. Prices are
+`GEMINI_PRICE_INPUT`, `GEMINI_PRICE_CACHED`, `GEMINI_PRICE_OUTPUT` and
+`GEMINI_PRICE_CACHE_STORAGE` ($ per 1M tokens); update them when prices change (they double on
+2027-01-01). Each turn's log line shows its cost and the bucket level.
+
 ## Not done yet
 
 - Replies resend the whole CV (~1.7k output tokens) even for a one-line change.
