@@ -204,6 +204,32 @@ export function AppPage({
   // Stages after the intake can be opened from the gauge once the intake is sent.
   const intakeSent = messages.some((m) => m.intake);
 
+  // Start over: the server archives the conversation; this browser forgets its saved state.
+  const [confirmReset, setConfirmReset] = useState(false);
+  async function startOver() {
+    try {
+      await api.reset();
+    } catch (e) {
+      fail(e);
+      return;
+    }
+    try {
+      if (persistKey) localStorage.removeItem(persistKey);
+    } catch {
+      // storage blocked: nothing saved to forget
+    }
+    setSnapshot((s) => ({ backend: s?.backend ?? "", messages: [] }));
+    setStage(0);
+    setTemplate("Ledger");
+    setPalette("Slate");
+    setTypography("Bricolage");
+    setThemeKey(undefined);
+    setDismissed([]);
+    setOverflowMm(0);
+    setPdf({ status: "idle" });
+    setConfirmReset(false);
+  }
+
   async function submitIntake(intake: Parameters<Api["sendIntake"]>[0]) {
     setSending(true);
     try {
@@ -221,6 +247,23 @@ export function AppPage({
       <h1 className="ds-sr-only">קוחה</h1>
       <div className="app-page-stages">
         <StageGauge label="שלבי העבודה" stages={STAGES} current={stage} onSelect={setStage} canSelect={(i) => i > 0 && intakeSent} />
+        {messages.length > 0 && (
+          <div className="app-page-reset">
+            {confirmReset ? (
+              <div role="group" aria-label="התחלה מחדש" className="app-page-reset-confirm">
+                <span>למחוק את השיחה ואת קורות החיים ולהתחיל מחדש?</span>
+                <Button variant="secondary" onClick={startOver}>
+                  כן, להתחיל מחדש
+                </Button>
+                <Button onClick={() => setConfirmReset(false)}>ביטול</Button>
+              </div>
+            ) : (
+              <button type="button" className="app-page-reset-link" onClick={() => setConfirmReset(true)}>
+                התחלה מחדש
+              </button>
+            )}
+          </div>
+        )}
         <div role="alert" className="app-page-error">
           {error && `משהו השתבש בחיבור לשרת (${error}). מנסים שוב…`}
         </div>
@@ -238,7 +281,6 @@ export function AppPage({
             <ExportPanel
               pdf={pdf}
               onExportPdf={() => exportPdf(doc)}
-              onBack={() => setStage(2)}
               onExportHtml={() => downloadCvHtml(doc)}
               onBookPractice={() => {}}
             />

@@ -14,6 +14,7 @@ export type Api = {
   send(text: string): Promise<void>;
   sendIntake(intake: IntakeForm): Promise<void>;
   pdf(html: string): Promise<Blob>; // self-contained CV HTML (cv/exportHtml.ts) -> PDF
+  reset(): Promise<void>; // start over: the server archives the conversation
 };
 
 export const httpApi: Api = {
@@ -43,6 +44,10 @@ export const httpApi: Api = {
     const res = await fetch("/api/pdf", { method: "POST", headers: { "content-type": "text/html" }, body: html });
     if (!res.ok) throw new Error(`pdf failed: ${res.status}`);
     return res.blob();
+  },
+  async reset() {
+    const res = await fetch("/api/reset", { method: "POST" });
+    if (!res.ok) throw new Error(`reset failed: ${res.status}`);
   },
 };
 

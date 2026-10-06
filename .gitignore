@@ -5,6 +5,7 @@ node_modules/
 .messages/*/inbox/
 .messages/*/outbox/
 .messages/*/uploads/
+.messages/*/archive/
 storybook-static
 dist
 *.log

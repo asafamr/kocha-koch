@@ -279,6 +279,12 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 /* CV pane header: heading and the Next button on one row */
 .app-page-cv-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 .app-page-cv-nav { display: flex; gap: 0.5rem; }
+/* Start over: a quiet link under the stage gauge, at the end side; confirm inline */
+.app-page-reset { display: flex; justify-content: flex-end; margin-block-start: 0.25rem; font-size: var(--fs-xs); }
+.app-page-reset-link { font: inherit; color: var(--muted); background: none; border: 0; padding: 0.15rem 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.app-page-reset-link:hover { color: var(--ink); }
+.app-page-reset-link:focus-visible { outline: 3px solid var(--audio); outline-offset: 2px; }
+.app-page-reset-confirm { display: flex; align-items: center; gap: 0.5rem; font-size: var(--fs-sm); color: var(--ink); }
 .app-page-overflow { display: flex; align-items: center; gap: 0.75rem; margin-inline-start: auto; font-size: var(--fs-sm); color: var(--ink); }
 
 /* PrepPoints: gentle cards. Hairline borders and muted labels, nothing that reads as a warning. */

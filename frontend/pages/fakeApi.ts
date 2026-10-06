@@ -10,6 +10,7 @@ export function fakeApi(messages: ThreadItem[]): Api {
     send: async () => {},
     sendIntake: async () => {},
     pdf: async () => Promise.reject(new Error("no server")), // export shows its error state
+    reset: async () => {},
   };
 }
 

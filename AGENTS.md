@@ -18,6 +18,8 @@ container). The Gemini app keeps its messages in memory (`STORE=memory`); you ne
   (`docs/prompts/prep-points.md`); the user does not pick them. Send new `tips` when the CV or
   the target changes.
 - A message is pending while its outbox file does not exist.
+- "Start over" in the app moves `inbox/`, `outbox/` and `uploads/` to `archive/<time>/`. Ignore
+  `archive/`: those conversations are closed.
 
 ## Answering messages
 1. List `.messages/agent/inbox/*.json` with no matching `.messages/agent/outbox/` file, oldest id first.

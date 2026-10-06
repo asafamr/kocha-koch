@@ -11,13 +11,11 @@ export function ExportPanel({
   onExportPdf,
   onExportHtml,
   onBookPractice,
-  onBack,
 }: {
   pdf: PdfState;
   onExportPdf: () => void;
   onExportHtml: () => void;
   onBookPractice: () => void;
-  onBack: () => void;
 }) {
   return (
     <div className="intake export-panel">
@@ -36,9 +34,6 @@ export function ExportPanel({
       <Message from="kocha">רוצים להגיע מוכנים לראיון? אפשר להתאמן איתי מול מצלמה.</Message>
       <Button variant="secondary" onClick={onBookPractice} style={{ justifySelf: "center" }}>
         הזמן מקום לאימון מול מצלמה
-      </Button>
-      <Button variant="secondary" onClick={onBack} style={{ justifySelf: "center" }}>
-        חזרה לעיצוב
       </Button>
     </div>
   );

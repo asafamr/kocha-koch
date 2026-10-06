@@ -1,5 +1,5 @@
 import { join, normalize } from "node:path";
-import { addMessage, addReply, saveUpload, STORE, thread } from "./store";
+import { addMessage, addReply, resetStore, saveUpload, STORE, thread } from "./store";
 import { answer } from "./gemini";
 import { htmlToPdf, MAX_HTML, pdfAvailable, printPage } from "./pdf";
 
@@ -90,6 +90,11 @@ Bun.serve({
     }
     if (pathname === "/api/intake") {
       return req.method === "POST" ? postIntake(req) : new Response("method not allowed", { status: 405 });
+    }
+    if (pathname === "/api/reset") {
+      if (req.method !== "POST") return new Response("method not allowed", { status: 405 });
+      await resetStore();
+      return new Response(null, { status: 204 });
     }
     if (pathname === "/api/pdf") {
       return req.method === "POST" ? postPdf(req) : new Response("method not allowed", { status: 405 });

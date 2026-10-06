@@ -6,6 +6,7 @@ import { join } from "node:path";
 //     .messages/inbox/<id>.json   written by the server for each user message
 //     .messages/outbox/<id>.json  the reply, with the same id
 //     .messages/uploads/<file>    files the user uploaded (the intake CV PDF)
+//     .messages/archive/<time>/   earlier conversations, moved here by a reset ("start over")
 //   STORE=memory: kept in process, nothing touches disk, lost on restart.
 // A message is pending while it has no reply with the same id.
 
@@ -21,6 +22,7 @@ type Store = {
   put(box: "inbox" | "outbox", item: Message | Reply): Promise<void>;
   list(): Promise<{ inbox: Message[]; outbox: Reply[] }>;
   putFile(name: string, bytes: Uint8Array): Promise<string>; // returns the path the agent reads
+  reset(): Promise<void>; // start a new conversation (files: archived, memory: dropped)
 };
 
 function memoryStore(): Store {
@@ -36,6 +38,11 @@ function memoryStore(): Store {
     async putFile(name, bytes) {
       files.set(name, bytes);
       return `uploads/${name}`;
+    },
+    async reset() {
+      boxes.inbox = [];
+      boxes.outbox = [];
+      files.clear();
     },
   };
 }
@@ -70,6 +77,13 @@ async function fileStore(root: string): Promise<Store> {
       await Bun.write(join(dirs.uploads, name), bytes);
       return `uploads/${name}`;
     },
+    // Move the conversation aside (nothing is deleted), then start with empty folders.
+    async reset() {
+      const archive = join(root, "archive", new Date().toISOString().replace(/[:.]/g, "-"));
+      await mkdir(archive, { recursive: true });
+      for (const [name, dir] of Object.entries(dirs)) await rename(dir, join(archive, name));
+      await Promise.all(Object.values(dirs).map((d) => mkdir(d, { recursive: true })));
+    },
   };
 }
 
@@ -93,6 +107,8 @@ export async function addReply(id: string, text: string, by: string) {
 export async function saveUpload(ext: string, bytes: Uint8Array): Promise<string> {
   return store.putFile(`${newId()}.${ext}`, bytes);
 }
+
+export const resetStore = () => store.reset();
 
 export async function thread(): Promise<ThreadItem[]> {
   const { inbox, outbox } = await store.list();
