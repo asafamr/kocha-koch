@@ -37,10 +37,11 @@ services:
       - ./.messages/agent:/app/.messages
 
   # Answered by Gemini in-process, messages kept in memory (no disk). http://127.0.0.1:3001
+  # Set up like Cloud Run: one container, no volume, listens on PORT=8080.
   app-gemini:
     <<: *app
-    environment: { BACKEND: gemini, STORE: memory }
-    ports: ["127.0.0.1:3001:3000"]
+    environment: { BACKEND: gemini, STORE: memory, PORT: "8080" }
+    ports: ["127.0.0.1:3001:8080"]
 
   # Claude Code shell (also has codex). Start with: docker compose run --rm agent
   agent:

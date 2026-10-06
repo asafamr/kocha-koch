@@ -21,6 +21,8 @@ container). The Gemini app keeps its messages in memory (`STORE=memory`); you ne
 - "Start over" in the app moves `inbox/`, `outbox/` and `uploads/` to `archive/<time>/`. Ignore
   `archive/`: those conversations are closed.
 
+Your role and reply format as kocha: `docs/prompts/kocha.md` (the Gemini backend uses the same file).
+
 ## Answering messages
 1. List `.messages/agent/inbox/*.json` with no matching `.messages/agent/outbox/` file, oldest id first.
 2. Read earlier messages and replies for context.

@@ -13,6 +13,9 @@ FROM oven/bun:1-alpine
 RUN apk add --no-cache chromium font-dejavu
 WORKDIR /app
 COPY src ./src
+# Instructions for the Gemini backend (src/gemini.ts).
+COPY docs ./docs
+COPY frontend/cv/data.ts ./frontend/cv/data.ts
 COPY --from=build /app/dist ./dist
 RUN mkdir -p .messages && chown bun:bun .messages
 USER bun

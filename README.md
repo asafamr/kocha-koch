@@ -10,8 +10,10 @@ Two instances run side by side:
 | http://127.0.0.1:3000 | Claude Code (or Codex) through files | `.messages/agent/` |
 | http://127.0.0.1:3001 | Gemini, in the server | in memory only, lost on restart |
 
-Protocol details are in [AGENTS.md](AGENTS.md). Gemini gets only the message text for now: no
-PDF, and its replies carry no CV or tips.
+Protocol details are in [AGENTS.md](AGENTS.md). Gemini follows the same prompts
+(`docs/prompts/kocha.md` and the files it lists) and reads the uploaded PDF. The :3001 app is set
+up like Cloud Run: one container, messages in memory, listening on `PORT=8080`. It needs
+`GEMINI_API_KEY` in `.env`.
 
 ## Run
 

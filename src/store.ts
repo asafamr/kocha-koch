@@ -22,6 +22,7 @@ type Store = {
   put(box: "inbox" | "outbox", item: Message | Reply): Promise<void>;
   list(): Promise<{ inbox: Message[]; outbox: Reply[] }>;
   putFile(name: string, bytes: Uint8Array): Promise<string>; // returns the path the agent reads
+  getFile(path: string): Promise<Uint8Array | null>; // a path putFile returned
   reset(): Promise<void>; // start a new conversation (files: archived, memory: dropped)
 };
 
@@ -38,6 +39,9 @@ function memoryStore(): Store {
     async putFile(name, bytes) {
       files.set(name, bytes);
       return `uploads/${name}`;
+    },
+    async getFile(path) {
+      return files.get(path.replace(/^uploads\//, "")) ?? null;
     },
     async reset() {
       boxes.inbox = [];
@@ -77,6 +81,12 @@ async function fileStore(root: string): Promise<Store> {
       await Bun.write(join(dirs.uploads, name), bytes);
       return `uploads/${name}`;
     },
+    async getFile(path) {
+      const name = path.replace(/^uploads\//, "");
+      if (name.includes("/") || name.startsWith(".")) return null;
+      const file = Bun.file(join(dirs.uploads, name));
+      return (await file.exists()) ? new Uint8Array(await file.arrayBuffer()) : null;
+    },
     // Move the conversation aside (nothing is deleted), then start with empty folders.
     async reset() {
       const archive = join(root, "archive", new Date().toISOString().replace(/[:.]/g, "-"));
@@ -99,9 +109,11 @@ export async function addMessage(text: string, intake?: Intake): Promise<Message
   return msg;
 }
 
-export async function addReply(id: string, text: string, by: string) {
-  await store.put("outbox", { id, ts: new Date().toISOString(), text, by });
+export async function addReply(id: string, text: string, by: string, extra: { cv?: unknown; tips?: unknown } = {}) {
+  await store.put("outbox", { id, ts: new Date().toISOString(), text, by, ...extra });
 }
+
+export const getUpload = (path: string) => store.getFile(path);
 
 // Save an uploaded file under a fresh name; returns its path relative to the messages dir.
 export async function saveUpload(ext: string, bytes: Uint8Array): Promise<string> {
