@@ -284,6 +284,7 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 
 /* CV pane header: heading and the Next button on one row */
 .app-page-cv-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.app-page-overflow { display: flex; align-items: center; gap: 0.75rem; margin-inline-start: auto; font-size: var(--fs-sm); color: var(--ink); }
 
 /* PrepPoints: gentle cards. Hairline borders and muted labels, nothing that reads as a warning. */
 .ds-prep { display: grid; gap: 1.25rem; font: var(--fs-md)/1.6 var(--f-body); color: var(--ink); }

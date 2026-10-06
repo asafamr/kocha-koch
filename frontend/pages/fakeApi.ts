@@ -30,3 +30,12 @@ export const SAMPLE_THREAD: ThreadItem[] = [
     reply: reply("2", "קיצרתי לשני משפטים."),
   },
 ];
+
+// Like SAMPLE_THREAD, but the CV is too long for one page (design stage shows the overflow notice).
+const longCv = {
+  ...SAMPLE_CV,
+  experience: [1, 2, 3].flatMap((n) => SAMPLE_CV.experience!.map((j) => ({ ...j, company: `${j.company} ${n}` }))),
+};
+export const OVERFLOW_THREAD: ThreadItem[] = [
+  { ...SAMPLE_THREAD[0], reply: { ...SAMPLE_THREAD[0].reply!, cv: { data: longCv } } },
+];

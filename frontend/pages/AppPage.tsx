@@ -108,6 +108,13 @@ export function AppPage({ api = httpApi, initialStage = 0, pollMs = 2000 }: { ap
     if (t.typography && t.typography in TYPOGRAPHY) setTypography(t.typography);
   }, [cv.theme?.key]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Design: mm of content below the A4 page. The button asks kocha to cut it (cut, don't shrink: KB D2).
+  const [overflowMm, setOverflowMm] = useState(0);
+  const overflowing = stage === 2 && overflowMm > 0;
+  function askToFit() {
+    send(`קורות החיים חורגים מעמוד אחד בכ־${overflowMm} מ״מ בתבנית ${TEMPLATE_LABELS[template]}. אפשר לקצר כך שייכנסו בעמוד אחד?`);
+  }
+
   const doc = useMemo<CvDocument | null>(
     () => (cv.data ? { data: cv.data, theme: { template, palette, typography }, patch: cv.patch } : null),
     [cv.data, cv.patch, template, palette, typography],
@@ -176,6 +183,14 @@ export function AppPage({ api = httpApi, initialStage = 0, pollMs = 2000 }: { ap
             <Block>
               <div className="app-page-cv-head">
                 <Text variant="heading">קורות חיים</Text>
+                {overflowing && (
+                  <div className="app-page-overflow" role="status">
+                    <span>חורג מעמוד אחד בכ־{overflowMm} מ״מ</span>
+                    <Button variant="secondary" onClick={askToFit} disabled={waiting}>
+                      קצרו לעמוד אחד
+                    </Button>
+                  </div>
+                )}
                 <Button onClick={() => setStage(stage + 1)}>הבא</Button>
               </div>
               {!doc ? (
@@ -238,7 +253,7 @@ export function AppPage({ api = httpApi, initialStage = 0, pollMs = 2000 }: { ap
                     </>
                   }
                 >
-                  <CvDocumentView doc={doc} />
+                  <CvDocumentView doc={doc} onOverflow={setOverflowMm} />
                 </CvCanvas>
               )}
             </Block>
