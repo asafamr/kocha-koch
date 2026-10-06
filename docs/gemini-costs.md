@@ -24,7 +24,7 @@ overflow fixed (all variants below passed every check unless noted).
 | Minimal thinking | | fails: not supported by gemini-3.8-flash | | |
 
 Runs vary: at low, gemini-3.8-flash usually reports no thinking tokens, but one run used 2.4k
-(about $0.009 more). Total spent on these benchmarks, including smoke tests and the grounding runs: about $0.95.
+(about $0.009 more). Total spent on these benchmarks, including smoke tests and the grounding runs: about $1.01.
 
 ## Grounding and thinking level
 
@@ -38,11 +38,12 @@ one line), Hebrew plural address. Both runs below follow the grounding rules in
 
 | Thinking | Cost (3 messages) | Time (3 replies) | Result |
 |---|---:|---:|---|
-| high (**default**) | $0.197 | 314 s (intake 142 s) | all checks pass; 14 sources; consults more research |
+| high | $0.197 | 314 s (intake 142 s) | all checks pass; 14 sources; consults more research |
+| medium (**default**) | $0.056 | 108 s (intake 50 s) | all checks pass; 5 sources |
 | low | $0.039 | 56 s | all checks pass; 5 sources |
 
-High costs about five times as much and is slower; the grounding rules did most of the work.
-Set `GEMINI_THINKING_LEVEL=low` to trade depth for cost. While it thinks, the page shows the
+High costs about 3.5 times medium and is slower; the grounding rules did most of the work.
+Medium is the default; set `GEMINI_THINKING_LEVEL` to high or low to trade depth for cost. While it thinks, the page shows the
 seconds, the thinking tokens so far and the model's latest thought heading (streamed thought
 summaries), so a two-minute answer does not look stuck.
 

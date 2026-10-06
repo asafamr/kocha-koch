@@ -7,10 +7,10 @@ const MODEL = process.env.GEMINI_MODEL ?? "gemini-3.8-flash";
 const KEY = process.env.GEMINI_API_KEY;
 const ROOT = join(import.meta.dir, "..");
 const MAX_ROUNDS = 4; // model turns per reply: up to 3 lookups, then the answer
-// Knobs, measured in docs/gemini-costs.md. Thinking level: high (default), medium or low
+// Knobs, measured in docs/gemini-costs.md. Thinking level: medium (default), high or low
 // (gemini-3.8-flash has no minimal); "default" leaves it to the model. GEMINI_CACHE: explicit
 // (default) caches the instructions and tools for an hour; "none" sends them with every call.
-const LEVEL = process.env.GEMINI_THINKING_LEVEL ?? "high";
+const LEVEL = process.env.GEMINI_THINKING_LEVEL ?? "medium";
 const THINKING = LEVEL === "default" ? undefined : LEVEL;
 const EXPLICIT_CACHE = (process.env.GEMINI_CACHE ?? "explicit") === "explicit";
 const API = "https://generativelanguage.googleapis.com/v1beta";
