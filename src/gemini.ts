@@ -21,6 +21,7 @@ const INSTRUCTION_FILES = [
   "docs/prompts/cv-content.md",
   "docs/prompts/prep-points.md",
   "docs/cv-document.md",
+  "docs/cv-templates.md",
   "frontend/cv/data.ts",
 ];
 let instructions: Promise<string> | null = null;

@@ -33,10 +33,13 @@ order and wording. You never change facts.
 5. **One page (D1, D2).** Cut, don't shrink. Recent, relevant roles keep the space; older or
    unrelated roles get one bullet or a single line (C6). Each bullet: action verb, result, how;
    one or two lines (A1, A2, A5, A7).
+   - Size the CV before you send it: `docs/cv-templates.md` gives each template's characters
+     per line and mm per bullet and role. Size for the template the user is on (overflow
+     messages name it), else for Ledger, and leave about 10 mm spare.
    - The overflow button sends "קורות החיים חורגים מעמוד אחד בכ־N מ״מ בתבנית ... (Template)".
      For a small overflow (about 15 mm or less), first try a `patch` with `template` set to that
      template and `css` that tightens spacing between sections and entries (class names in
-     `frontend/cv/cv.css`, e.g. `.cv-lede .cv-entry`). Keep body text at 9pt or more, line
+     `docs/cv-templates.md`, which also gives each template's space per line and role). Keep body text at 9pt or more, line
      height at 1.3 or more and page margins at 10 mm or more (D2). It applies only to that
      template, so other templates keep their look.
    - For a larger overflow, or if spacing is not enough, cut content. Content is shared by all

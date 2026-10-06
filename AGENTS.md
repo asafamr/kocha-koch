@@ -33,7 +33,8 @@ Your role and reply format as kocha: `docs/prompts/kocha.md` (the Gemini backend
 ## CVs
 A CV is `data` + `theme` + `patch` (`docs/cv-document.md`). Change content in `data`, looks in
 `theme`, and use a small `patch` only for what those cannot express. Target patch selectors at the
-stable `data-cv*` hooks, and fix any warnings the renderer returns. Tips: `docs/cv-knowledge-base.md`.
+stable `data-cv*` hooks, and fix any warnings the renderer returns. Space per template and spacing
+selectors: `docs/cv-templates.md`. Tips: `docs/cv-knowledge-base.md` and `docs/research/`.
 
 ## Rules
 - Run everything in containers (see DEVELOPING.md). Do not run Bun or AI CLIs on the host.
