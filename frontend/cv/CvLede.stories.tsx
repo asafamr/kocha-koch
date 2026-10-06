@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CvLede } from "./CvLede";
-import { SAMPLE_CV } from "./data";
+import { SAMPLE_CV, SAMPLE_CV_JUNIOR } from "./data";
 import { onDesk } from "./story";
 import { themeArgTypes } from "./theme";
 
@@ -15,3 +15,5 @@ const meta = {
 export default meta;
 
 export const Default: StoryObj<typeof meta> = {};
+// Only some sections: no summary, no military service, a Projects section.
+export const Junior: StoryObj<typeof meta> = { args: { cv: SAMPLE_CV_JUNIOR } };

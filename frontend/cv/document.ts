@@ -49,7 +49,9 @@ export function renderCvDocument(doc: CvDocument): RenderResult {
 
 // Stable hooks for patch selectors, the same in every template, found from the data itself:
 //   [data-cv="name"|"title"|"summary"], [data-cv-section="experience"|"education"|"military"|"skills"|"contact"],
+//   [data-cv-section="other.N"] (heading of data.sections[N]),
 //   [data-cv-job="J"] (a job's container), [data-cv-bullet="J.B"] (bullet B of job J).
+// A section the CV does not have has no heading, so its hook matches nothing.
 const SECTION_KEYS: [RegExp, string][] = [
   [/experience/i, "experience"],
   [/education/i, "education"],
@@ -66,13 +68,17 @@ export function annotate(root: HTMLElement, data: CvData) {
       .reverse()
       .find((el) => text(el) === value.replace(/\s+/g, " ").trim() && !(outsideJobs && el.closest("[data-cv-job]")));
 
+  const others = (data.sections ?? []).map((s) => s.title.replace(/\s+/g, " ").trim());
   root.querySelectorAll("h2").forEach((h) => {
+    // Other sections first, so e.g. "Volunteer Service" is not taken for military service.
+    const other = others.indexOf(text(h));
     const hit = SECTION_KEYS.find(([re]) => re.test(text(h)));
-    if (hit) h.setAttribute("data-cv-section", hit[1]);
+    if (other >= 0) h.setAttribute("data-cv-section", `other.${other}`);
+    else if (hit) h.setAttribute("data-cv-section", hit[1]);
   });
 
   // Jobs first, so the headline title is not confused with a job role of the same text.
-  data.experience.forEach((job, j) => {
+  (data.experience ?? []).forEach((job, j) => {
     const bullets = job.bullets.map((b) => exact(b));
     bullets.forEach((el, b) => el?.setAttribute("data-cv-bullet", `${j}.${b}`));
     // The job container: smallest ancestor of its first bullet that also holds the role text.
@@ -81,7 +87,7 @@ export function annotate(root: HTMLElement, data: CvData) {
     if (el && el !== root) el.setAttribute("data-cv-job", String(j));
   });
 
-  const mark = (value: string, key: string) => exact(value, true)?.setAttribute("data-cv", key);
+  const mark = (value: string | undefined, key: string) => value && exact(value, true)?.setAttribute("data-cv", key);
   mark(data.name, "name");
   mark(data.title, "title");
   mark(data.summary, "summary");

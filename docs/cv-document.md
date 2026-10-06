@@ -25,6 +25,11 @@ type DomOp =
   | { op: "setStyle"; selector: string; style: string };   // appended to the inline style
 ```
 
+In `data` only `name` is required. A missing or empty section is left out of the page, heading
+and all. Sections the fixed fields do not cover (Projects, Certifications, Publications...) go in
+`data.sections` as `{ title, entries: [{ head, sub?, dates?, bullets? }] }`. How to fill `data`:
+`docs/prompts/cv-content.md`.
+
 ## Which layer to change
 
 1. **Content** (wording, bullets, order of jobs): change `data`. It flows into every template.
@@ -41,6 +46,7 @@ Added to the rendered page in every template, found from the data:
 |---|---|
 | `[data-cv="name"]`, `[data-cv="title"]`, `[data-cv="summary"]` | name, headline title, summary (only if the template shows them) |
 | `[data-cv-section="experience"]` (also `education`, `military`, `skills`, `contact`) | the section's heading (`h2`) |
+| `[data-cv-section="other.0"]` | the heading of `data.sections[0]` |
 | `[data-cv-job="0"]` | the container of job 0 (role, company, dates, bullets) |
 | `[data-cv-bullet="0.2"]` | bullet 2 of job 0 |
 

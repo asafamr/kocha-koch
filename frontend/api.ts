@@ -57,7 +57,7 @@ const isPoint = (p: unknown): p is PrepPoint =>
 export function readCv(v: unknown): ReplyCv | null {
   if (!isObj(v)) return null;
   const out: ReplyCv = {};
-  if (isObj(v.data) && typeof v.data.name === "string" && Array.isArray(v.data.experience)) out.data = v.data as CvData;
+  if (isObj(v.data) && typeof v.data.name === "string") out.data = v.data as CvData; // only the name is required
   if (isObj(v.patch)) out.patch = v.patch as CvPatch;
   if (isObj(v.theme)) out.theme = v.theme as Partial<CvTheme>;
   return out.data || out.patch || out.theme ? out : null;

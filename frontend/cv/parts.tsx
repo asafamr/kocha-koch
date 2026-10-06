@@ -32,8 +32,32 @@ export const Ltr = ({ children }: { children: ReactNode }) => <span dir="ltr">{c
 // Date ranges: bdi isolates them and picks direction from content (LTR or Hebrew text).
 export const Dates = ({ children }: { children: ReactNode }) => <bdi className="cv-dates">{children}</bdi>;
 
+// Only the contact fields that are set.
 export function contactItems(c: CvData["contact"]): ReactNode[] {
-  return [c.city, <Ltr key="p">{c.phone}</Ltr>, <Ltr key="e">{c.email}</Ltr>, <Ltr key="l">{c.linkedin}</Ltr>];
+  if (!c) return [];
+  return [
+    c.city,
+    c.phone && <Ltr key="p">{c.phone}</Ltr>,
+    c.email && <Ltr key="e">{c.email}</Ltr>,
+    c.linkedin && <Ltr key="l">{c.linkedin}</Ltr>,
+  ].filter(Boolean);
+}
+
+// Sections are optional: render one only if it has items.
+export const has = <T,>(items?: T[]): items is T[] => !!items && items.length > 0;
+
+// "Company, Location" without a dangling comma when a part is missing.
+export const joined = (...parts: (string | undefined)[]) => parts.filter(Boolean).join(", ");
+
+export function Bullets({ items }: { items?: string[] }) {
+  if (!has(items)) return null;
+  return (
+    <ul>
+      {items.map((b) => (
+        <li key={b}>{b}</li>
+      ))}
+    </ul>
+  );
 }
 
 // "a | b | c" on one line.

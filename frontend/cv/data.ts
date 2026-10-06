@@ -1,14 +1,21 @@
 // CV content shared by every style. Styles only change layout and typography.
-export type CvJob = { role: string; company: string; location: string; dates: string; bullets: string[] };
+// Only the name is required. A missing or empty section is left out of the page, heading and all:
+// a CV shows what the candidate has, and nothing is a requirement (no army service, no degree...).
+export type CvJob = { role: string; company: string; location?: string; dates: string; bullets: string[] };
+// One line of any other section: a project, certificate, paper, volunteer role, language.
+export type CvEntry = { head: string; sub?: string; dates?: string; bullets?: string[] };
 export type CvData = {
   name: string;
-  title: string;
-  contact: { phone: string; email: string; city: string; linkedin: string };
-  summary: string;
-  experience: CvJob[];
-  education: { degree: string; school: string; dates: string }[];
-  military: { role: string; unit: string; dates: string };
-  skills: { label: string; items: string }[];
+  title?: string;
+  contact?: { phone?: string; email?: string; city?: string; linkedin?: string };
+  summary?: string;
+  experience?: CvJob[];
+  // Other sections in the source CV, in its order: Projects, Certifications, Publications,
+  // Volunteering, Languages... Rendered right after experience.
+  sections?: { title: string; entries: CvEntry[] }[];
+  education?: { degree: string; school?: string; dates?: string }[];
+  military?: { role: string; unit?: string; dates?: string };
+  skills?: { label: string; items: string }[];
 };
 
 export const SAMPLE_CV: CvData = {
@@ -46,5 +53,41 @@ export const SAMPLE_CV: CvData = {
     { label: "Languages", items: "TypeScript, JavaScript, Python, SQL" },
     { label: "Technologies", items: "React, Node.js, PostgreSQL, AWS, Docker" },
     { label: "Spoken", items: "Hebrew (native), English (fluent)" },
+  ],
+};
+
+// A junior CV with only some sections: no summary, no military service, no LinkedIn, and a
+// Projects section (knowledge base tip H6). Templates must render it without empty headings.
+export const SAMPLE_CV_JUNIOR: CvData = {
+  name: "Dana Mizrahi",
+  title: "Junior Backend Developer",
+  contact: { phone: "+972-52-118-9034", email: "dana.mizrahi@example.com", city: "Haifa" },
+  experience: [
+    {
+      role: "Software Engineering Intern",
+      company: "Elbit Systems",
+      location: "Haifa",
+      dates: "Jul 2024 – Sep 2024",
+      bullets: ["Wrote Python tests for a telemetry parser, raising coverage from 40% to 85%."],
+    },
+  ],
+  sections: [
+    {
+      title: "Projects",
+      entries: [
+        {
+          head: "Bus Arrival API",
+          sub: "github.com/danam/bus-api",
+          dates: "2024",
+          bullets: ["A FastAPI service over Israel's public GTFS feed; PostgreSQL, Docker, 300 daily users."],
+        },
+        { head: "Final project: room booking system", sub: "Java, Spring Boot, MySQL", dates: "2023" },
+      ],
+    },
+  ],
+  education: [{ degree: "B.Sc. Computer Science", school: "University of Haifa", dates: "2021 – 2024" }],
+  skills: [
+    { label: "Languages", items: "Python, Java, SQL" },
+    { label: "Tools", items: "FastAPI, Spring Boot, PostgreSQL, Docker, Git" },
   ],
 };

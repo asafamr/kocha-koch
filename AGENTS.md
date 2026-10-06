@@ -11,8 +11,9 @@ container). The Gemini app keeps its messages in memory (`STORE=memory`); you ne
   where `cvFile` (e.g. `uploads/<id>.pdf`) is the user's current CV, relative to `.messages/agent/`.
 - Reply: `outbox/<id>.json` = `{ id, ts, text, by, cv?, tips? }`, same `<id>` as the message.
   `text` is Hebrew chat. `cv` = `{ data?, theme?, patch? }` (`docs/cv-document.md`); `data` is a
-  full `CvData` (`frontend/cv/data.ts`), English. `tips` = `{ profile, target, strengths, jobFit, points }`
-  (`docs/prompts/prep-points.md`). The page shows the latest `cv.data` and `tips` any reply sent.
+  `CvData` (`frontend/cv/data.ts`), English, built by `docs/prompts/cv-content.md`. `tips` =
+  `{ profile, target, strengths, jobFit, points }` (`docs/prompts/prep-points.md`). The page
+  shows the latest `cv.data` and `tips` any reply sent.
 - Answer the intake with `cv.data` and `tips`. A message starting `עדכון פרופיל:` means the user
   changed seniority or track: send new `tips`.
 - A message is pending while its outbox file does not exist.
