@@ -1,0 +1,144 @@
+/* CV styles, English (LTR). Sizes in pt/mm for print. One A4 page; overflow is cut (one-page CVs only).
+   Colors and fonts come from --cv-* variables set by theme.ts (palette + typography), so every
+   style works with every palette and typography. Logical properties, so an RTL CV mirrors. */
+
+
+.cv {
+  inline-size: 210mm; block-size: 297mm; box-sizing: border-box; overflow: hidden;
+  background: #fff; color: var(--cv-ink); font-family: var(--cv-font-body);
+  font-kerning: normal;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.cv h1, .cv h2, .cv p, .cv ul, .cv dl, .cv dd { margin: 0; }
+.cv h1 { font-family: var(--cv-font-display); font-weight: var(--cv-display-weight); line-height: 1.08; }
+.cv h2 {
+  font-family: var(--cv-font-heading); text-transform: var(--cv-heading-case);
+  font-variant: var(--cv-heading-variant); letter-spacing: var(--cv-heading-tracking);
+}
+.cv ul { padding-inline-start: 4mm; }
+.cv-row { display: flex; justify-content: space-between; align-items: baseline; gap: 4mm; }
+.cv-dates { white-space: nowrap; font-variant-numeric: tabular-nums; } /* aligned digits; not page-wide, it widens hyphens in Inter */
+.cv-meta { color: var(--cv-muted); }
+
+/* 1. Ledger: 18 mm margins, two-column grid (32 mm label column, wide content column, 6 mm gutter).
+   Headings hang in the label column under a hairline; dates end the first line of each entry. */
+.cv-ledger { padding: 11mm 12mm 9mm; font-size: 9.75pt; line-height: 1.45; }
+.cv-ledger header { display: grid; grid-template-columns: 32mm 1fr; column-gap: 6mm; margin-block-end: 7mm; }
+.cv-ledger h1 { grid-column: 1 / -1; font-size: 36pt; line-height: 1; letter-spacing: -0.025em; margin-block-end: 6mm; }
+.cv-ledger .cv-title { grid-column: 2; grid-row: 2; font-size: 12.5pt; line-height: 1.25; font-weight: 500; color: var(--cv-accent); margin-block-end: 2mm; }
+.cv-ledger .cv-summary { grid-column: 2; grid-row: 3; font-size: 10.5pt; line-height: 1.45; max-inline-size: 124mm; }
+.cv-ledger .cv-contact { grid-column: 1; grid-row: 2 / span 2; display: grid; align-content: start; gap: 0.6mm; font-size: 8pt; letter-spacing: 0.005em; color: var(--cv-muted); padding-block-start: 1mm; }
+.cv-lg-section { display: grid; grid-template-columns: 32mm 1fr; column-gap: 6mm; border-block-start: 0.5pt solid var(--cv-rule); padding-block-start: 3mm; margin-block-end: 5mm; }
+.cv-ledger h2 { font-size: 8pt; font-weight: 700; color: var(--cv-accent); line-height: 1.4; padding-block-start: 0.4mm; }
+@container style(--cv-heading-variant: small-caps) { .cv-ledger h2 { font-size: 11pt; padding-block-start: 0; } }
+.cv-lg-entry + .cv-lg-entry { margin-block-start: 4mm; }
+.cv-lg-entry strong { font-weight: 650; font-size: 10.5pt; }
+.cv-lg-entry .cv-dates { font-size: 8.5pt; color: var(--cv-muted); }
+.cv-lg-entry .cv-meta { font-size: 9.75pt; margin-block-end: 1mm; }
+.cv-ledger ul { padding-inline-start: 3.5mm; }
+.cv-ledger li { margin-block-start: 0.7mm; padding-inline-start: 0.5mm; }
+.cv-ledger li::marker { color: var(--cv-muted); }
+.cv-lg-skills { display: grid; gap: 0.8mm; margin: 0; }
+.cv-lg-skills > div { display: grid; grid-template-columns: 24mm 1fr; align-items: baseline; }
+.cv-lg-skills dt { font-size: 8.5pt; color: var(--cv-muted); }
+
+/* 2. Sidebar: grid, 31% tinted column at the start (contact, skills, education), main column with the
+   name, summary and experience. No accent bars; headings are small tracked labels. */
+.cv-sidebar {
+  display: grid; grid-template-columns: 31% 69%; grid-template-areas: "side main";
+  font-size: 10pt; line-height: 1.5;
+}
+.cv-sidebar .cv-main { grid-area: main; padding: 12mm 11mm 10mm 10mm; }
+.cv-sidebar .cv-side { grid-area: side; background: var(--cv-tint); padding: 12mm 6mm 10mm 9mm; font-size: 9.25pt; line-height: 1.5; }
+.cv-sidebar .cv-side p { margin-block-end: 1mm; overflow-wrap: anywhere; }
+.cv-sidebar h1 { font-size: 34pt; line-height: 1; letter-spacing: -0.02em; }
+.cv-sidebar .cv-title { font-size: 13pt; font-weight: 500; color: var(--cv-accent); margin-block: 3.5mm 6mm; }
+.cv-sidebar .cv-summary { font-size: 10.5pt; line-height: 1.55; }
+.cv-sidebar h2 { font-size: 8.5pt; font-weight: 700; color: var(--cv-accent); margin-block: 9mm 3mm; }
+.cv-sidebar .cv-side h2 { margin-block: 8mm 2.5mm; }
+.cv-sidebar .cv-side h2:first-child { margin-block-start: 1mm; }
+.cv-sidebar .cv-meta { font-size: 9pt; }
+.cv-sidebar .cv-entry + .cv-entry { margin-block-start: 5.5mm; }
+.cv-sidebar .cv-row strong { font-size: 11pt; font-weight: 650; }
+.cv-sidebar .cv-row .cv-dates { font-size: 8.75pt; color: var(--cv-muted); }
+.cv-sidebar .cv-entry .cv-meta { font-size: 10pt; margin-block-end: 1.5mm; }
+.cv-sidebar .cv-main li { margin-block-start: 1mm; padding-inline-start: 0.5mm; }
+.cv-sidebar li::marker { color: var(--cv-muted); }
+.cv-sidebar .cv-side-item { display: grid; margin-block-end: 3mm; }
+.cv-sidebar .cv-side .cv-dates { color: var(--cv-muted); font-size: 8.75pt; }
+.cv-sidebar .cv-side-item > .cv-meta { font-size: 8.75pt; }
+@container style(--cv-heading-variant: small-caps) { .cv-sidebar h2 { font-size: 11pt; } }
+
+/* 3. Bars: 15 mm margins, headings on full-width tinted bars, contact stacked at end */
+.cv-bars { padding: 10mm; font-size: 9.75pt; line-height: 1.45; }
+.cv-bars header { align-items: end; margin-block-end: 5mm; }
+.cv-bars h1 { font-size: 26pt; }
+.cv-bars .cv-title { font-size: 11.5pt; font-weight: 500; color: var(--cv-accent); margin-block-start: 1mm; }
+.cv-bars .cv-contact { display: grid; gap: 0.5mm; font-size: 8.75pt; justify-items: end; color: var(--cv-muted); }
+.cv-bars h2 { background: var(--cv-tint); font-size: 9.5pt; font-weight: 700; padding: 1.3mm 3mm; margin-block: 4mm 2mm; }
+.cv-bars-body { padding-inline: 3mm; }
+.cv-bars .cv-entry { margin-block-end: 2.5mm; }
+.cv-bars li { margin-block: 0.5mm; }
+
+/* 4. Compact (Jake's): 12.5 mm margins, dense, headings with 0.5pt rules, company/location then
+   italic role/dates */
+.cv-compact { padding: 9mm; font-size: 10pt; line-height: 1.25; }
+.cv-compact header { text-align: center; margin-block-end: 2mm; }
+.cv-compact h1 { font-size: 24pt; }
+.cv-compact .cv-meta { font-size: 9.5pt; color: var(--cv-ink); }
+.cv-compact h2 { font-size: 12pt; font-weight: 600; border-block-end: 0.5pt solid var(--cv-rule); margin-block: 3.5mm 1.5mm; }
+.cv-compact .cv-entry { margin-block-end: 1.5mm; }
+.cv-compact .cv-sub { font-style: italic; font-size: 9.5pt; }
+.cv-compact ul { padding-inline-start: 4mm; }
+.cv-compact li { margin-block: 0.8mm; }
+.cv-compact p { margin-block-end: 0.8mm; }
+
+/* 5. Lede: one column, 20 mm margins, no rules. Name at the start, contact stacked at the end,
+   the summary set large as the opening statement; education, service and skills run in columns. */
+.cv-lede { padding: 14mm 13mm 12mm; font-size: 10.25pt; line-height: 1.55; }
+.cv-lede header { display: grid; grid-template-columns: 1fr auto; align-items: end; column-gap: 8mm; }
+.cv-lede h1 { font-size: 44pt; line-height: 1; letter-spacing: -0.025em; }
+.cv-lede .cv-title { grid-column: 1; font-size: 12.5pt; font-weight: 500; color: var(--cv-accent); margin-block-start: 3.5mm; }
+.cv-lede .cv-contact { grid-column: 2; grid-row: 1 / span 2; display: grid; gap: 0.6mm; justify-items: end; text-align: end; font-size: 8.5pt; color: var(--cv-muted); padding-block-end: 0.5mm; align-self: end; }
+.cv-lede .cv-summary { font-size: 15pt; line-height: 1.38; letter-spacing: -0.005em; max-inline-size: 150mm; margin-block: 13mm 4mm; }
+.cv-lede h2 { font-size: 8.5pt; font-weight: 700; color: var(--cv-accent); margin-block: 11mm 4mm; }
+.cv-lede .cv-entry + .cv-entry { margin-block-start: 6.5mm; }
+.cv-lede .cv-row strong { font-size: 11pt; font-weight: 650; }
+.cv-lede .cv-dates { font-size: 8.5pt; color: var(--cv-muted); }
+.cv-lede .cv-meta { margin-block-end: 1.5mm; }
+.cv-lede ul { padding-inline-start: 3.5mm; }
+.cv-lede li { margin-block-start: 1mm; padding-inline-start: 0.5mm; }
+.cv-lede li::marker { color: var(--cv-muted); }
+.cv-ld-cols { display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 8mm; }
+.cv-ld-cols.two { grid-template-columns: repeat(2, 1fr); }
+.cv-ld-cols .cv-dates { display: block; font-size: 8.5pt; }
+.cv-ld-cols dt { font-size: 8.5pt; color: var(--cv-muted); }
+.cv-ld-cols dd { font-size: 9.5pt; }
+@container style(--cv-heading-variant: small-caps) { .cv-lede h2 { font-size: 11pt; } }
+
+/* 6. Margin: two columns. Wide main column first, a narrow column at the end (36%) set off by a
+   hairline and white space, no tint. Contact, skills, education and service go in the narrow one. */
+.cv-margin { display: grid; grid-template-columns: 1fr 62mm; font-size: 9.75pt; line-height: 1.5; }
+.cv-margin .cv-main { padding: 13mm 9mm 11mm 13mm; }
+.cv-margin .cv-aside { margin-block: 13mm 11mm; padding-inline: 6mm 11mm; border-inline-start: 0.5pt solid var(--cv-rule); font-size: 9pt; line-height: 1.45; }
+.cv-margin h1 { font-size: 36pt; line-height: 1; letter-spacing: -0.025em; }
+.cv-margin .cv-title { font-size: 13pt; font-weight: 500; color: var(--cv-accent); margin-block: 4mm 7mm; }
+.cv-margin .cv-summary { font-size: 10.5pt; line-height: 1.5; }
+.cv-margin h2 { font-size: 8.5pt; font-weight: 700; color: var(--cv-accent); margin-block: 0 3mm; }
+.cv-margin .cv-main h2 { margin-block-start: 9mm; }
+.cv-margin .cv-aside section + section { margin-block-start: 7mm; }
+.cv-margin .cv-entry + .cv-entry { margin-block-start: 5mm; }
+.cv-margin .cv-row strong { font-size: 10.5pt; font-weight: 650; }
+.cv-margin .cv-dates { font-size: 8.5pt; color: var(--cv-muted); }
+.cv-margin .cv-meta { margin-block-end: 1.5mm; }
+.cv-margin .cv-aside .cv-meta { margin-block-end: 0; }
+.cv-margin .cv-aside .cv-dates { display: block; }
+.cv-margin .cv-aside .cv-entry + .cv-entry { margin-block-start: 3mm; }
+.cv-margin ul { padding-inline-start: 3.5mm; }
+.cv-margin li { margin-block-start: 1mm; padding-inline-start: 0.5mm; }
+.cv-margin li::marker { color: var(--cv-muted); }
+.cv-margin .cv-aside p { overflow-wrap: anywhere; }
+.cv-margin dl { display: grid; gap: 3mm; }
+.cv-margin dt { font-size: 8.5pt; color: var(--cv-muted); }
+.cv-margin dd { font-size: 9pt; }
+@container style(--cv-heading-variant: small-caps) { .cv-margin h2 { font-size: 11pt; } }

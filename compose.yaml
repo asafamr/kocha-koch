@@ -1,0 +1,98 @@
+# Works with `docker compose` and `podman compose`.
+# Both images run as uid 1000. Rootless podman: set USERNS_MODE=keep-id in .env
+# so that uid maps to your host user and ./.messages stays writable.
+x-hardening: &hardening
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  userns_mode: ${USERNS_MODE:-}
+
+x-app: &app
+  <<: *hardening
+  build: .
+  image: kocha-koch-app
+  init: true   # reaps child processes (the image also runs tini, for Cloud Run)
+  read_only: true
+  tmpfs: [/tmp]
+  env_file:
+    - path: .env
+      required: false
+
+# agent tools share one image and one bun package cache.
+x-tools: &tools
+  <<: *hardening
+  image: kocha-koch-agent
+  build: { context: ., dockerfile: Dockerfile.agent }
+  environment:
+    BUN_INSTALL_CACHE_DIR: /bun-cache
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+
+services:
+  # Answered by Claude Code / Codex through files. http://127.0.0.1:3000
+  app:
+    <<: *app
+    environment: { BACKEND: files }
+    ports: ["127.0.0.1:3000:3000"]
+    volumes:
+      - ./.messages/agent:/app/.messages
+
+  # Answered by Gemini in-process, messages kept in memory (no disk). http://127.0.0.1:3001
+  # Set up like Cloud Run: one container, no volume, listens on PORT=8080.
+  app-gemini:
+    <<: *app
+    environment: { BACKEND: gemini, STORE: memory, PORT: "8080" }
+    ports: ["127.0.0.1:3001:8080"]
+
+  # Claude Code shell (also has codex). Start with: docker compose run --rm agent
+  agent:
+    <<: *tools
+    profiles: [agent]
+    stdin_open: true
+    tty: true
+    volumes: &agent-volumes
+      - .:/work
+      - bun-cache:/bun-cache
+      - agent-home:/home/node   # keeps CLI logins between runs
+      - /dev/null:/work/.env:ro # hide API keys in .env from AI CLIs
+
+  # Answers app's messages with Claude Code. Start with: docker compose --profile claude up
+  claude-responder:
+    <<: *tools
+    profiles: [claude]
+    init: true
+    command: scripts/agent-loop.sh claude
+    volumes: *agent-volumes
+
+  # App with live reload (server restarts, page hot-reloads on save), same messages as app.
+  # http://127.0.0.1:3002. Start with: docker compose --profile dev up
+  app-dev:
+    <<: *tools
+    profiles: [dev]
+    init: true
+    command: sh -c "bun install --frozen-lockfile && bun run dev"
+    environment:
+      BUN_INSTALL_CACHE_DIR: /bun-cache
+      DEV: "1"
+      BACKEND: files
+      MESSAGES_DIR: .messages/agent
+    ports: ["127.0.0.1:3002:3000"]
+    volumes:
+      - .:/work
+      - bun-cache:/bun-cache
+      - /dev/null:/work/.env:ro
+
+  # Component dev UI. Start with: docker compose --profile dev up storybook
+  storybook:
+    <<: *tools
+    profiles: [dev]
+    init: true
+    command: sh -c "bun install --frozen-lockfile && bun run storybook --host 0.0.0.0"
+    ports: ["127.0.0.1:6006:6006"]
+    volumes:
+      - .:/work
+      - bun-cache:/bun-cache
+      - /dev/null:/work/.env:ro
+
+volumes:
+  agent-home:
+  bun-cache:

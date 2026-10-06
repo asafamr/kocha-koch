@@ -1,0 +1,351 @@
+/* Design language, taken from ../kohi/packages/ui (tokens.css, base.css, fonts.css).
+   Hebrew and Latin fonts. Components use logical properties, so they work in RTL and LTR;
+   direction comes from the page (`dir`). Component classes are prefixed `ds-`. */
+
+/* Hebrew/Latin subsets; the browser loads only the one a page uses (unicode-range). */
+@font-face {
+  font-family: "Suez One";
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/suez-one-hebrew.woff2") format("woff2");
+  unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+@font-face {
+  font-family: "Suez One";
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/suez-one-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Noto Sans Hebrew";
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("./fonts/noto-sans-hebrew-hebrew.woff2") format("woff2");
+  unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+@font-face {
+  font-family: "Noto Sans Hebrew";
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("./fonts/noto-sans-hebrew-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/jetbrains-mono-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --paper: #F4F2ED; --surface: #FBFAF7; --ink: #0B0B0A; --muted: #565148;
+  --faint: #767065; --hair: #D9D5CA;
+  --marker: #FFD84D; --audio: #2F5D8C; --critical: #B3122C;
+
+  --f-poster: "Suez One", serif;
+  --f-body: "Noto Sans Hebrew", Arial, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --fs-2xs: 0.75rem;    /* 12px fine print */
+  --fs-xs: 0.8125rem;   /* 13px captions */
+  --fs-sm: 0.875rem;    /* 14px secondary body */
+  --fs-md: 0.9375rem;   /* 15px dense body, chat */
+  --fs-base: 1rem;      /* 16px body */
+  --fs-lg: 1.125rem;    /* 18px lead */
+  --fs-xl: 1.375rem;    /* 22px section heading */
+  --fs-2xl: 1.625rem;   /* 26px page heading */
+  --fs-3xl: 2rem;       /* 32px display */
+
+  --ease: cubic-bezier(.16, 1, .3, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #131312; --surface: #1A1A18; --ink: #F1EFE9; --muted: #A8A298;
+    --faint: #8A847A; --hair: #2C2B27;
+    --marker: #F0C63C; --audio: #8FB6DE; --critical: #E46B7E;
+  }
+}
+
+body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 var(--f-body); }
+
+/* Text */
+.ds-text { margin: 0; font-family: var(--f-body); color: var(--ink); }
+.ds-text-display { font: 400 var(--fs-3xl)/1.16 var(--f-poster); }
+.ds-text-heading { font-size: var(--fs-xl); font-weight: 800; line-height: 1.16; }
+.ds-text-lead { font-size: var(--fs-lg); line-height: 1.6; }
+.ds-text-body { font-size: var(--fs-base); line-height: 1.6; }
+.ds-text-caption { font-size: var(--fs-xs); color: var(--muted); } /* --faint fails 4.5:1 contrast at this size */
+.ds-text-mono { font: var(--fs-sm)/1.5 var(--f-mono); font-variant-numeric: tabular-nums; }
+
+/* Paragraph */
+.ds-p { margin: 0 0 1em; max-width: 65ch; font: var(--fs-base)/1.6 var(--f-body); color: var(--ink); }
+.ds-p-muted { color: var(--muted); }
+
+/* Button */
+.ds-button {
+  font: 700 var(--fs-base)/1 var(--f-body);
+  padding: 0.7rem 1rem;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--marker);
+  color: #0B0B0A;
+  cursor: pointer;
+  transition: transform 80ms var(--ease);
+}
+.ds-button:not(:disabled):hover { transform: translateY(-1px); }
+.ds-button:not(:disabled):active { transform: scale(0.98); }
+.ds-button:disabled { background: var(--hair); color: var(--muted); cursor: not-allowed; }
+.ds-button:focus-visible, .ds-checkbox input:focus-visible { outline: 3px solid var(--audio); outline-offset: 2px; }
+
+/* Checkbox: square, ink border, marker fill when checked */
+.ds-checkbox { display: inline-flex; align-items: center; gap: 0.5rem; font: var(--fs-base)/1.6 var(--f-body); color: var(--ink); cursor: pointer; }
+.ds-checkbox input {
+  appearance: none; margin: 0; width: 1.1rem; height: 1.1rem;
+  border: 2px solid var(--ink); background: var(--surface); display: grid; place-content: center;
+}
+.ds-checkbox input:checked { background: var(--marker); }
+.ds-checkbox input:checked::after {
+  content: ""; width: 0.3rem; height: 0.55rem; margin-top: -0.15rem;
+  border: solid #0B0B0A; border-width: 0 2px 2px 0; transform: rotate(45deg);
+}
+.ds-checkbox:has(input:disabled) { color: var(--muted); cursor: not-allowed; }
+.ds-checkbox input:disabled { border-color: var(--hair); background: var(--hair); }
+
+/* Block (kohi .card) */
+.ds-block { background: var(--paper); border: 2px solid var(--ink); padding: 1.25rem; }
+
+/* Modal: dims the page and centers its content */
+.ds-modal { position: fixed; inset: 0; display: grid; place-items: center; padding: 1.5rem; background: rgb(11 11 10 / 0.45); }
+.ds-modal > .ds-block { width: min(480px, 100%); padding: 2rem; }
+
+/* Highlight: yellow marker stroke (kohi .mark, drawn) */
+.ds-mark {
+  color: #0B0B0A;
+  background: linear-gradient(var(--marker), var(--marker)) no-repeat 0 .56em / 100% .86em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* StageGauge: circles on a line. Done = ink, current = marker, todo = empty.
+   Each li draws the line segment from the previous circle to its own (logical props, so RTL works). */
+.ds-stages { display: grid; list-style: none; margin: 0; padding: 0; }
+.ds-stages li {
+  position: relative; display: grid; justify-items: center; gap: 0.5rem; text-align: center;
+  font: var(--fs-sm)/1.4 var(--f-body); color: var(--muted);
+}
+.ds-stages li + li::before {
+  content: ""; position: absolute; inset-block-start: 8px; inset-inline-start: -50%;
+  inline-size: 100%; block-size: 2px; background: var(--hair);
+}
+.ds-stages li.is-done::before, .ds-stages li.is-current::before { background: var(--ink); }
+.ds-stages-dot {
+  position: relative; z-index: 1; inline-size: 18px; block-size: 18px; box-sizing: border-box;
+  border: 2px solid var(--ink); border-radius: 50%; background: var(--surface);
+}
+.ds-stages li.is-done .ds-stages-dot { background: var(--ink); }
+.ds-stages li.is-current .ds-stages-dot { background: var(--marker); }
+.ds-stages li.is-done, .ds-stages li.is-current { color: var(--ink); }
+.ds-stages li.is-current { font-weight: 700; }
+.ds-stages-button { display: grid; justify-items: center; gap: 0.5rem; font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.ds-stages-button:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ds-stages-button:focus-visible { outline: 3px solid var(--audio); outline-offset: 4px; }
+
+/* AppPage: stage gauge on top; CV 70% left, chat 30% right (grid is LTR so CV stays left; content inside is RTL).
+   Frames end at the viewport; only the chat messages scroll inside their frame. */
+.app-page {
+  block-size: 100dvh; box-sizing: border-box; padding: 1.5rem; gap: 1.5rem; background: var(--surface);
+  display: grid; grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: "stages stages" "cv chat"; grid-template-columns: 7fr 3fr;
+  direction: ltr;
+}
+.app-page > * { direction: rtl; min-block-size: 0; }
+.app-page-stages { grid-area: stages; }
+.app-page-cv { grid-area: cv; }
+.app-page-chat { grid-area: chat; }
+.app-page-cv > .ds-block, .app-page-chat > .ds-block { block-size: 100%; box-sizing: border-box; border: 0; }
+.app-page-cv > .ds-block { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 0.75rem; }
+.app-page-cv-scroll { overflow-y: auto; padding-inline-end: 0.5rem; }
+.app-page-chat > .ds-block { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 0.75rem; }
+.app-page-chat-scroll { overflow-y: auto; display: flex; flex-direction: column-reverse; }
+.app-page-chat-list, .app-page-chat-turn { display: grid; gap: 0.75rem; }
+.app-page-error { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.app-page-error:empty { display: none; }
+
+/* Visually hidden, still read by screen readers */
+.ds-sr-only { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Message: kocha at the start side with avatar and light bubble; user at the end side, ink bubble */
+.ds-msg { display: flex; align-items: flex-end; gap: 0.5rem; max-inline-size: 85%; }
+.ds-msg-kocha { justify-self: start; }
+.ds-msg-user { justify-self: end; }
+.ds-msg-bubble { padding: 0.5rem 0.75rem; font: var(--fs-md)/1.5 var(--f-body); white-space: pre-wrap; }
+.ds-msg-kocha .ds-msg-bubble { background: var(--surface); color: var(--ink); border: 1px solid var(--hair); }
+.ds-msg-user .ds-msg-bubble { background: var(--ink); color: var(--paper); }
+/* kohi's .warming-face */
+.ds-avatar { inline-size: 36px; block-size: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--hair); flex: none; }
+
+/* TypingIndicator: three dots; still when the user asks for reduced motion */
+.ds-typing { display: flex; gap: 4px; padding-block: 0.9rem; }
+.ds-typing-detail { font-size: var(--fs-xs); color: var(--muted); font-variant-numeric: tabular-nums; }
+.ds-typing-note { font-size: var(--fs-xs); color: var(--muted); font-style: italic; margin-block-start: 0.2rem; max-inline-size: 28ch; }
+.ds-typing span { inline-size: 6px; block-size: 6px; border-radius: 50%; background: var(--muted); animation: ds-typing 1.2s infinite; }
+.ds-typing span:nth-child(2) { animation-delay: 0.2s; }
+.ds-typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes ds-typing { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ds-typing span { animation: none; opacity: 0.6; } }
+
+/* Form fields: label above, square 2px ink box, audio-blue focus ring (same as buttons) */
+.ds-field { display: grid; gap: 0.35rem; }
+.ds-field > label { font: 700 var(--fs-sm)/1.4 var(--f-body); color: var(--ink); }
+.ds-input {
+  font: var(--fs-base)/1.5 var(--f-body); color: var(--ink); background: var(--surface);
+  border: 2px solid var(--ink); border-radius: 0; padding: 0.6rem 0.75rem; box-sizing: border-box; inline-size: 100%;
+}
+.ds-input::placeholder { color: var(--muted); }
+.ds-input:focus-visible, .ds-file:focus-within { outline: 3px solid var(--audio); outline-offset: 2px; }
+.ds-textarea { resize: vertical; overflow-y: auto; }
+
+/* FileInput: transparent native input over a dashed box */
+.ds-file {
+  position: relative; display: grid; place-items: center; min-block-size: 4.5rem; padding: 0.75rem;
+  border: 2px dashed var(--ink); background: var(--surface); color: var(--muted);
+  font: var(--fs-sm)/1.4 var(--f-body); text-align: center;
+}
+.ds-file.has-file { border-style: solid; color: var(--ink); font-weight: 700; }
+.ds-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; inline-size: 100%; block-size: 100%; }
+
+/* AppPage stage 0: the intake form spans both columns and scrolls on its own */
+.app-page-form { grid-column: 1 / -1; grid-row: 2; overflow-y: auto; }
+.intake { display: grid; gap: 1.25rem; max-inline-size: 640px; margin-inline: auto; padding-block-end: 1rem; }
+
+/* CvOutline: plain structured content (fine-tuning stage), no layout styling */
+.ds-outline { display: grid; gap: 1.25rem; font: var(--fs-md)/1.6 var(--f-body); color: var(--ink); }
+.ds-outline-title { margin: 0 0 0.25rem; font: 700 var(--fs-sm)/1.4 var(--f-body); color: var(--muted); }
+.ds-outline ul { margin: 0; padding-inline-start: 1.25rem; }
+.ds-outline-entries { list-style: none; padding-inline-start: 0; display: grid; gap: 0.6rem; }
+.ds-outline-entries > li > ul { list-style: disc; margin-block-start: 0.15rem; }
+
+/* CvCanvas: gray canvas, page transformed by zoom/pan, tray of zoom controls at the bottom */
+.ds-canvas { position: relative; block-size: 100%; min-block-size: 0; }
+.ds-canvas-viewport {
+  position: absolute; inset: 0; overflow: hidden; user-select: none; -webkit-user-select: none; /* drag pans, never selects */ background: #d9d6cf; cursor: grab; touch-action: none;
+}
+.ds-canvas-viewport:active { cursor: grabbing; }
+.ds-canvas-viewport:focus-visible { outline: 3px solid var(--audio); outline-offset: -3px; }
+.ds-canvas-stage { position: absolute; inset-block-start: 0; left: 0; transform-origin: 0 0; }
+.ds-canvas-page { inline-size: fit-content; box-shadow: 0 2px 16px rgb(0 0 0 / 0.25); }
+/* Tray: top-right corner (physical, like design tools), wraps if the pane is narrow */
+.ds-canvas-tray {
+  position: absolute; top: 12px; right: 12px; max-inline-size: calc(100% - 24px); flex-wrap: wrap;
+  display: flex; align-items: center; gap: 2px; padding: 4px;
+  background: var(--surface); border: 1px solid var(--hair); border-radius: 10px;
+  box-shadow: 0 1px 8px rgb(0 0 0 / 0.08); font: 500 var(--fs-sm)/1 var(--f-body);
+}
+.ds-canvas-tray button { display: inline-grid; place-items: center;
+  font: inherit; min-inline-size: 2.25rem; block-size: 2rem; padding: 0 0.6rem;
+  border: 0; border-radius: 6px; background: transparent; color: var(--ink); cursor: pointer;
+}
+.ds-canvas-tray button:hover { background: var(--paper); }
+.ds-canvas-tray button:focus-visible { outline: 3px solid var(--audio); outline-offset: 1px; }
+.ds-canvas-tray output { min-inline-size: 3.5rem; text-align: center; font-variant-numeric: tabular-nums; }
+
+.ds-canvas-controls { display: flex; align-items: center; gap: 8px; padding-inline: 4px 8px; margin-inline-end: 4px; border-inline-end: 1px solid var(--hair); }
+
+/* Select: label above a square native select; compact puts the label inline for toolbars */
+.ds-select { display: grid; gap: 0.35rem; }
+.ds-select label { font: 700 var(--fs-sm)/1.4 var(--f-body); color: var(--ink); }
+.ds-select select {
+  font: var(--fs-base)/1.4 var(--f-body); color: var(--ink); background: var(--surface);
+  border: 2px solid var(--ink); border-radius: 0; padding: 0.45rem 0.6rem;
+}
+.ds-select select:focus-visible { outline: 3px solid var(--audio); outline-offset: 2px; }
+.ds-select-compact { display: flex; align-items: center; gap: 6px; }
+.ds-select-compact label { font-size: var(--fs-xs); color: var(--muted); }
+.ds-select-compact select {
+  font-size: var(--fs-sm); padding: 0.25rem 0.5rem; border: 1px solid var(--hair); border-radius: 6px; cursor: pointer;
+}
+.ds-select-compact select:hover { border-color: var(--ink); }
+
+/* Button secondary: ink background, for a second strong action next to a primary one */
+.ds-button-secondary { background: var(--ink); color: var(--surface); }
+
+/* AppPage export stage: centered like the intake form */
+.export-actions { display: flex; justify-content: center; gap: 1rem; }
+.export-panel .ds-msg { max-inline-size: 100%; }
+.export-practice { justify-self: center; text-decoration: none; }
+.intake-privacy { margin: 0; font-size: var(--fs-xs); color: var(--muted); }
+.intake-privacy a, .intake .ds-msg a { color: inherit; text-underline-offset: 3px; }
+.export-status { margin: 0; min-block-size: 1.4em; text-align: center; font-size: var(--fs-sm); color: var(--muted); }
+.export-status.is-error { color: var(--ink); font-weight: 600; }
+
+/* ChatInput: textarea and send button at the bottom of a chat */
+.ds-chat-input { display: flex; gap: 0.5rem; align-items: stretch; }
+.ds-chat-input textarea { flex: 1; resize: none; }
+
+/* CV pane header: heading and the Next button on one row */
+.app-page-cv-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.app-page-cv-nav { display: flex; gap: 0.5rem; }
+/* Start over: a quiet link under the stage gauge, at the end side; confirm inline */
+.app-page-reset { display: flex; justify-content: flex-end; margin-block-start: 0.25rem; font-size: var(--fs-xs); }
+.app-page-reset-link { font: inherit; color: var(--muted); background: none; border: 0; padding: 0.15rem 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.app-page-reset-link:hover { color: var(--ink); }
+.app-page-reset-link:focus-visible { outline: 3px solid var(--audio); outline-offset: 2px; }
+.app-page-reset-confirm { display: flex; align-items: center; gap: 0.5rem; font-size: var(--fs-sm); color: var(--ink); }
+.app-page-overflow { display: flex; align-items: center; gap: 0.75rem; margin-inline-start: auto; font-size: var(--fs-sm); color: var(--ink); }
+
+/* PrepPoints: gentle cards. Hairline borders and muted labels, nothing that reads as a warning. */
+.ds-prep { display: grid; gap: 1.25rem; font: var(--fs-md)/1.6 var(--f-body); color: var(--ink); }
+.ds-prep-title { margin: 0 0 0.5rem; font: 700 var(--fs-sm)/1.4 var(--f-body); color: var(--muted); }
+.ds-prep ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.ds-prep-strengths li { padding-inline-start: 0.75rem; border-inline-start: 3px solid var(--marker); }
+.ds-prep-points li { background: var(--surface); border: 1px solid var(--hair); padding: 0.75rem 1rem; }
+.ds-prep-points p { margin: 0; }
+.ds-prep-question { font-weight: 700; }
+.ds-prep-prepare { color: var(--ink); margin-block-start: 0.2rem; }
+.ds-prep-foot { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-block-start: 0.5rem; font-size: var(--fs-xs); color: var(--muted); }
+.ds-prep-foot button { font: inherit; color: var(--muted); background: none; border: 0; padding: 0.15rem 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.ds-prep-foot button:hover { color: var(--ink); }
+.ds-prep-foot button:focus-visible { outline: 3px solid var(--audio); outline-offset: 2px; }
+.ds-prep-empty { margin: 0; color: var(--muted); }
+
+/* AppPage fine-tuning: outline scrolls; the tips drawer floats along the bottom of the pane */
+.app-page-cv-body { position: relative; min-block-size: 0; }
+.app-page-cv-body > .app-page-cv-scroll { block-size: 100%; box-sizing: border-box; padding-block-start: 4.25rem; }
+
+/* Drawer: floats at the bottom of a position: relative container */
+.ds-drawer {
+  position: absolute; max-block-size: calc(100% - 24px);
+  display: grid; grid-template-rows: auto minmax(0, 1fr);
+  background: var(--surface); border: 2px solid var(--ink); box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
+}
+.ds-drawer-handle {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem; inline-size: 100%;
+  padding: 0.7rem 1rem; border: 0; background: transparent; cursor: pointer;
+  font: 800 var(--fs-base)/1.3 var(--f-body); color: var(--ink); text-align: start;
+}
+.ds-drawer-handle:focus-visible { outline: 3px solid var(--audio); outline-offset: -3px; }
+.ds-drawer-count {
+  display: inline-grid; place-items: center; min-inline-size: 1.5rem; block-size: 1.5rem; margin-inline-start: 0.5rem;
+  background: var(--marker); color: #0B0B0A; font: 700 var(--fs-xs)/1 var(--f-body); border-radius: 999px;
+}
+.ds-drawer-bottom { inset-inline: 12px; inset-block-end: 12px; }
+/* Top: same corner as the design-stage canvas tray (physical top right) */
+.ds-drawer-top { top: 12px; right: 12px; inline-size: min(560px, calc(100% - 24px)); }
+/* Chevron points the way the drawer opens: up for bottom, down for top; flips when open */
+.ds-drawer-chevron { inline-size: 0.55rem; block-size: 0.55rem; border: solid var(--ink); border-width: 2px 2px 0 0; transform: rotate(-45deg); margin-block-start: 0.25rem; }
+.ds-drawer-bottom.is-open .ds-drawer-chevron, .ds-drawer-top:not(.is-open) .ds-drawer-chevron { transform: rotate(135deg); margin-block-start: -0.25rem; }
+.ds-drawer-body { overflow-y: auto; padding: 0.25rem 1rem 1rem; border-block-start: 1px solid var(--hair); }
+
+/* PrepPoints evidence: expandable source links */
+.ds-prep-evidence { margin-block-start: 0.4rem; font-size: var(--fs-xs); }
+.ds-prep-evidence summary { cursor: pointer; color: var(--muted); inline-size: fit-content; }
+.ds-prep-evidence summary:focus-visible { outline: 3px solid var(--audio); outline-offset: 2px; }
+.ds-prep .ds-prep-evidence ul { margin-block-start: 0.3rem; gap: 0.25rem; }
+.ds-prep .ds-prep-evidence li { background: none; border: 0; padding: 0; }
+.ds-prep-evidence a { color: var(--audio); text-underline-offset: 3px; }
+
+/* Tips drawer: seniority and track pickers above the tips */
+.app-page-prep-target { margin: 0 0 0.75rem; padding-block: 0.75rem; border-block-end: 1px solid var(--hair); font-size: var(--fs-xs); color: var(--muted); }

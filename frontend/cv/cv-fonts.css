@@ -1,0 +1,26 @@
+/* CV typography fonts (see theme.ts TYPOGRAPHY). All SIL OFL 1.1, self-hosted from fontsource:
+   free to self-host and to embed in generated PDFs. Latin subset. */
+@font-face {
+  font-family: "Bricolage Grotesque"; font-weight: 200 800; font-display: swap;
+  src: url("../components/fonts/bricolage-grotesque-latin-wght.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Hanken Grotesk"; font-weight: 100 900; font-display: swap;
+  src: url("../components/fonts/hanken-grotesk-latin-wght.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Schibsted Grotesk"; font-weight: 400 900; font-display: swap;
+  src: url("../components/fonts/schibsted-grotesk-latin-wght.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Newsreader"; font-weight: 200 800; font-style: normal; font-display: swap;
+  src: url("../components/fonts/newsreader-latin-wght.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Newsreader"; font-weight: 200 800; font-style: italic; font-display: swap;
+  src: url("../components/fonts/newsreader-latin-wght-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Literata"; font-weight: 200 900; font-display: swap;
+  src: url("../components/fonts/literata-latin-wght.woff2") format("woff2");
+}

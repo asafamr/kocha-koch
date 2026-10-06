@@ -1,0 +1,7 @@
+.git
+.claude
+.env
+.messages
+node_modules
+dist
+storybook-static
