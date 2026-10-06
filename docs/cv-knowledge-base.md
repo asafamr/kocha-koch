@@ -67,6 +67,7 @@ have, ask the user. If they don't know it, write the result without a number (se
 - [F. Typos and language errors](#f-typos-and-language-errors)
 - [G. Skills and soft-skill claims](#g-skills-and-soft-skill-claims)
 - [H. Gaps, career changers, juniors, Israel, Hebrew vs English](#h-gaps-career-changers-juniors-israel-hebrew-vs-english)
+- [Videos](#videos)
 - [Myths and weak claims](#myths-and-weak-claims)
 - [Consolidated sources](#consolidated-sources)
 - [Pages that did not load](#pages-that-did-not-load)
@@ -1211,6 +1212,167 @@ they display in the right order. Check the exported PDF text as well as the scre
 
 **Sources.** [S58] (as above).
 - [S53] practitioner · standards guide: W3C Internationalization, "Inline markup and bidirectional text in HTML", n.d. https://www.w3.org/International/articles/inline-bidi-markup/
+
+---
+
+## Videos
+
+YouTube videos that teach a tip, for users who prefer watching. Research pass: October 2026.
+Every video passed a YouTube oEmbed check (the title and channel below are its exact output).
+"Checked" says how the content was confirmed: **transcript** (auto-captions), **MIT transcript**
+(published by MIT), **description** (the video's description or chapter list), **summary** (a
+third-party summary page, weaker). Videos checked only by title, résumé-builder product channels,
+and videos that contradict a tip or repeat a myth (see "Myths and weak claims") were left out.
+No video was found for A6's main point, B5, B6, C2, C5, C6, D3, F2, F3, H1, H7, H9, H11, or for
+reserve duty as a gap reason.
+
+Shared videos (used under several tips):
+- **[V1]** "MIT CAPD's Career Toolkit: Crafting an effective resume" · MIT Career Advising &
+  Professional Development · English · https://www.youtube.com/watch?v=cYwma0HY4ZE · MIT's career
+  center, the same source as [S37]. Caveat: it states "six to ten seconds" per CV as fact (see
+  Myths).
+- **[V2]** "Create Your Resume for Google: Tips and Advice" · Life at Google · English ·
+  https://www.youtube.com/watch?v=BYUy1yvjHxE · two Google recruiters ([S76]). Caveat: it allows
+  up to two pages for engineering roles, looser than D1.
+- **[V3]** "איך לכתוב קורות חיים? | שאלה אחת" · כאן | דיגיטל - תאגיד השידור הישראלי · Hebrew ·
+  https://www.youtube.com/watch?v=EVYB28lBWU0 · Ronit Miller, career lecturer at Sapir College, on
+  Kan. Caveat: she says Word beats PDF for ATS, which B7 does not support.
+- **[V4]** "איך לכתוב קורות חיים שפוגעים בול?" · האקריו - HackerU. · Hebrew ·
+  https://www.youtube.com/watch?v=XsYZV6jFsQc · an Israeli tech-training college (part of the
+  video demos a CV-builder site).
+
+### A. Measurable outcomes and bullet content
+- **A1** [V1] (MIT transcript: quantify the impact of contributions). · "How to include numbers on
+  your resume to quantify your experience" · Sarah Doody · https://www.youtube.com/watch?v=_g7oqj5kTnU
+  · numbers can come from scope: dataset sizes, participants, frequency, team size; also covers
+  NDAs (checked: description; career coach for UX and tech).
+- **A2** [V2]: "Accomplish X as measured by Y by doing Z", with examples (checked: summary).
+- **A3** [V1]: "don't worry if you don't have exact numbers", describe the role and the positive
+  outcome (MIT transcript). [V2]: comparisons and averages for context (checked: summary).
+- **A4** [V1]: "skip responsibilities included", start with the action verb (MIT transcript). ·
+  "Resume Accomplishment Statements for less relevant or less professional experiences" · ASU
+  Career Services · https://www.youtube.com/watch?v=EChTCj8Lxao · accomplishment statements for
+  internships, volunteer and part-time work (checked: description).
+- **A5** [V1]: start with an action verb that shows the skill (MIT transcript). [V2]: begin bullets
+  with action words (checked: summary).
+- **A6** [V1]: action verbs instead of "I" or "we" (MIT transcript). It does not cover separating
+  your part from the team's.
+- **A7** "Writing Resume Job Bullet Points Recruiters Will ACTUALLY READ | How to Keep Job Bullets
+  SHORT" · Mika Thompson · https://www.youtube.com/watch?v=bS7IYoyn7ok · digits, symbols, shorter
+  words, no long stories (checked: description; résumé writer). [V2]: concise bullets (summary).
+
+### B. Automatic screening (ATS)
+- **B1** "שואלים מגייסת - מערכות ATS - איך מסננים מועמדים מאחורי הקלעים - חלק א'" · Irit H ·
+  https://www.youtube.com/watch?v=381BiVfTFE0 · Hebrew · a recruiter interviews Shai Bechor, CEO of
+  CIVI, an Israeli ATS vendor, on how ATSs work and keywords (checked: description). · "How To Use
+  Resume Keywords the RIGHT Way ✅ | Indeed" · Indeed · https://www.youtube.com/watch?v=SmBXRD54uRk
+  · finding keywords in the job post (checked: description).
+- **B3** "Fix Confusing Job Titles on Your Resume FAST" · Shelley Piedmont | My Career GPS ·
+  https://www.youtube.com/watch?v=iBqTEFa8Izw · list the official title next to a standard
+  equivalent when the real title is unclear (checked: description; former recruiter).
+- **B4** "Resume Contact Information   How to Make Sure An ATS Will Read It" · Lisa Hebert | LMH
+  Advisors · https://www.youtube.com/watch?v=wgD2gLC9fAM · some systems skip the Word header, so put
+  contact details in the body (checked: description; career advisor).
+- **B7** "WORD VS PDF! Which Format Should I Use??" · Amy Miller ·
+  https://www.youtube.com/watch?v=HwlgGWXLANA · no blanket "never PDF" rule (checked: description;
+  recruiter, including Amazon). · "כל מה שרצית לדעת על מערכות סינון קורות חיים ולא העזת לשאול |
+  ״מדברים קריירה״ - פרק 17" · עידן אפלמן · https://www.youtube.com/watch?v=-jkxyKv-UN4 · Hebrew ·
+  Tal Tadmor, product manager at Spark Hire (formerly Comeet, an Israeli ATS): PDF vs Word is about
+  user experience, not technology (checked: description).
+- **B8** "How important are keywords on your resume? Jon Stross, co-founder of Greenhouse, talks ATS
+  & hiring" · The Briefcase Coach · https://www.youtube.com/watch?v=y4ae1lSejLU · "keywords in
+  context are very important" (checked: description).
+- **B9** "Lever ATS Review/Demo – How a recruiter can rapidly screen candidates + simple screening
+  questions" · Sam Struan · https://www.youtube.com/watch?v=E5MMm9wKl10 · a recruiter filters with
+  knockout questions in Lever's real recruiter view (checked: description).
+
+### C. Tailoring, summary and section order
+- **C1** [V1]: customize for each role, relevant experience on top (MIT transcript). [V2]: mirror
+  the job description's language (checked: summary).
+- **C3** [V2]: an objective is optional, only if specific to the role (checked: summary). · "Pitch
+  Yourself With A Resume Summary | Recruiter Tips | Google Career Certificates" · Grow with Google ·
+  https://www.youtube.com/watch?v=OPWNF_8wbBY · what to put in a summary and what to leave out, 87
+  seconds (checked: description; talent acquisition manager at Charter).
+- **C4** [V1]: most recent first (MIT transcript). [V2]: reverse chronological (summary).
+
+### D. Length and how recruiters read
+- **D1** [V1]: "one page or two pages maximum if you have substantial relevant information" (MIT
+  transcript).
+- **D2** [V1]: "Don't shrink the font to fit more content", margins at least 0.5 inch (MIT
+  transcript).
+- **D4** "F-Pattern in Reading Digital Content" · NNgroup · https://www.youtube.com/watch?v=XU1-Rz2Q7-E
+  · eye-tracking of how people scan web text, by Kara Pernice ([S57], [S58]); about web pages, not
+  CVs (checked: NN/g's page for the video).
+
+### E. Formatting and personal details
+- **E1** [V2]: simple, consistent format, font sizing and spacing (transcript). · "Resume Writing
+  Series Part 2: Resume Formatting Basics, Don't Get Snubbed for Bad Style (JSB)" · APUS Career
+  Services · https://www.youtube.com/watch?v=UpK9pyItzlM · consistent spacing and bolding,
+  right-aligned dates (transcript; university career coach, 46-minute workshop).
+- **E2** "Resume Formatting Best Practices | Indeed Career Quick Tips" · Indeed ·
+  https://www.youtube.com/watch?v=iQLPWQP2B08 · a standard font, two or three sizes, 10-12 pt body
+  (transcript). [V3]: one plain font, 11-12 pt (transcript).
+- **E3** [V3]: name, mobile, a grown-up email, LinkedIn, city only (transcript). [V4]: name and one
+  line of city, email and phone, optional LinkedIn or Git link, city not street (transcript).
+- **E4** [V3]: no photo unless the job asks (transcript). [V4]: "בארץ לא מקובל להוסיף תמונת פרופיל"
+  (transcript).
+- **E5** [V3]: no age or marital status; ID number only for the public sector (transcript). [V4]:
+  the law forbids discrimination by family status or residence, so leave them out (transcript).
+  Neither mentions reserve duty.
+- **E6** [V2]: month and year on every date (transcript).
+
+### F. Typos and language errors
+- **F1** [V2]: "the most important tip we have overall is to always check for typos" (transcript).
+  · APUS Career Services (see E1): never send a CV with typos; get a second reader (transcript).
+
+### G. Skills and soft-skill claims
+- **G1** "What Hiring Managers Look For: How to List Your Skills on Your Resume" · Job Search AnaLyst
+  - Ana Lokotkova · https://www.youtube.com/watch?v=HJejTPKZN9E · generic soft skills add nothing;
+  show them through an accomplishment; 6-9 targeted skills in the ad's wording (transcript; former
+  HR and recruiter). · "How recruiters actually review your resume | Ask a Recruiter" · Microsoft
+  Learn · https://www.youtube.com/watch?v=ea45OfTx3w0 · a Microsoft recruiter looks in the
+  experience section for where each listed skill was used (transcript). [V3]: write achievements,
+  not "מעולה בעבודה בצוות" (transcript).
+- **G2** "Cliche Resume Buzzwords To NEVER USE ON YOUR RESUME | 5 Resume Buzzwords RECRUITERS HATE
+  the MOST" · Mika Thompson · https://www.youtube.com/watch?v=_qTein80d3Y · drop "results-driven",
+  "go-getter", "ninja"; state facts instead (transcript; résumé writer, not a recruiter).
+- **G3** "Ex-Google Recruiter Explains: 6 Résumé Secrets That Get You Hired" · Farah Sharghi ·
+  https://www.youtube.com/watch?v=eGmZZFJ-8PY · unexplained items make recruiters "make up our own
+  story"; the first word of a bullet changes how senior you read (transcript; ex-Google recruiter).
+- **G4** "The RIGHT Way to List Tech Skills on Your Resume" · Shelley Piedmont | My Career GPS ·
+  https://www.youtube.com/watch?v=2OuNyYiiMsM · a grouped technical skills section in the ad's
+  exact form, no soft skills in it (transcript; former recruiter). [V2]: only languages you can be
+  interviewed on; link GitHub; include projects (transcript). · "Resumes: Adding Projects to Your
+  Resume" · Engineering Career Services Ohio State University ·
+  https://www.youtube.com/watch?v=2lUY3f-VqaQ · project title and dates, then result-focused bullets
+  naming the tools (transcript).
+
+### H. Gaps, career changers, juniors, Israel, Hebrew vs English
+- **H2** "How to Explain Career Gap in Interview and Resume" · Linda Raynier ·
+  https://www.youtube.com/watch?v=K-4ZUOXbxjE · explaining a one-year gap in the CV and the interview
+  (checked: description; former corporate recruiter).
+- **H4** "YOU NEED this method for gaps in your CV" · Raj Sidhu ·
+  https://www.youtube.com/watch?v=u8lD4lzgnpI · durations instead of dates, citing the same study of
+  9,000+ applications as [S31] (checked: search snippet only; University of Cambridge careers
+  consultant).
+- **H5** "The Best Resume Tips for a Career Change" · LinkedIn ·
+  https://www.youtube.com/watch?v=UmiSMDVDWJI · transferable skills, the job description's language,
+  quantified results (checked: description; Linda Raynier and Adam Broda). · "How to Write a Career
+  Change CV (*With Examples*)" · Raj Sidhu · https://www.youtube.com/watch?v=V2qKG-AHLHE · two
+  frameworks and a worked example (checked: description).
+- **H6** "How to Write a Resume With Limited Work Experience" · LinkedIn ·
+  https://www.youtube.com/watch?v=-VYWkJIPf2I · writing a CV with little experience through relevant
+  and transferable skills (checked: description). · "איך *לעזאזל* מוצאים עבודה ראשונה בהייטק אם כולם
+  דורשים ניסיון?!" · TechMonster - Career in Tech · https://www.youtube.com/watch?v=l-NUoZNU7YM ·
+  Hebrew · build experience honestly through a portfolio of projects (checked: description; Israeli
+  tech-careers channel).
+- **H8** "טיפים לפורשי צה"ל לכתיבת קורות חיים" · רדיו סול · https://www.youtube.com/watch?v=SRBFU10NLJU
+  · Hebrew · a 47-minute radio interview with an occupational counsellor who runs IDF retirement
+  workshops; aimed at retiring career officers, not discharged conscripts (checked: description).
+- **H10** "איך כותבים מסמך קורות חיים באנגלית?" · בית הספר לקריירה ·
+  https://www.youtube.com/watch?v=iYIMzssaTxE · Hebrew · the accepted rules for an English CV, from a
+  Campus IL course of the Israeli Employment Service (checked: description). It does not cover when
+  to choose Hebrew.
 
 ---
 
