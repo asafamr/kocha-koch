@@ -1,0 +1,22 @@
+# The PDF renderer: the standard Gotenberg image (Chromium behind an HTML -> PDF API), locked
+# down because the HTML comes from users. Used by `pdf` in compose and the private Cloud Run
+# service kocha-cv-pdf (docs/deploy-cloud-run.md); the app calls it from src/pdf.ts.
+#   - JavaScript off; Chromium may not reach any host, private or public, and reads files only
+#     from its own /tmp (the default deny list);
+#   - only the HTML route is used: URL download, LibreOffice, PDF engines and webhooks are off;
+#   - cookies, cache and storage cleared between conversions; 30 s per request.
+FROM docker.io/gotenberg/gotenberg:8
+CMD ["gotenberg", \
+  "--api-port-from-env=PORT", \
+  "--api-timeout=30s", \
+  "--api-disable-download-from", \
+  "--chromium-disable-javascript", \
+  "--chromium-deny-private-ips", \
+  "--chromium-deny-public-ips", \
+  "--chromium-clear-cache", \
+  "--chromium-clear-cookies", \
+  "--chromium-clear-storage", \
+  "--chromium-max-concurrency=2", \
+  "--libreoffice-disable-routes", \
+  "--pdfengines-disable-routes", \
+  "--webhook-disable"]

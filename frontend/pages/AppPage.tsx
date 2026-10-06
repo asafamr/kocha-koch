@@ -199,12 +199,24 @@ export function AppPage({
     api.send(text).catch(fail);
   }
 
+  // Users who agreed to share their CVs with kocha (consent cv_processing) send them on export
+  // too, in the background; the server reuses the result for an unchanged CV, so a later practice
+  // click adds nothing. A failure never affects the download.
+  const sharesCvs = messages.some((m) => m.intake?.consents?.some((c) => c.purpose === "cv_processing"));
+  function shareWithKocha(d: CvDocument) {
+    if (!sharesCvs) return;
+    cvHtmlFile(d)
+      .then((html) => api.handoff({ document: d, html }))
+      .catch(() => {});
+  }
+
   const [pdf, setPdf] = useState<PdfState>({ status: "idle" });
   async function exportPdf(d: CvDocument) {
     setPdf({ status: "working", text: "מכין את קובץ ה־PDF…" });
     try {
       const name = await downloadCvPdf(d, api.pdf);
       setPdf({ status: "done", text: `הקובץ ${name} ירד לתיקיית ההורדות.` });
+      shareWithKocha(d);
     } catch (e) {
       const unavailable = e instanceof Error && e.message.includes("503");
       setPdf({ status: "error", text: unavailable ? "יצירת PDF לא זמינה בשרת הזה." : "לא הצלחתי ליצור PDF. נסו שוב." });
@@ -217,7 +229,6 @@ export function AppPage({
   // The practice button. If the user agreed to share their CVs with kocha, hand them over first
   // and open kocha's join link with the token; on any failure open the plain tracked link. The
   // tab is opened inside the click (popup blockers allow it) and pointed at the link afterwards.
-  const sharesCvs = messages.some((m) => m.intake?.consents?.some((c) => c.purpose === "cv_processing"));
   async function practice(d: CvDocument) {
     const tab = window.open("about:blank", "_blank");
     if (tab) tab.opener = null;
@@ -309,7 +320,10 @@ export function AppPage({
               prep={tips && <PrepPoints points={points} onDismiss={(id) => setDismissed((d) => [...d, id])} />}
               pdf={pdf}
               onExportPdf={() => exportPdf(doc)}
-              onExportHtml={() => downloadCvHtml(doc)}
+              onExportHtml={() => {
+                downloadCvHtml(doc);
+                shareWithKocha(doc);
+              }}
               practiceUrl={kochaUrl("export")}
               onPractice={sharesCvs ? () => practice(doc) : undefined}
             />
