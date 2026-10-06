@@ -294,7 +294,7 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 .ds-prep-points p { margin: 0; }
 .ds-prep-question { font-weight: 700; }
 .ds-prep-prepare { color: var(--ink); margin-block-start: 0.2rem; }
-.ds-prep-foot { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-block-start: 0.5rem; font-size: var(--fs-xs); color: var(--muted); }
+.ds-prep-foot { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-block-start: 0.5rem; font-size: var(--fs-xs); color: var(--muted); }
 .ds-prep-foot button { font: inherit; color: var(--muted); background: none; border: 0; padding: 0.15rem 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .ds-prep-foot button:hover { color: var(--ink); }
 .ds-prep-foot button:focus-visible { outline: 3px solid var(--audio); outline-offset: 2px; }

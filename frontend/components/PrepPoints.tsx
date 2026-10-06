@@ -1,18 +1,15 @@
 // Points a recruiter may ask about, with a story to have ready. Private to the candidate, never
 // part of the CV. Tone and rules: docs/prompts/prep-points.md (gentle, actionable, dismissible).
-// `evidence` holds sources from docs/cv-weak-points-research.md; points without measured
-// research have none, and show no sources toggle.
+// `evidence` holds sources from docs/cv-weak-points-research.md and docs/cv-knowledge-base.md,
+// added whenever one exists; an item without sources shows no sources toggle.
 export type PrepEvidence = { label: string; url: string };
 export type PrepPoint = {
   id: string;
   question: string;
   prepare: string;
-  basis: "research" | "practice";
   evidence?: PrepEvidence[];
 };
-export type PrepStrength = { text: string };
-
-const BASIS_LABEL = { research: "מבוסס מחקר", practice: "מניסיון של מגייסים" } as const;
+export type PrepStrength = { text: string; evidence?: PrepEvidence[] };
 
 export function PrepPoints({
   strengths = [],
@@ -32,7 +29,10 @@ export function PrepPoints({
           <h3 className="ds-prep-title">כדאי להבליט</h3>
           <ul className="ds-prep-strengths">
             {strengths.map((s) => (
-              <li key={s.text}>{s.text}</li>
+              <li key={s.text}>
+                {s.text}
+                <Sources evidence={s.evidence} />
+              </li>
             ))}
           </ul>
         </section>
@@ -64,22 +64,8 @@ function PointList({ points, onDismiss }: { points: PrepPoint[]; onDismiss: (id:
               <li key={p.id}>
                 <p className="ds-prep-question">{p.question}</p>
                 <p className="ds-prep-prepare">{p.prepare}</p>
-                {p.evidence && p.evidence.length > 0 && (
-                  <details className="ds-prep-evidence">
-                    <summary>מקורות ({p.evidence.length})</summary>
-                    <ul>
-                      {p.evidence.map((e) => (
-                        <li key={e.url}>
-                          <a href={encodeURI(e.url)} target="_blank" rel="noopener noreferrer">
-                            {e.label}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                )}
+                <Sources evidence={p.evidence} />
                 <div className="ds-prep-foot">
-                  <span>{BASIS_LABEL[p.basis]}</span>
                   <button type="button" onClick={() => onDismiss(p.id)} aria-label={`לא רלוונטי: ${p.question}`}>
                     לא רלוונטי
                   </button>
@@ -87,5 +73,24 @@ function PointList({ points, onDismiss }: { points: PrepPoint[]; onDismiss: (id:
               </li>
             ))}
           </ul>
+  );
+}
+
+// Expandable source links; nothing when there are none.
+function Sources({ evidence }: { evidence?: PrepEvidence[] }) {
+  if (!evidence || evidence.length === 0) return null;
+  return (
+    <details className="ds-prep-evidence">
+      <summary>מקורות ({evidence.length})</summary>
+      <ul>
+        {evidence.map((e) => (
+          <li key={e.url}>
+            <a href={encodeURI(e.url)} target="_blank" rel="noopener noreferrer">
+              {e.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
