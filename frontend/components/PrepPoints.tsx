@@ -2,6 +2,8 @@
 // part of the CV. Tone and rules: docs/prompts/prep-points.md (gentle, actionable, dismissible).
 // `evidence` holds sources from docs/cv-weak-points-research.md and docs/cv-knowledge-base.md,
 // added whenever one exists; an item without sources shows no sources toggle.
+// Each group renders only when given: the app shows strengths and job fit in the fine-tuning
+// drawer (they improve the CV) and the questions on the export page (they prepare for the call).
 export type PrepEvidence = { label: string; url: string };
 export type PrepPoint = {
   id: string;
@@ -19,7 +21,7 @@ export function PrepPoints({
 }: {
   strengths?: PrepStrength[];
   jobFit?: PrepPoint[]; // fit to this job ad: required skills and wording
-  points: PrepPoint[];
+  points?: PrepPoint[]; // questions a recruiter may ask; omitted = no questions section
   onDismiss: (id: string) => void;
 }) {
   return (
@@ -45,14 +47,16 @@ export function PrepPoints({
         </section>
       )}
 
-      <section aria-label="שאלות שכדאי להתכונן אליהן">
-        <h3 className="ds-prep-title">שאלות שכדאי להתכונן אליהן</h3>
-        {points.length === 0 ? (
-          <p className="ds-prep-empty">אין כרגע שאלות להתכונן אליהן.</p>
-        ) : (
-          <PointList points={points} onDismiss={onDismiss} />
-        )}
-      </section>
+      {points && (
+        <section aria-label="שאלות שכדאי להתכונן אליהן">
+          <h3 className="ds-prep-title">שאלות שכדאי להתכונן אליהן</h3>
+          {points.length === 0 ? (
+            <p className="ds-prep-empty">אין כרגע שאלות להתכונן אליהן.</p>
+          ) : (
+            <PointList points={points} onDismiss={onDismiss} />
+          )}
+        </section>
+      )}
     </div>
   );
 }

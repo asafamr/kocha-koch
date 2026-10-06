@@ -279,6 +279,7 @@ export function AppPage({
         <section className="app-page-form" aria-label={STAGES[3]}>
           {doc ? (
             <ExportPanel
+              prep={tips && <PrepPoints points={points} onDismiss={(id) => setDismissed((d) => [...d, id])} />}
               pdf={pdf}
               onExportPdf={() => exportPdf(doc)}
               onExportHtml={() => downloadCvHtml(doc)}
@@ -320,7 +321,7 @@ export function AppPage({
                     <CvOutline sections={cvToOutline(doc.data)} />
                   </div>
                   {/* Private to the candidate, never part of the CV. */}
-                  <Drawer title="טיפים לשיפור" count={jobFit.length + points.length} placement="top">
+                  <Drawer title="טיפים לשיפור" count={(tips?.strengths?.length ?? 0) + jobFit.length} placement="top">
                     {tips?.target && (
                       <p className="app-page-prep-target" dir="auto">
                         משרה: {tips.target}
@@ -330,7 +331,6 @@ export function AppPage({
                       <PrepPoints
                         strengths={tips.strengths}
                         jobFit={jobFit}
-                        points={points}
                         onDismiss={(id) => setDismissed((d) => [...d, id])}
                       />
                     ) : (
