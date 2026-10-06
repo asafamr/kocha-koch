@@ -1,10 +1,19 @@
 import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { Button } from "./Button";
 
-// Message box at the bottom of a chat. Enter sends, Shift+Enter adds a line.
-export function ChatInput({ onSend, placeholder = "כתבו הודעה…" }: { onSend: (text: string) => void; placeholder?: string }) {
+// Message box at the bottom of a chat. Enter sends, Shift+Enter adds a line. While `busy`
+// (kocha is still answering) the user can type but not send, so replies arrive in order.
+export function ChatInput({
+  onSend,
+  placeholder = "כתבו הודעה…",
+  busy = false,
+}: {
+  onSend: (text: string) => void;
+  placeholder?: string;
+  busy?: boolean;
+}) {
   const [text, setText] = useState("");
-  const ready = text.trim() !== "";
+  const ready = text.trim() !== "" && !busy;
 
   function submit(e?: FormEvent) {
     e?.preventDefault();

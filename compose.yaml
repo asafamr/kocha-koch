@@ -10,7 +10,7 @@ x-app: &app
   <<: *hardening
   build: .
   image: kocha-koch-app
-  init: true   # bun as PID 1 ignores SIGTERM
+  init: true   # reaps child processes (the image also runs tini, for Cloud Run)
   read_only: true
   tmpfs: [/tmp]
   env_file:

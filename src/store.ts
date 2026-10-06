@@ -7,7 +7,11 @@ import { join } from "node:path";
 //     .messages/outbox/<id>.json  the reply, with the same id
 //     .messages/uploads/<file>    files the user uploaded (the intake CV PDF)
 //     .messages/archive/<time>/   earlier conversations, moved here by a reset ("start over")
-//   STORE=memory: kept in process, nothing touches disk, lost on restart.
+//     One conversation: local runs are single-user (ports bind to 127.0.0.1), so the session
+//     argument is ignored.
+//   STORE=memory: kept in process, one conversation per browser session (a cookie set by the
+//     server), nothing touches disk. Sessions idle for SESSION_TTL are dropped, and the oldest go
+//     first when there are too many or their uploads take too much memory.
 // A message is pending while it has no reply with the same id.
 
 // The intake form, sent once at the start. cvFile is relative to the messages dir.
@@ -23,34 +27,53 @@ export type ThreadItem = Message & {
 };
 
 type Store = {
-  put(box: "inbox" | "outbox", item: Message | Reply): Promise<void>;
-  list(): Promise<{ inbox: Message[]; outbox: Reply[] }>;
-  putFile(name: string, bytes: Uint8Array): Promise<string>; // returns the path the agent reads
-  getFile(path: string): Promise<Uint8Array | null>; // a path putFile returned
-  reset(): Promise<void>; // start a new conversation (files: archived, memory: dropped)
+  put(session: string, box: "inbox" | "outbox", item: Message | Reply): Promise<void>;
+  list(session: string): Promise<{ inbox: Message[]; outbox: Reply[] }>;
+  putFile(session: string, name: string, bytes: Uint8Array): Promise<string>; // returns the path the agent reads
+  getFile(session: string, path: string): Promise<Uint8Array | null>; // a path putFile returned
+  reset(session: string): Promise<void>; // start a new conversation (files: archived, memory: dropped)
 };
 
+const SESSION_TTL_MS = 6 * 3_600_000;
+const MAX_SESSIONS = 2000;
+const MAX_UPLOAD_BYTES = 256 * 1024 * 1024; // all sessions together
+
 function memoryStore(): Store {
-  const boxes = { inbox: [] as Message[], outbox: [] as Reply[] };
-  const files = new Map<string, Uint8Array>();
+  type Conv = { inbox: Message[]; outbox: Reply[]; files: Map<string, Uint8Array>; touched: number };
+  const convs = new Map<string, Conv>(); // insertion order = least recently used first
+  const bytes = () => [...convs.values()].reduce((s, c) => s + [...c.files.values()].reduce((t, f) => t + f.length, 0), 0);
+  const evict = () => {
+    const now = Date.now();
+    for (const [k, c] of convs) if (now - c.touched > SESSION_TTL_MS) convs.delete(k);
+    while (convs.size > MAX_SESSIONS || (convs.size > 1 && bytes() > MAX_UPLOAD_BYTES)) convs.delete(convs.keys().next().value!);
+  };
+  const conv = (session: string) => {
+    let c = convs.get(session);
+    if (c) convs.delete(session); // re-insert to mark it recently used
+    else c = { inbox: [], outbox: [], files: new Map(), touched: 0 };
+    c.touched = Date.now();
+    convs.set(session, c);
+    evict();
+    return c;
+  };
   return {
-    async put(box, item) {
-      (boxes[box] as (Message | Reply)[]).push(item);
+    async put(session, box, item) {
+      (conv(session)[box] as (Message | Reply)[]).push(item);
     },
-    async list() {
-      return { inbox: [...boxes.inbox], outbox: [...boxes.outbox] };
+    async list(session) {
+      const c = conv(session);
+      return { inbox: [...c.inbox], outbox: [...c.outbox] };
     },
-    async putFile(name, bytes) {
-      files.set(name, bytes);
+    async putFile(session, name, data) {
+      conv(session).files.set(name, data);
+      evict();
       return `uploads/${name}`;
     },
-    async getFile(path) {
-      return files.get(path.replace(/^uploads\//, "")) ?? null;
+    async getFile(session, path) {
+      return convs.get(session)?.files.get(path.replace(/^uploads\//, "")) ?? null;
     },
-    async reset() {
-      boxes.inbox = [];
-      boxes.outbox = [];
-      files.clear();
+    async reset(session) {
+      convs.delete(session);
     },
   };
 }
@@ -69,7 +92,7 @@ async function fileStore(root: string): Promise<Store> {
 
   return {
     // Write to a temp name, then rename, so readers never see half a file.
-    async put(box, item) {
+    async put(_session, box, item) {
       const tmp = join(dirs[box], `.${item.id}.tmp`);
       await Bun.write(tmp, JSON.stringify(item, null, 2) + "\n");
       await rename(tmp, join(dirs[box], `${item.id}.json`));
@@ -81,11 +104,11 @@ async function fileStore(root: string): Promise<Store> {
       ]);
       return { inbox, outbox };
     },
-    async putFile(name, bytes) {
+    async putFile(_session, name, bytes) {
       await Bun.write(join(dirs.uploads, name), bytes);
       return `uploads/${name}`;
     },
-    async getFile(path) {
+    async getFile(_session, path) {
       const name = path.replace(/^uploads\//, "");
       if (name.includes("/") || name.startsWith(".")) return null;
       const file = Bun.file(join(dirs.uploads, name));
@@ -107,27 +130,27 @@ const store =
 
 const newId = () => `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
 
-export async function addMessage(text: string, intake?: Intake): Promise<Message> {
+export async function addMessage(session: string, text: string, intake?: Intake): Promise<Message> {
   const msg: Message = { id: newId(), ts: new Date().toISOString(), text, ...(intake ? { intake } : {}) };
-  await store.put("inbox", msg);
+  await store.put(session, "inbox", msg);
   return msg;
 }
 
-export async function addReply(id: string, text: string, by: string, extra: { cv?: unknown; tips?: unknown } = {}) {
-  await store.put("outbox", { id, ts: new Date().toISOString(), text, by, ...extra });
+export async function addReply(session: string, id: string, text: string, by: string, extra: { cv?: unknown; tips?: unknown } = {}) {
+  await store.put(session, "outbox", { id, ts: new Date().toISOString(), text, by, ...extra });
 }
 
-export const getUpload = (path: string) => store.getFile(path);
+export const getUpload = (session: string, path: string) => store.getFile(session, path);
 
 // Save an uploaded file under a fresh name; returns its path relative to the messages dir.
-export async function saveUpload(ext: string, bytes: Uint8Array): Promise<string> {
-  return store.putFile(`${newId()}.${ext}`, bytes);
+export async function saveUpload(session: string, ext: string, bytes: Uint8Array): Promise<string> {
+  return store.putFile(session, `${newId()}.${ext}`, bytes);
 }
 
-export const resetStore = () => store.reset();
+export const resetStore = (session: string) => store.reset(session);
 
-export async function thread(): Promise<ThreadItem[]> {
-  const { inbox, outbox } = await store.list();
+export async function thread(session: string): Promise<ThreadItem[]> {
+  const { inbox, outbox } = await store.list(session);
   const replies = new Map(outbox.map((r) => [r.id, r]));
   return inbox
     .sort((a, b) => a.id.localeCompare(b.id))

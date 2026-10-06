@@ -60,6 +60,7 @@ Protocol details are in [AGENTS.md](AGENTS.md). Gemini follows the same prompts
 (`docs/prompts/kocha.md` and the files it lists) and reads the uploaded PDF. The :3001 app is set
 up like Cloud Run: one container, messages in memory, listening on `PORT=8080`. It needs
 `GEMINI_API_KEY` in `.env`. Costs and limits: [docs/gemini-costs.md](docs/gemini-costs.md).
+Deploying it: [docs/deploy-cloud-run.md](docs/deploy-cloud-run.md).
 
 To run everything at once, with Claude Code answering in the background:
 

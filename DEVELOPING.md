@@ -58,7 +58,7 @@ or the containers cannot write to `.messages/`.
 | File | Role |
 |---|---|
 | `src/server.ts` | `GET/POST /api/messages`, `POST /api/intake` (multipart: role, job description, consent, CV PDF up to 5 MB), `POST /api/pdf` (CV HTML -> PDF), `POST /api/reset` (start over), static files from `dist/` |
-| `src/store.ts` | `STORE=files`: inbox/outbox files, atomic writes (temp file + rename), uploads in `uploads/`, reset moves them to `archive/<time>/`. `STORE=memory`: in process, nothing on disk. Types shared with the frontend |
+| `src/store.ts` | `STORE=files`: one local conversation, inbox/outbox files, atomic writes (temp file + rename), uploads in `uploads/`, reset moves them to `archive/<time>/`. `STORE=memory`: one conversation per session cookie, idle sessions dropped after 6 h, nothing on disk. Types shared with the frontend |
 | `src/gemini.ts` | `BACKEND=gemini`: sends the thread (with the intake PDF) to Gemini with `docs/prompts/kocha.md`, the CV and tips prompts and the research docs as instructions; adds its JSON reply (text, cv, tips) after a verification pass (`docs/prompts/verify.md`); streams progress for the typing indicator |
 | `src/spend.ts` | Gemini spend limit per process: a leaky bucket in dollars (`GEMINI_SPEND_PER_HOUR`, default $10), see `docs/gemini-costs.md` |
 | `src/pdf.ts` | CV PDFs with headless Chromium (in the app image), so the text layer is the same for every user. `app-dev` has no Chromium: export there shows an error |

@@ -63,12 +63,12 @@ export type Progress = { phase: "thinking" | "lookup" | "writing" | "verifying";
 export const progress = new Map<string, Progress>();
 
 // One user turn: the message text, and for the intake its fields and the CV PDF.
-async function userParts(m: ThreadItem): Promise<Part[]> {
+async function userParts(session: string, m: ThreadItem): Promise<Part[]> {
   const parts: Part[] = [{ text: m.text }];
   if (m.intake) {
     const { role, jobDescription } = m.intake;
     parts.push({ text: `Intake.\nTarget role: ${role}\nJob description:\n${jobDescription || "(not given)"}` });
-    const pdf = await getUpload(m.intake.cvFile);
+    const pdf = await getUpload(session, m.intake.cvFile);
     if (pdf) parts.push({ inlineData: { mimeType: "application/pdf", data: Buffer.from(pdf).toString("base64") } });
   }
   return parts;
@@ -247,18 +247,18 @@ async function verifyCv(id: string, sources: Part[], data: unknown): Promise<unk
   };
   const fixed = fix(data);
   logUsage(id, 0, out.usageMetadata ?? {}, Date.now() - started, `verify: ${applied}/${fixes.length} fixes`);
-  for (const f of fixes) console.log(`gemini ${id} verify fix: "${f.before}" -> "${f.after}" (${f.why ?? ""})`);
+  // Counts only: the fixed strings are CV content, which stays out of the logs.
   return fixed;
 }
 
 // What the CV may claim: the user's uploaded CV, the intake fields and the user's messages.
-async function sourceParts(messages: ThreadItem[]): Promise<Part[]> {
+async function sourceParts(session: string, messages: ThreadItem[]): Promise<Part[]> {
   const parts: Part[] = [];
   const said: string[] = [];
   for (const m of messages) {
     if (m.intake) {
       parts.push({ text: `Target role: ${m.intake.role}\nJob description:\n${m.intake.jobDescription || "(not given)"}` });
-      const pdf = await getUpload(m.intake.cvFile);
+      const pdf = await getUpload(session, m.intake.cvFile);
       if (pdf) parts.push({ text: "The user's CV:" }, { inlineData: { mimeType: "application/pdf", data: Buffer.from(pdf).toString("base64") } });
     } else said.push(m.text);
   }
@@ -299,20 +299,20 @@ function parseReply(raw: string): { text: string; cv?: unknown; tips?: unknown }
 
 // Answer one message the same way an external agent would: read the thread, add a reply with
 // the same id, with the CV and tips the model sent. Works with either store.
-export async function answer(id: string) {
+export async function answer(session: string, id: string) {
   if (!KEY) throw new Error("GEMINI_API_KEY is not set");
   if (!canSpend()) {
     // This pod's spend limit (src/spend.ts) is used up: refuse politely until it drains.
     console.log(`gemini ${id} refused: spend limit ($${bucket().level.toFixed(3)} in the bucket)`);
-    await addReply(id, "קוחה עמוסה כרגע. נסו לשלוח שוב בעוד כמה דקות.", "server");
+    await addReply(session, id, "קוחה עמוסה כרגע. נסו לשלוח שוב בעוד כמה דקות.", "server");
     return;
   }
   progress.set(id, { phase: "thinking", startedAt: Date.now(), thinkingTokens: 0 });
   try {
     const contents: Content[] = [];
-    const history = (await thread()).filter((m) => m.id <= id);
+    const history = (await thread(session)).filter((m) => m.id <= id);
     for (const m of history) {
-      contents.push({ role: "user", parts: await userParts(m) });
+      contents.push({ role: "user", parts: await userParts(session, m) });
       if (m.reply) {
         const { text, cv, tips } = m.reply;
         contents.push({ role: "model", parts: [{ text: JSON.stringify({ text, cv, tips }) }] });
@@ -354,8 +354,8 @@ export async function answer(id: string) {
       }
       const text = reply ? (reply.text as string) : raw || "(empty response)";
       const cv = reply?.cv as { data?: unknown } | undefined;
-      if (cv?.data) cv.data = await verifyCv(id, await sourceParts(history), cv.data);
-      await addReply(id, text, `gemini:${MODEL}`, { cv, tips: reply?.tips });
+      if (cv?.data) cv.data = await verifyCv(id, await sourceParts(session, history), cv.data);
+      await addReply(session, id, text, `gemini:${MODEL}`, { cv, tips: reply?.tips });
       return;
     }
   } finally {

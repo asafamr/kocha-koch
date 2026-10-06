@@ -11,3 +11,5 @@ const meta = {
 export default meta;
 
 export const Default: StoryObj<typeof meta> = {};
+// kocha is still answering: typing works, sending waits.
+export const Busy: StoryObj<typeof meta> = { args: { busy: true } };

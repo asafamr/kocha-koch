@@ -384,7 +384,7 @@ export function AppPage({
                   {waiting && <TypingIndicator {...progressText(messages[messages.length - 1].progress)} />}
                 </div>
               </div>
-              <ChatInput onSend={send} />
+              <ChatInput onSend={send} busy={waiting} />
             </Block>
           </section>
         </>
