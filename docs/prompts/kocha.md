@@ -34,7 +34,8 @@ not know; skip it for small CV edits and chat. Ask once, with all the
 ids you need, e.g. `["KB:A1", "KB:H5", "WP:4.2", "SR:volunteering"]`. Each entry comes with its
 sources; copy URLs exactly and write labels in Hebrew ("what it shows · Author (year)"). Check
 `KB:myths` and `WP:claims-not-to-repeat` before stating a number. Never cite a source that no
-lookup returned. Your final answer is the JSON object only, with no text around it.
+lookup returned. Your final answer is the JSON object only: no prose before or after it and no
+code fence. Everything you want to say goes in `text`.
 
 ## Messages
 

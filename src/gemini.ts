@@ -100,13 +100,25 @@ async function cachedInstructions(): Promise<string | null> {
 }
 
 // One model turn, streamed so progress (thinking tokens, the latest thought heading) shows while
-// it runs. Returns the turn's parts, as received, and its usage.
-async function generate(id: string, contents: Content[], thinkingBefore: number, useCache = true): Promise<{ parts: Part[]; usage: any }> {
-  const generationConfig = { thinkingConfig: { ...(THINKING ? { thinkingLevel: THINKING } : {}), includeThoughts: true } };
+// it runs. Returns the turn's parts, as received, and its usage. `json`: the answer turn, with
+// tools off and JSON response mode on, so the reply is valid JSON (prompts alone do not ensure
+// it; JSON mode with tools on makes the model call tools even when it should answer).
+async function generate(
+  id: string,
+  contents: Content[],
+  thinkingBefore: number,
+  json: boolean,
+  useCache = true,
+): Promise<{ parts: Part[]; usage: any }> {
+  const generationConfig = {
+    thinkingConfig: { ...(THINKING ? { thinkingLevel: THINKING } : {}), includeThoughts: true },
+    ...(json ? { responseMimeType: "application/json" } : {}),
+  };
+  const toolConfig = json ? { functionCallingConfig: { mode: "NONE" } } : undefined;
   const cached = useCache ? await cachedInstructions() : null;
   const body = cached
-    ? { cachedContent: cached, contents, generationConfig }
-    : { systemInstruction: { parts: [{ text: await loadInstructions() }] }, contents, tools: TOOLS, generationConfig };
+    ? { cachedContent: cached, contents, generationConfig, toolConfig }
+    : { systemInstruction: { parts: [{ text: await loadInstructions() }] }, contents, tools: TOOLS, toolConfig, generationConfig };
   const res = await fetch(`${API}/models/${MODEL}:streamGenerateContent?alt=sse`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-goog-api-key": KEY! },
@@ -118,7 +130,7 @@ async function generate(id: string, contents: Content[], thinkingBefore: number,
       // The cache may have expired or been rejected: drop it and send the instructions inline.
       console.error(`gemini with cache failed ${res.status}: ${err.slice(0, 300)}`);
       cache = null;
-      return generate(id, contents, thinkingBefore, false);
+      return generate(id, contents, thinkingBefore, json, false);
     }
     throw new Error(`Gemini ${res.status}: ${err}`);
   }
@@ -176,14 +188,23 @@ function logUsage(id: string, round: number, u: any, ms: number, note: string) {
   );
 }
 
-// The reply JSON, also when the model wraps it in a code fence.
-function parseReply(raw: string): { text?: unknown; cv?: unknown; tips?: unknown } {
-  const json = raw.trim().replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
-  try {
-    return JSON.parse(json);
-  } catch {
-    return { text: raw }; // not JSON: show it as chat
+// The reply JSON. Models sometimes wrap it in a code fence or write prose before it, so try the
+// whole text, then a fenced block, then the span from the first "{" to the last "}". Null when
+// none of them is a reply object.
+function parseReply(raw: string): { text: string; cv?: unknown; tips?: unknown } | null {
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/)?.[1];
+  const braces = raw.includes("{") ? raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1) : "";
+  for (const candidate of [raw.trim(), fenced, braces]) {
+    if (!candidate) continue;
+    try {
+      const v = JSON.parse(candidate);
+      if (v && typeof v === "object" && typeof v.text === "string") return v;
+    } catch {
+      // try the next form
+    }
   }
+  console.log("gemini reply was not valid JSON");
+  return null;
 }
 
 // Answer one message the same way an external agent would: read the thread, add a reply with
@@ -208,14 +229,15 @@ export async function answer(id: string) {
     }
 
     let thinkingSoFar = 0;
+    let json = false; // the turn after a lookup, or a retry after a reply that was not JSON
     for (let round = 1; round <= MAX_ROUNDS; round++) {
       const started = Date.now();
-      const { parts, usage } = await generate(id, contents, thinkingSoFar);
+      const { parts, usage } = await generate(id, contents, thinkingSoFar, json);
       thinkingSoFar += usage.thoughtsTokenCount ?? 0;
       const calls = parts.filter((p) => p.functionCall).map((p) => p.functionCall as { name: string; args?: { ids?: string[] } });
       logUsage(id, round, usage, Date.now() - started, calls.length ? `lookup ${calls.flatMap((c) => c.args?.ids ?? []).join(",")}` : "answer");
 
-      if (calls.length && round < MAX_ROUNDS) {
+      if (calls.length && !json && round < MAX_ROUNDS) {
         const p = progress.get(id);
         if (p) Object.assign(p, { phase: "lookup", thinkingTokens: thinkingSoFar });
         // Send the model's turn back unchanged (it carries thought signatures), then the results.
@@ -227,13 +249,18 @@ export async function answer(id: string) {
         );
         contents.push({ role: "user", parts: responses });
         if (p) p.phase = "thinking";
+        json = true;
         continue;
       }
 
       const raw = parts.map((p) => (typeof p.text === "string" && !p.thought ? p.text : "")).join("");
       const reply = parseReply(raw);
-      const text = typeof reply.text === "string" && reply.text ? reply.text : "(empty response)";
-      await addReply(id, text, `gemini:${MODEL}`, { cv: reply.cv, tips: reply.tips });
+      if (reply === null && !json && round < MAX_ROUNDS) {
+        json = true; // ask again in JSON mode; the invalid reply is dropped
+        continue;
+      }
+      const text = reply ? (reply.text as string) : raw || "(empty response)";
+      await addReply(id, text, `gemini:${MODEL}`, { cv: reply?.cv, tips: reply?.tips });
       return;
     }
   } finally {
