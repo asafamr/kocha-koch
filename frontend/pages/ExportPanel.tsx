@@ -13,6 +13,7 @@ export function ExportPanel({
   onExportPdf,
   onExportHtml,
   practiceUrl,
+  onPractice,
   prep,
 }: {
   prep?: ReactNode;
@@ -20,6 +21,7 @@ export function ExportPanel({
   onExportPdf: () => void;
   onExportHtml: () => void;
   practiceUrl: string; // kocha.co.il, where she runs a practice interview on camera
+  onPractice?: () => void; // hands the CVs over first (src/kocha.ts); the link is the fallback
 }) {
   return (
     <div className="intake export-panel">
@@ -45,7 +47,17 @@ export function ExportPanel({
       <Message from="kocha">
         רוצים להגיע מוכנים? תרגלו איתי את השאלות האלה בראיון טכני מול מצלמה, בעברית. 15 דקות, בחינם.
       </Message>
-      <a className="ds-button ds-button-secondary export-practice" href={practiceUrl} target="_blank" rel="noopener">
+      <a
+        className="ds-button ds-button-secondary export-practice"
+        href={practiceUrl}
+        target="_blank"
+        rel="noopener"
+        onClick={(e) => {
+          if (!onPractice) return;
+          e.preventDefault();
+          onPractice();
+        }}
+      >
         לתרגול ב־kocha.co.il
       </a>
     </div>

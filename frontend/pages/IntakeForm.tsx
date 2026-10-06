@@ -6,9 +6,9 @@ import { Message } from "../components/Message";
 import { TextArea } from "../components/TextArea";
 import { TextField } from "../components/TextField";
 import { kochaUrl, REPO_URL } from "../links";
-import { CONSENT_LABEL } from "../modals/ConsentModal";
+import { CONSENTS, type ConsentPurpose } from "../../src/consent";
 
-export type Intake = { cv: File; role: string; jobDescription: string; consent: boolean };
+export type Intake = { cv: File; role: string; jobDescription: string; consents: ConsentPurpose[] };
 
 // Stage 1: kocha's opening words, then current CV, target role, optional job description, consent.
 // Next is enabled once a CV file and a target role are present.
@@ -16,12 +16,12 @@ export function IntakeForm({ onNext, sending = false }: { onNext: (intake: Intak
   const [cv, setCv] = useState<File | null>(null);
   const [role, setRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
-  const [consent, setConsent] = useState(false);
+  const [consents, setConsents] = useState<ConsentPurpose[]>([]); // all unchecked by default
   const ready = cv !== null && role.trim() !== "";
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    if (cv && ready) onNext({ cv, role: role.trim(), jobDescription, consent });
+    if (cv && ready) onNext({ cv, role: role.trim(), jobDescription, consents });
   }
 
   return (
@@ -58,7 +58,16 @@ export function IntakeForm({ onNext, sending = false }: { onNext: (intake: Intak
         value={jobDescription}
         onChange={(e) => setJobDescription(e.target.value)}
       />
-      <Checkbox label={CONSENT_LABEL} checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+      {CONSENTS.map((c) => (
+        <Checkbox
+          key={c.purpose}
+          label={c.text}
+          checked={consents.includes(c.purpose)}
+          onChange={(e) =>
+            setConsents((now) => (e.target.checked ? [...now, c.purpose] : now.filter((p) => p !== c.purpose)))
+          }
+        />
+      ))}
       <p className="intake-privacy">
         רוצים פרטיות מלאה? הכלי הזה הוא{" "}
         <a href={REPO_URL} target="_blank" rel="noopener">

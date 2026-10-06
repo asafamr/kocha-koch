@@ -1,5 +1,6 @@
 import { mkdir, readdir, rename } from "node:fs/promises";
 import { join } from "node:path";
+import type { ConsentRecord } from "./consent";
 
 // Two stores with the same shape:
 //   STORE=files (default): the file protocol in AGENTS.md, needed when an external agent answers.
@@ -14,8 +15,9 @@ import { join } from "node:path";
 //     first when there are too many or their uploads take too much memory.
 // A message is pending while it has no reply with the same id.
 
-// The intake form, sent once at the start. cvFile is relative to the messages dir.
-export type Intake = { role: string; jobDescription: string; consent: boolean; cvFile: string };
+// The intake form, sent once at the start. cvFile is relative to the messages dir. consents: the
+// purposes the user agreed to (src/consent.ts), recorded with version, time, IP and user agent.
+export type Intake = { role: string; jobDescription: string; consents: ConsentRecord[]; cvFile: string };
 export type Message = { id: string; ts: string; text: string; intake?: Intake };
 // A reply may carry a CV update and tips as JSON (docs/cv-document.md, docs/prompts/prep-points.md).
 // The server passes them through unchanged; the frontend validates their shape.

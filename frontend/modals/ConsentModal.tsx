@@ -3,8 +3,10 @@ import { Block } from "../components/Block";
 import { Button } from "../components/Button";
 import { Checkbox } from "../components/Checkbox";
 
-// Shared with the intake form so both ask for the same consent.
-export const CONSENT_LABEL = "זה בסדר לשמור את המידע שלי ולפנות אליי עם הצעות מקוֹחָה";
+import { CONSENTS } from "../../src/consent";
+
+// The marketing consent, with the same versioned text as the intake form (src/consent.ts).
+export const CONSENT_LABEL = CONSENTS.find((c) => c.purpose === "marketing_email")!.text;
 
 export function ConsentModal({
   onContinue,

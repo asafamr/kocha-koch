@@ -15,7 +15,7 @@ import { TypingIndicator } from "../components/TypingIndicator";
 import { CvDocumentView } from "../cv/CvDocumentView";
 import type { CvData } from "../cv/data";
 import type { CvDocument, CvPatch } from "../cv/document";
-import { downloadCvHtml, downloadCvPdf } from "../cv/exportHtml";
+import { cvHtmlFile, downloadCvHtml, downloadCvPdf } from "../cv/exportHtml";
 import { PALETTE_LABELS, TEMPLATE_LABELS, TYPOGRAPHY_LABELS } from "../cv/labels";
 import { cvToOutline } from "../cv/outline";
 import { TEMPLATES, type TemplateName } from "../cv/templates";
@@ -214,6 +214,23 @@ export function AppPage({
   // Stages after the intake can be opened from the gauge once the intake is sent.
   const intakeSent = messages.some((m) => m.intake);
 
+  // The practice button. If the user agreed to share their CVs with kocha, hand them over first
+  // and open kocha's join link with the token; on any failure open the plain tracked link. The
+  // tab is opened inside the click (popup blockers allow it) and pointed at the link afterwards.
+  const sharesCvs = messages.some((m) => m.intake?.consents?.some((c) => c.purpose === "cv_processing"));
+  async function practice(d: CvDocument) {
+    const tab = window.open("about:blank", "_blank");
+    if (tab) tab.opener = null;
+    let url = kochaUrl("export");
+    try {
+      url = await api.handoff({ document: d, html: await cvHtmlFile(d) });
+    } catch {
+      // plain link
+    }
+    if (tab) tab.location.href = url;
+    else window.location.href = url;
+  }
+
   // Start over: the server archives the conversation; this browser forgets its saved state.
   const [confirmReset, setConfirmReset] = useState(false);
   async function startOver() {
@@ -294,6 +311,7 @@ export function AppPage({
               onExportPdf={() => exportPdf(doc)}
               onExportHtml={() => downloadCvHtml(doc)}
               practiceUrl={kochaUrl("export")}
+              onPractice={sharesCvs ? () => practice(doc) : undefined}
             />
           ) : (
             <p className="ds-prep-empty">{READING}</p>

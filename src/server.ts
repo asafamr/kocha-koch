@@ -1,6 +1,8 @@
 import { join, normalize } from "node:path";
 import { addMessage, addReply, resetStore, saveUpload, STORE, thread, type ThreadItem } from "./store";
 import { answer, deleteCache, progress } from "./gemini";
+import { CONSENTS, isPurpose, type ConsentRecord } from "./consent";
+import { handoff, handoffEnabled, NoConsent } from "./kocha";
 import { htmlToPdf, MAX_HTML, pdfAvailable, PdfBusy } from "./pdf";
 
 const BACKEND = process.env.BACKEND ?? "files"; // "files" | "gemini"
@@ -18,14 +20,16 @@ const MAX_TEXT = 20_000;
 // and sees only its own conversation. With STORE=files there is one local conversation.
 const COOKIE = "kocha_session";
 const SESSION_MAX_AGE_S = 6 * 3600;
-type Session = { id: string; setCookie?: string };
-function sessionOf(req: Request): Session {
-  if (STORE !== "memory") return { id: "local" };
+type Session = { id: string; setCookie?: string; ip: string };
+function sessionOf(req: Request, peer: string): Session {
+  // Behind Cloud Run's proxy the client is the first x-forwarded-for entry.
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || peer;
+  if (STORE !== "memory") return { id: "local", ip };
   const found = req.headers.get("cookie")?.match(/(?:^|;\s*)kocha_session=([0-9a-f-]{36})(?:;|$)/)?.[1];
-  if (found) return { id: found };
+  if (found) return { id: found, ip };
   const id = crypto.randomUUID();
   const secure = req.headers.get("x-forwarded-proto") === "https" ? "; Secure" : "";
-  return { id, setCookie: `${COOKIE}=${id}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_MAX_AGE_S}${secure}` };
+  return { id, ip, setCookie: `${COOKIE}=${id}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_MAX_AGE_S}${secure}` };
 }
 
 // Per-session limits for the in-process backend, where every message spends money: one answer
@@ -68,7 +72,22 @@ async function postIntake(req: Request, s: Session) {
   const form = await req.formData().catch(() => null);
   const role = String(form?.get("role") ?? "").trim();
   const jobDescription = String(form?.get("jobDescription") ?? "").trim();
-  const consent = form?.get("consent") === "true";
+  // consents: a JSON list of the purposes the user ticked; recorded with the text version shown.
+  let purposes: unknown = [];
+  try {
+    purposes = JSON.parse(String(form?.get("consents") ?? "[]"));
+  } catch {
+    // no consent
+  }
+  const now = new Date().toISOString();
+  const consents: ConsentRecord[] = (Array.isArray(purposes) ? purposes : []).filter(isPurpose).map((purpose) => ({
+    purpose,
+    version: CONSENTS.find((c) => c.purpose === purpose)!.version,
+    grantedAt: now,
+    ip: s.ip,
+    userAgent: (req.headers.get("user-agent") ?? "").slice(0, 300),
+    page: "intake",
+  }));
   const cv = form?.get("cv");
   if (!role || role.length > 200 || jobDescription.length > MAX_TEXT) {
     return Response.json({ error: "bad role or job description" }, { status: 400 });
@@ -86,7 +105,7 @@ async function postIntake(req: Request, s: Session) {
   const text = [`תפקיד מבוקש: ${role}`, jobDescription ? "צירפתי את תיאור המשרה." : "", `קורות חיים: ${cv.name}`]
     .filter(Boolean)
     .join("\n");
-  const msg = await addMessage(s.id, text, { role, jobDescription, consent, cvFile });
+  const msg = await addMessage(s.id, text, { role, jobDescription, consents, cvFile });
   if (BACKEND === "gemini") startAnswer(s.id, msg.id);
   return Response.json(msg, { status: 201 });
 }
@@ -106,6 +125,26 @@ async function postPdf(req: Request, s: Session) {
   }
 }
 
+// The practice button: hand the user to kocha.co.il with their CVs (src/kocha.ts). The body is
+// the CV document and its self-contained HTML (for the PDF). Without the feature or consent the
+// page falls back to the plain link; errors are logged, never shown.
+async function postHandoff(req: Request, s: Session) {
+  if (!handoffEnabled) return Response.json({ error: "off" }, { status: 404 });
+  if (Number(req.headers.get("content-length") ?? 0) > MAX_HTML * 2) return Response.json({ error: "too large" }, { status: 413 });
+  const body = await req.json().catch(() => null);
+  if (!body?.document || typeof body.html !== "string" || body.html.length > MAX_HTML) {
+    return Response.json({ error: "bad request" }, { status: 400 });
+  }
+  try {
+    return Response.json({ url: await handoff(s.id, body.document, body.html) });
+  } catch (e) {
+    if (e instanceof NoConsent) return Response.json({ error: "no consent" }, { status: 403 });
+    if (e instanceof PdfBusy) return Response.json({ error: "busy" }, { status: 429 });
+    console.error("handoff:", (e as Error)?.message ?? e);
+    return Response.json({ error: "handoff failed" }, { status: 502 });
+  }
+}
+
 // Pending messages the Gemini backend is answering get their live progress (typing indicator).
 function withProgress(messages: ThreadItem[]) {
   return messages.map((m) => {
@@ -122,6 +161,7 @@ async function api(req: Request, pathname: string, s: Session): Promise<Response
   if (route === "POST /api/messages") return postMessage(req, s);
   if (route === "POST /api/intake") return postIntake(req, s);
   if (route === "POST /api/pdf") return postPdf(req, s);
+  if (route === "POST /api/handoff") return postHandoff(req, s);
   if (route === "POST /api/reset") {
     await resetStore(s.id);
     return new Response(null, { status: 204 });
@@ -140,10 +180,10 @@ Bun.serve({
   port: PORT,
   development: DEV && { hmr: true },
   routes: DEV ? { "/": (await import("../frontend/index.html")).default } : undefined,
-  async fetch(req) {
+  async fetch(req, server) {
     const { pathname } = new URL(req.url);
     if (!pathname.startsWith("/api/")) return serveStatic(pathname);
-    const s = sessionOf(req);
+    const s = sessionOf(req, server.requestIP(req)?.address ?? "");
     const res = await api(req, pathname, s);
     if (s.setCookie) res.headers.append("set-cookie", s.setCookie);
     return res;
@@ -161,4 +201,4 @@ for (const signal of ["SIGTERM", "SIGINT"] as const) {
   });
 }
 
-console.log(`listening on :${PORT} (backend=${BACKEND}, store=${STORE}${DEV ? ", dev" : ""}${pdfAvailable ? ", pdf" : ""})`);
+console.log(`listening on :${PORT} (backend=${BACKEND}, store=${STORE}${DEV ? ", dev" : ""}${pdfAvailable ? ", pdf" : ""}${handoffEnabled ? ", handoff" : ""})`);

@@ -11,6 +11,7 @@ export function fakeApi(messages: ThreadItem[]): Api {
     sendIntake: async () => {},
     pdf: async () => Promise.reject(new Error("no server")), // export shows its error state
     reset: async () => {},
+    handoff: async () => Promise.reject(new Error("no server")), // the practice link stays plain
   };
 }
 
@@ -23,7 +24,7 @@ export const SAMPLE_THREAD: ThreadItem[] = [
     id: "1",
     ts,
     text: "תפקיד מבוקש: Senior Backend Engineer\nצירפתי את תיאור המשרה.\nקורות חיים: cv.pdf",
-    intake: { role: "Senior Backend Engineer", jobDescription: "…", consent: true, cvFile: "uploads/1.pdf" },
+    intake: { role: "Senior Backend Engineer", jobDescription: "…", consents: [], cvFile: "uploads/1.pdf" },
     reply: reply("1", "קראתי. הנה גרסה ראשונה, ובטיפים יש כמה דברים שכדאי להכין.", {
       cv: { data: SAMPLE_CV },
       tips: { profile: { seniority: "senior", track: "hands-on" }, ...PREP_SAMPLES["senior/hands-on"] },

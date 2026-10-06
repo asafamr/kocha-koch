@@ -17,6 +17,7 @@ this project; nothing here is automated.
 | `--memory` | `2Gi` | Chromium for PDFs, plus uploads in memory (capped at 256 MB in `src/store.ts`). |
 | `--set-env-vars` | `BACKEND=gemini,STORE=memory,GEMINI_SPEND_PER_HOUR=10` | Without `BACKEND`/`STORE` the server starts in file mode. `PORT` is set by Cloud Run. |
 | `--set-secrets` | `GEMINI_API_KEY=<secret>:latest` | Keep the key in Secret Manager, not in env vars or the image. |
+| handoff | `KOCHA_HANDOFF_URL` env var, `KOCHA_HANDOFF_SECRET` secret | Optional: hands users who consent to kocha.co.il with their CVs (`docs/kocha-handoff.md`). |
 
 Example (fill in project, region and image):
 

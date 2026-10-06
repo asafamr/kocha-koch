@@ -2,11 +2,12 @@ import type { PrepPoint, PrepStrength } from "./components/PrepPoints";
 import type { Seniority, Track } from "./components/prepPointsSample";
 import type { CvData } from "./cv/data";
 import type { CvPatch, CvTheme } from "./cv/document";
+import type { ConsentPurpose } from "../src/consent";
 import type { ThreadItem } from "../src/store";
 
 export type { ThreadItem };
 export type Snapshot = { backend: string; messages: ThreadItem[] };
-export type IntakeForm = { cv: File; role: string; jobDescription: string; consent: boolean };
+export type IntakeForm = { cv: File; role: string; jobDescription: string; consents: ConsentPurpose[] };
 
 // The app talks to the server only through this, so stories can pass a fake.
 export type Api = {
@@ -15,6 +16,7 @@ export type Api = {
   sendIntake(intake: IntakeForm): Promise<void>;
   pdf(html: string): Promise<Blob>; // self-contained CV HTML (cv/exportHtml.ts) -> PDF
   reset(): Promise<void>; // start over: the server archives the conversation
+  handoff(body: { document: unknown; html: string }): Promise<string>; // kocha.co.il join link with the CVs (src/kocha.ts)
 };
 
 export const httpApi: Api = {
@@ -31,12 +33,12 @@ export const httpApi: Api = {
     });
     if (!res.ok) throw new Error(`send failed: ${res.status}`);
   },
-  async sendIntake({ cv, role, jobDescription, consent }) {
+  async sendIntake({ cv, role, jobDescription, consents }) {
     const form = new FormData();
     form.set("cv", cv);
     form.set("role", role);
     form.set("jobDescription", jobDescription);
-    form.set("consent", String(consent));
+    form.set("consents", JSON.stringify(consents));
     const res = await fetch("/api/intake", { method: "POST", body: form });
     if (!res.ok) throw new Error(`intake failed: ${res.status}`);
   },
@@ -48,6 +50,11 @@ export const httpApi: Api = {
   async reset() {
     const res = await fetch("/api/reset", { method: "POST" });
     if (!res.ok) throw new Error(`reset failed: ${res.status}`);
+  },
+  async handoff(body) {
+    const res = await fetch("/api/handoff", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(`handoff failed: ${res.status}`);
+    return ((await res.json()) as { url: string }).url;
   },
 };
 
