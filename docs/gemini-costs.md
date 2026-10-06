@@ -18,8 +18,13 @@ overflow fixed (all variants below passed every check unless noted).
 | Full research docs inline, medium thinking (first version) | ~74k tokens | ≈ $0.25 (+ thinking, not logged) | ≈ $0.08+ | ~120 s |
 | Index + `lookup` tool, medium thinking (model default) | 9k | $0.096 | 3.2¢ | 90 s |
 | Index + `lookup`, low thinking | 9k | $0.069 | 2.3¢ | 44 s |
-| Index + `lookup`, low thinking, explicit cache (**default**) | 9k, cached | $0.034 | 1.1¢ | 44 s |
+| Index + `lookup`, low thinking, explicit cache | 9k, cached | $0.034 | 1.1¢ | 44 s |
+| Same, `lookup` only when writing tips | 9k, cached | $0.025 | 0.8¢ | 36 s |
+| Same, plus `cv-templates.md` and five more research docs in the index (**default**) | 11.4k, cached | $0.022–0.041 | 0.7–1.4¢ | 46–72 s |
 | Minimal thinking | | fails: not supported by gemini-3.8-flash | | |
+
+Runs vary: at low, gemini-3.8-flash usually reports no thinking tokens, but one run used 2.4k
+(about $0.009 more). Total spent on this benchmark, including earlier smoke tests: $0.61.
 
 ## What moved the cost
 
@@ -34,6 +39,9 @@ overflow fixed (all variants below passed every check unless noted).
 
 Storage of the cache (~8.4k tokens) costs about $0.004 per hour it exists; it is recreated on
 demand after it expires.
+
+4. **Lookup only when needed**: the prompt tells the model to skip `lookup` for small edits and
+   chat, which saves a model turn on most follow-up messages.
 
 ## Not done yet
 
