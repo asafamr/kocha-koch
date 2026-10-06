@@ -10,12 +10,13 @@ x-app: &app
   <<: *hardening
   build: .
   image: kocha-koch-app
-  init: true   # reaps child processes (the image also runs tini, for Cloud Run)
+  init: true   # bun as PID 1 would not reap children
   read_only: true
   tmpfs: [/tmp]
   env_file:
     - path: .env
       required: false
+  depends_on: [pdf]
 
 # agent tools share one image and one bun package cache.
 x-tools: &tools
@@ -31,7 +32,7 @@ services:
   # Answered by Claude Code / Codex through files. http://127.0.0.1:3000
   app:
     <<: *app
-    environment: { BACKEND: files }
+    environment: { BACKEND: files, PDF_URL: "http://pdf:3000" }
     ports: ["127.0.0.1:3000:3000"]
     volumes:
       - ./.messages/agent:/app/.messages
@@ -40,8 +41,17 @@ services:
   # Set up like Cloud Run: one container, no volume, listens on PORT=8080.
   app-gemini:
     <<: *app
-    environment: { BACKEND: gemini, STORE: memory, PORT: "8080" }
+    environment: { BACKEND: gemini, STORE: memory, PORT: "8080", PDF_URL: "http://pdf:3000" }
     ports: ["127.0.0.1:3001:8080"]
+
+  # CV HTML -> PDF (Gotenberg, locked down in Dockerfile.pdf). Internal only: no published port.
+  pdf:
+    <<: *hardening
+    build: { context: ., dockerfile: Dockerfile.pdf }
+    image: kocha-koch-pdf
+    environment: { PORT: "3000" }   # Cloud Run sets PORT itself
+    read_only: true
+    tmpfs: [/tmp, /home/gotenberg]   # Chromium writes its profile and crash data under HOME
 
   # Claude Code shell (also has codex). Start with: docker compose run --rm agent
   agent:
@@ -75,6 +85,8 @@ services:
       DEV: "1"
       BACKEND: files
       MESSAGES_DIR: .messages/agent
+      PDF_URL: "http://pdf:3000"
+    depends_on: [pdf]
     ports: ["127.0.0.1:3002:3000"]
     volumes:
       - .:/work

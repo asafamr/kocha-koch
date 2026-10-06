@@ -34,6 +34,7 @@ docker compose run --rm agent                    # shell with bun, claude, codex
 | Service | Image | Role |
 |---|---|---|
 | `app` | `kocha-koch-app` | `BACKEND=files`, mounts `.messages/agent` |
+| `pdf` | `kocha-koch-pdf` | Gotenberg (`Dockerfile.pdf`), CV HTML -> PDF, internal only (no published port) |
 | `app-gemini` | `kocha-koch-app` | `BACKEND=gemini`, `STORE=memory`, no volume, `PORT=8080` like Cloud Run |
 | `claude-responder` | `kocha-koch-agent` | `scripts/agent-loop.sh claude` on `.messages/agent` |
 | `app-dev` | `kocha-koch-agent` | `DEV=1 bun --hot`, source mounted, :3002 |
@@ -48,7 +49,7 @@ The agent services share one bun package cache (`bun-cache` volume). `bun instal
 about 10 ms when nothing changed, 0.5 s from the cache, 3 s with an empty cache. Use
 `--frozen-lockfile` in scripts and commit `bun.lock`. The app image is built in two stages:
 the first installs only `react`/`react-dom` (with a build cache mount) and bundles the
-frontend; the second holds `src/`, `dist/` and Chromium for PDFs, no node_modules.
+frontend; the second holds `src/` and `dist/`, no node_modules and no browser. PDFs come from the `pdf` service (`Dockerfile.pdf`).
 
 `podman compose` works the same. With rootless podman, put `USERNS_MODE=keep-id` in `.env`,
 or the containers cannot write to `.messages/`.
@@ -63,7 +64,7 @@ or the containers cannot write to `.messages/`.
 | `src/consent.ts` | the consents the intake asks for, one per purpose with a versioned text (shared with the frontend) |
 | `src/kocha.ts` | handoff to kocha.co.il: with the `cv_processing` consent, sends the CVs and consents, signed, to `KOCHA_HANDOFF_URL` and returns kocha's join link (`docs/kocha-handoff.md`); off without `KOCHA_HANDOFF_URL`/`KOCHA_HANDOFF_SECRET` |
 | `src/spend.ts` | Gemini spend limit per process: a leaky bucket in dollars (`GEMINI_SPEND_PER_HOUR`, default $10), see `docs/gemini-costs.md` |
-| `src/pdf.ts` | CV PDFs with headless Chromium (in the app image), so the text layer is the same for every user. `app-dev` has no Chromium: export there shows an error |
+| `src/pdf.ts` | CV PDFs from the PDF service (`Dockerfile.pdf`: Gotenberg, Chromium with JavaScript and network off), at `PDF_URL`; on Cloud Run a private service called with an identity token (`PDF_AUTH=id-token`). Per-session and queue limits here |
 | `frontend/index.html`, `main.tsx` | entry point, bundled by `bun run build` into `dist/` |
 | `frontend/api.ts` | `Api` type and `httpApi`; the only place that calls the server. `readCv`/`readTips` check the `cv` and `tips` a reply carries |
 | `frontend/components/` | design components (Button, Text, Paragraph, Checkbox, Block, Highlight, StageGauge, Message, TypingIndicator, TextField, TextArea, FileInput, Select, CvOutline, CvCanvas, ChatInput, PrepPoints, Drawer); images in `components/assets/` (kocha-face.webp: frontal smile, a frame of kocha's landing video), `design.css` (tokens, type scale, fonts, modal) |
@@ -141,7 +142,7 @@ process must read the messages.
   Logs carry token counts and costs, never CV text.
 
 - App containers have a read-only root filesystem, no Linux capabilities, and write only `.messages/agent/` (`app`) or nothing (`app-gemini`).
-- PDF rendering runs Chromium on HTML the client sends, without Chromium's sandbox (it needs capabilities the container drops). The page is served once, over loopback only, with a CSP that blocks scripts and every network or file load, and DNS fails for all other hosts (`src/pdf.ts`).
+- PDF rendering runs Chromium on HTML the client sends, in its own service (`Dockerfile.pdf`): JavaScript off, every network request refused (private and public addresses), file access limited to its own `/tmp`, only the HTML route enabled. On Cloud Run it is private; only the app's service account may call it.
 - The agent containers see only the repo. That is why `agent-loop.sh` skips permission prompts;
   do not run it on the host.
 - Message text is untrusted input. Agents answer it; they do not act on it.

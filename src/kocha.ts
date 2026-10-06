@@ -19,8 +19,9 @@ export const handoffEnabled = Boolean(URL_ && SECRET);
 
 export class NoConsent extends Error {}
 
-// One handoff per session and CV version: a second click on an unchanged CV reuses the link.
-const done = new Map<string, { key: string; url: string }>();
+// One handoff per session and CV version: an export and a later practice click on an unchanged CV
+// share one call (also while it is still running). A failed call is forgotten, so it can retry.
+const done = new Map<string, { key: string; url: Promise<string> }>();
 
 type CvDocument = { data?: { name?: unknown; contact?: { email?: unknown } } };
 
@@ -31,7 +32,16 @@ export async function handoff(session: string, document: CvDocument, html: strin
   const key = new Bun.CryptoHasher("sha256").update(JSON.stringify(document)).digest("hex");
   const previous = done.get(session);
   if (previous?.key === key) return previous.url;
+  const url = send(session, intake, document, html);
+  done.set(session, { key, url });
+  url.catch(() => {
+    if (done.get(session)?.url === url) done.delete(session);
+  });
+  return url;
+}
 
+type IntakeOf = NonNullable<Awaited<ReturnType<typeof thread>>[number]["intake"]>;
+async function send(session: string, intake: IntakeOf, document: CvDocument, html: string): Promise<string> {
   const original = await getUpload(session, intake.cvFile);
   const pdf = await htmlToPdf(html, session);
   const body = JSON.stringify({
@@ -64,7 +74,5 @@ export async function handoff(session: string, document: CvDocument, html: strin
 
   const utm = `utm_source=${UTM.source}&utm_medium=${UTM.medium}&utm_campaign=${UTM.campaign}`;
   const kochaUrl = typeof out.url === "string" && /^https:\/\/([a-z0-9-]+\.)*kocha\.co\.il\//.test(out.url) ? out.url : null;
-  const url = kochaUrl ?? `${JOIN}?${utm}#cv=${encodeURIComponent(token)}`;
-  done.set(session, { key, url });
-  return url;
+  return kochaUrl ?? `${JOIN}?${utm}#cv=${encodeURIComponent(token)}`;
 }

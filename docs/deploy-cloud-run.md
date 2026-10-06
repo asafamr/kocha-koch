@@ -1,11 +1,28 @@
-# Deploying the Gemini app on Cloud Run
+# Deploying on Cloud Run
 
-The managed version is the `app-gemini` image (`BACKEND=gemini`, `STORE=memory`). It keeps
-conversations in the process, so the settings below matter: they are what make sessions,
-long answers and the spend limit work. Run these yourself with a deploy identity scoped to
-this project; nothing here is automated.
+Two services:
 
-## Settings and why
+- **`kocha-cv`**: the app (`Dockerfile`, `BACKEND=gemini`, `STORE=memory`), public. It keeps
+  conversations in the process, so the settings below are what make sessions, long answers and
+  the spend limit work.
+- **`kocha-cv-pdf`**: the PDF renderer (`Dockerfile.pdf`: the standard Gotenberg image with
+  Chromium locked down), private. Only `kocha-cv`'s service account may call it, with an
+  identity token (`PDF_AUTH=id-token` in `src/pdf.ts`).
+
+Images go to the project's Artifact Registry; deploy with a project-scoped deploy identity.
+
+## kocha-cv-pdf (private)
+
+| Setting | Value | Why |
+|---|---|---|
+| `--no-allow-unauthenticated` | on | Callers need `roles/run.invoker` on this service: only `kocha-cv`'s service account gets it. |
+| `--service-account` | an account with no roles | Chromium renders user HTML here; it needs no access to anything. |
+| `--max-instances` | `1` | Enough for CV exports; bounds cost. |
+| `--concurrency` | `4` | Matches the app's queue; Gotenberg renders 2 at a time. |
+| `--memory` / `--cpu` | `2Gi` / `1` | Chromium. |
+| `--timeout` | `60` | A render takes about a second; Gotenberg stops at 30 s. |
+
+## kocha-cv (public)
 
 | Setting | Value | Why |
 |---|---|---|
@@ -13,21 +30,11 @@ this project; nothing here is automated.
 | `--no-cpu-throttling` | on | Answers run after the HTTP response (1–3 minutes). With request-based billing Cloud Run throttles the CPU between requests and they stall. |
 | `--min-instances` | `0` or `1` | 0 scales to zero when idle (sessions are lost then, and the bucket starts empty again); 1 keeps sessions and the cache warm at the cost of an always-on instance. |
 | `--concurrency` | `80` (default) | Polling is cheap; one instance handles many users. |
-| `--timeout` | `120` | No request waits for Gemini; the PDF render takes seconds. |
-| `--memory` | `2Gi` | Chromium for PDFs, plus uploads in memory (capped at 256 MB in `src/store.ts`). |
-| `--set-env-vars` | `BACKEND=gemini,STORE=memory,GEMINI_SPEND_PER_HOUR=10` | Without `BACKEND`/`STORE` the server starts in file mode. `PORT` is set by Cloud Run. |
-| `--set-secrets` | `GEMINI_API_KEY=<secret>:latest` | Keep the key in Secret Manager, not in env vars or the image. |
-| handoff | `KOCHA_HANDOFF_URL` env var, `KOCHA_HANDOFF_SECRET=kocha-cv-handoff-secret:latest` | Optional: hands users who consent to kocha.co.il with their CVs (`docs/kocha-handoff.md`). Same secret as kocha's server. |
-
-Example (fill in project, region and image):
-
-```sh
-gcloud run deploy kocha-cv --image=<region>-docker.pkg.dev/<project>/<repo>/kocha-koch-app:<tag> \
-  --region=<region> --max-instances=1 --min-instances=0 --no-cpu-throttling \
-  --timeout=120 --memory=2Gi \
-  --set-env-vars=BACKEND=gemini,STORE=memory,GEMINI_SPEND_PER_HOUR=10 \
-  --set-secrets=GEMINI_API_KEY=gemini-api-key:latest --allow-unauthenticated
-```
+| `--timeout` | `120` | No request waits for Gemini; a PDF takes seconds. |
+| `--memory` | `1Gi` | Uploads in memory are capped at 256 MB (`src/store.ts`); no browser in this image. |
+| `--service-account` | `kocha-cv@` | Reads its two secrets and invokes `kocha-cv-pdf`; nothing else. |
+| `--set-env-vars` | `BACKEND=gemini,STORE=memory,GEMINI_SPEND_PER_HOUR=10,PDF_URL=<kocha-cv-pdf URL>,PDF_AUTH=id-token,KOCHA_HANDOFF_URL=https://kocha.co.il/api/cv-tool/handoff` | Without `BACKEND`/`STORE` the server starts in file mode. `PORT` is set by Cloud Run. |
+| `--set-secrets` | `GEMINI_API_KEY=<gemini key secret>:latest,KOCHA_HANDOFF_SECRET=kocha-cv-handoff-secret:latest` | Secrets stay in Secret Manager. The handoff secret is shared with kocha's server (`docs/kocha-handoff.md`). |
 
 ## Outside the app
 
@@ -44,7 +51,7 @@ gcloud run deploy kocha-cv --image=<region>-docker.pkg.dev/<project>/<repo>/koch
   time; a global PDF queue of 4.
 - Per process: the spend bucket ($10/hour, starts empty) and the 10-minute Gemini cache,
   deleted on SIGTERM after up to 8 s for answers in flight.
-- Logs carry token counts and costs, not CV text.
+- Security headers on every response; logs carry token counts and costs, not CV text.
 
 ## Moving past one instance
 

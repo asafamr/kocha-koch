@@ -86,8 +86,9 @@ kohi side, in its own terms:
 
 - The intake shows one unchecked box per purpose (`src/consent.ts`); the server records each
   ticked one with version, time, IP and user agent in the intake message.
-- `src/kocha.ts` and `POST /api/handoff`: on the practice click, if the user ticked
-  `cv_processing`, build the payload from the session's intake upload, the CV document and a
+- `src/kocha.ts` and `POST /api/handoff`: on export (PDF or HTML, in the background) and on the
+  practice click, if the user ticked `cv_processing`, build the payload from the session's intake upload, the CV document and a
   PDF rendered here, sign it with `KOCHA_HANDOFF_SECRET`, POST it to `KOCHA_HANDOFF_URL`, and
-  open the returned link. A second click on the same CV reuses the link. Without the env vars,
+  open the returned link on the practice click. An export and a practice click on the same CV
+  share one call. Without the env vars,
   without consent, or on any error, the button opens the plain tracked link.
