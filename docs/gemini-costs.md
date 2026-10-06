@@ -37,11 +37,11 @@ Runs vary: at low, gemini-3.8-flash usually reports no thinking tokens, but one 
    at a tenth of the input price. Implicit caching (automatic, 4,096-token minimum) never hit in
    these runs (`cachedContentTokenCount` stayed 0), so the explicit cache is what saves.
 
-Storage of the cache (~8.4k tokens) costs about $0.004 per hour it exists; it is recreated on
-demand after it expires.
-
 4. **Lookup only when needed**: the prompt tells the model to skip `lookup` for small edits and
    chat, which saves a model turn on most follow-up messages.
+
+Storage of the cache (~11k tokens) costs about $0.006 per hour it exists; it is recreated on
+demand after it expires.
 
 ## Not done yet
 
