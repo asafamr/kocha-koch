@@ -26,7 +26,7 @@ export function IntakeForm({
   const [cv, setCv] = useState<File | null>(null);
   const [role, setRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
-  const [consents, setConsents] = useState<ConsentPurpose[]>([]); // all unchecked by default
+  const [consents, setConsents] = useState<ConsentPurpose[]>(() => CONSENTS.map((c) => c.purpose)); // all checked; the user may untick
   const ready = cv !== null && role.trim() !== "";
 
   function submit(e: FormEvent) {
