@@ -111,12 +111,15 @@ export function AppPage({
   const messages = snapshot?.messages ?? [];
   const waiting = messages.length > 0 && !messages[messages.length - 1].reply;
 
-  // On reload, an intake already on the server means the form is done.
+  // On reload, the server decides the stage: an intake there means the form is done; none (a new
+  // or expired session) means start at the form, whatever stage the browser saved.
   const resumed = useRef(false);
   useEffect(() => {
     if (!snapshot || resumed.current) return;
     resumed.current = true;
-    if (stage === 0 && messages.some((m) => m.intake)) setStage(1);
+    const hasIntake = messages.some((m) => m.intake);
+    if (stage === 0 && hasIntake) setStage(1);
+    if (stage > 0 && !hasIntake) setStage(0);
   }, [snapshot]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The CV is the latest data any reply sent, with the patches that came with or after it: the
