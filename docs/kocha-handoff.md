@@ -85,8 +85,8 @@ kohi side, in its own terms:
 
 ## This repo's side (built)
 
-- The intake shows one box (`src/consent.ts`), checked by default, for both purposes; if it is
-  still ticked the server records each purpose with version, time, IP and user agent in the intake message.
+- The intake shows one unchecked box (`src/consent.ts`) for both purposes; if the user ticks it
+  the server records each purpose with version, time, IP and user agent in the intake message.
 - `src/kocha.ts` and `POST /api/handoff`: on export (PDF or HTML, in the background) and on the
   practice click, if the user ticked `cv_processing`, build the payload from the session's intake upload, the CV document and a
   PDF rendered here, sign it with `KOCHA_HANDOFF_SECRET`, POST it to `KOCHA_HANDOFF_URL`, and

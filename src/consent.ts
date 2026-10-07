@@ -1,4 +1,4 @@
-// What the intake asks consent for: one box, checked by default (the user may untick), that grants
+// What the intake asks consent for: one box, unchecked (marketing consent must be an active opt-in), that grants
 // both of kocha's purposes (packages/consent in its repo). The text is registered there verbatim
 // under `version` for each purpose: change it only together with a new version there and here.
 // Each recorded consent keeps the version it was given under. Shared by the server and the frontend.
