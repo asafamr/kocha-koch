@@ -422,6 +422,10 @@ export function AppPage({
               </div>
             ) : (
               <button type="button" className="app-page-reset-link" onClick={() => setConfirmReset(true)}>
+                <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 1 0 3-6.7" />
+                  <path d="M3 4v5h5" />
+                </svg>
                 התחלה מחדש
               </button>
             )}
