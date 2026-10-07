@@ -284,23 +284,6 @@ export function AppPage({
       <h1 className="ds-sr-only">קוחה</h1>
       <div className="app-page-stages">
         <StageGauge label="שלבי העבודה" stages={STAGES} current={stage} onSelect={setStage} canSelect={(i) => i > 0 && intakeSent} />
-        {messages.length > 0 && (
-          <div className="app-page-reset">
-            {confirmReset ? (
-              <div role="group" aria-label="התחלה מחדש" className="app-page-reset-confirm">
-                <span>למחוק את השיחה ואת קורות החיים ולהתחיל מחדש?</span>
-                <Button variant="secondary" onClick={startOver}>
-                  כן, להתחיל מחדש
-                </Button>
-                <Button onClick={() => setConfirmReset(false)}>ביטול</Button>
-              </div>
-            ) : (
-              <button type="button" className="app-page-reset-link" onClick={() => setConfirmReset(true)}>
-                התחלה מחדש
-              </button>
-            )}
-          </div>
-        )}
         <div role="alert" className="app-page-error">
           {error && `משהו השתבש בחיבור לשרת (${error}). מנסים שוב…`}
         </div>
@@ -420,6 +403,31 @@ export function AppPage({
           </section>
         </>
       )}
+      <footer className="app-page-footer">
+        <p className="app-page-footer-pitch">
+          כשתגיעו לראיון תהיו מוכנים אם תתאמנו עם{" "}
+          <a href={kochaUrl("footer")} target="_blank" rel="noopener">
+            קוֹחָה
+          </a>
+        </p>
+        {messages.length > 0 && (
+          <div className="app-page-reset">
+            {confirmReset ? (
+              <div role="group" aria-label="התחלה מחדש" className="app-page-reset-confirm">
+                <span>למחוק את השיחה ואת קורות החיים ולהתחיל מחדש?</span>
+                <Button variant="secondary" onClick={startOver}>
+                  כן, להתחיל מחדש
+                </Button>
+                <Button onClick={() => setConfirmReset(false)}>ביטול</Button>
+              </div>
+            ) : (
+              <button type="button" className="app-page-reset-link" onClick={() => setConfirmReset(true)}>
+                התחלה מחדש
+              </button>
+            )}
+          </div>
+        )}
+      </footer>
     </main>
   );
 }

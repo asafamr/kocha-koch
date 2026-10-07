@@ -157,8 +157,8 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
    Frames end at the viewport; only the chat messages scroll inside their frame. */
 .app-page {
   block-size: 100dvh; box-sizing: border-box; padding: 1.5rem; gap: 1.5rem; background: var(--surface);
-  display: grid; grid-template-rows: auto minmax(0, 1fr);
-  grid-template-areas: "stages stages" "cv chat"; grid-template-columns: 7fr 3fr;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: "stages stages" "cv chat" "footer footer"; grid-template-columns: 7fr 3fr;
   direction: ltr;
 }
 .app-page > * { direction: rtl; min-block-size: 0; }
@@ -289,7 +289,15 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 .app-page-cv-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 .app-page-cv-nav { display: flex; gap: 0.5rem; }
 /* Start over: a quiet link under the stage gauge, at the end side; confirm inline */
-.app-page-reset { display: flex; justify-content: flex-end; margin-block-start: 0.25rem; font-size: var(--fs-xs); }
+/* Footer: the kocha pitch on the start side, start-over on the end side. */
+.app-page-footer {
+  grid-area: footer; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+  margin-block-start: -0.75rem; font-size: var(--fs-xs); color: var(--muted);
+}
+.app-page-footer-pitch { margin: 0; }
+.app-page-footer-pitch a { color: var(--ink); font-weight: 600; text-underline-offset: 3px; }
+.app-page-footer-pitch a:focus-visible { outline: 3px solid var(--audio); outline-offset: 2px; }
+.app-page-reset { display: flex; justify-content: flex-end; }
 .app-page-reset-link { font: inherit; color: var(--muted); background: none; border: 0; padding: 0.15rem 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .app-page-reset-link:hover { color: var(--ink); }
 .app-page-reset-link:focus-visible { outline: 3px solid var(--audio); outline-offset: 2px; }
