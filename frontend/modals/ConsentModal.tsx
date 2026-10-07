@@ -3,10 +3,10 @@ import { Block } from "../components/Block";
 import { Button } from "../components/Button";
 import { Checkbox } from "../components/Checkbox";
 
-import { CONSENTS } from "../../src/consent";
+import { CONSENT } from "../../src/consent";
 
-// The marketing consent, with the same versioned text as the intake form (src/consent.ts).
-export const CONSENT_LABEL = CONSENTS.find((c) => c.purpose === "marketing_email")!.text;
+// The consent, with the same versioned text as the intake form (src/consent.ts).
+export const CONSENT_LABEL = CONSENT.text;
 
 export function ConsentModal({
   onContinue,

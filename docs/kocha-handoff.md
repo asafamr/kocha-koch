@@ -8,8 +8,9 @@ with this wire format (decided 2026-10-06):
   `https://kocha.co.il/join?utm_source=cv-tool&utm_medium=export&utm_campaign=kocha-koch#cv=<token>`;
   this side opens it as-is.
 - Marketing consent is sent to Brevo as false until the email is verified by a Google sign-in.
-- Purposes `cv_processing` and `marketing_email`, version `he-1`, registered in kocha's
-  `packages/consent` with the texts of `src/consent.ts`, verbatim: change both together.
+- Purposes `cv_processing` and `marketing_email`, both granted by one box with one text,
+  version `cv-2` (was `he-1`, one text per purpose), registered in kocha's `packages/consent`
+  with the text of `src/consent.ts`, verbatim: change both together.
 - Originals up to 5 MB; `originalCv` may be null.
 - Shared secret: Secret Manager `kocha-cv-handoff-secret`, the same value on both sides. The endpoint belongs in kocha's control server (kohi,
 `apps/control`, Django); this repo only calls it. It follows kohi's own design: the CRM
@@ -55,8 +56,8 @@ a shared secret (`X-Kocha-Signature`), timestamped to stop replays. Not callable
   "jobDescription": "optional",
   "contact": { "email": "from the created CV, unverified", "name": "..." },
   "consents": [
-    { "purpose": "cv_processing", "version": "he-1", "grantedAt": "ISO time", "ip": "...", "userAgent": "...", "page": "intake" },
-    { "purpose": "marketing_email", "version": "he-1", "grantedAt": "...", "ip": "...", "userAgent": "...", "page": "intake" }
+    { "purpose": "cv_processing", "version": "cv-2", "grantedAt": "ISO time", "ip": "...", "userAgent": "...", "page": "intake" },
+    { "purpose": "marketing_email", "version": "cv-2", "grantedAt": "...", "ip": "...", "userAgent": "...", "page": "intake" }
   ],
   "originalCv": { "contentType": "application/pdf", "data": "<base64, at most 3 MB as in /api/cv>" },
   "createdCv": { "document": { "data": {}, "theme": {}, "patch": {} }, "pdf": "<base64 of the exported PDF>" },
@@ -69,8 +70,8 @@ Headers: `X-Kocha-Timestamp` (Unix seconds) and `X-Kocha-Signature: sha256=<hex 
 "<timestamp>.<body>" with the shared secret>`. Reject timestamps more than 5 minutes old.
 
 Purpose names and text versions are kocha's: `cv_processing` and `marketing_email` exist in
-`packages/consent`; the Hebrew texts used here (`src/consent.ts`, version `he-1`) need to be
-registered there.
+`packages/consent`; the Hebrew text used here (`src/consent.ts`, version `cv-2`, the same text for
+both purposes) needs to be registered there and accepted by the handoff.
 
 kohi side, in its own terms:
 
@@ -84,8 +85,8 @@ kohi side, in its own terms:
 
 ## This repo's side (built)
 
-- The intake shows one box per purpose (`src/consent.ts`), checked by default; the server records
-  each one still ticked with version, time, IP and user agent in the intake message.
+- The intake shows one box (`src/consent.ts`), checked by default, for both purposes; if it is
+  still ticked the server records each purpose with version, time, IP and user agent in the intake message.
 - `src/kocha.ts` and `POST /api/handoff`: on export (PDF or HTML, in the background) and on the
   practice click, if the user ticked `cv_processing`, build the payload from the session's intake upload, the CV document and a
   PDF rendered here, sign it with `KOCHA_HANDOFF_SECRET`, POST it to `KOCHA_HANDOFF_URL`, and

@@ -58,12 +58,11 @@ function loadSaved(key?: string): Saved {
   };
 }
 
-// The typing indicator's progress line for a Gemini answer: phase, seconds, thinking tokens.
+// The typing indicator's progress line for a Gemini answer: phase and seconds.
 const PHASES = { thinking: "חושבת", lookup: "בודקת מקורות", writing: "כותבת", verifying: "בודקת דיוק" } as const;
 function progressText(p?: ThreadItem["progress"]): { detail?: string; note?: string } {
   if (!p) return {};
   const parts = [PHASES[p.phase], `${p.seconds} שנ׳`];
-  if (p.thinkingTokens > 0) parts.push(`${p.thinkingTokens.toLocaleString("he-IL")} טוקני חשיבה`);
   return { detail: parts.join(" · "), note: p.thought };
 }
 
