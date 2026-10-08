@@ -1,6 +1,6 @@
 # The PDF renderer: the standard Gotenberg image (Chromium behind an HTML -> PDF API), locked
 # down because the HTML comes from users. Used by `pdf` in compose and the private Cloud Run
-# service kocha-cv-pdf (docs/deploy-cloud-run.md); the app calls it from src/pdf.ts.
+# PDF service (docs/deploy-cloud-run.md); the app calls it from src/pdf.ts.
 #   - JavaScript off; Chromium may not reach any host, private or public, and reads files only
 #     from its own /tmp (the default deny list);
 #   - only the HTML route is used: URL download, LibreOffice, PDF engines and webhooks are off;

@@ -2,27 +2,27 @@
 
 Two services:
 
-- **`kocha-cv`**: the app (`Dockerfile`, `BACKEND=gemini`, `STORE=memory`), public. It keeps
+- **the app** (`Dockerfile`, `BACKEND=gemini`, `STORE=memory`), public. It keeps
   conversations in the process, so the settings below are what make sessions, long answers and
   the spend limit work.
-- **`kocha-cv-pdf`**: the PDF renderer (`Dockerfile.pdf`: the standard Gotenberg image with
-  Chromium locked down), private. Only `kocha-cv`'s service account may call it, with an
-  identity token (`PDF_AUTH=id-token` in `src/pdf.ts`).
+- **the PDF renderer** (`Dockerfile.pdf`: the standard Gotenberg image with Chromium locked
+  down), private. Only the app's service account may call it, with an identity token
+  (`PDF_AUTH=id-token` in `src/pdf.ts`).
 
 Images go to the project's Artifact Registry; deploy with a project-scoped deploy identity.
 
-## kocha-cv-pdf (private)
+## The PDF renderer (private)
 
 | Setting | Value | Why |
 |---|---|---|
-| `--no-allow-unauthenticated` | on | Callers need `roles/run.invoker` on this service: only `kocha-cv`'s service account gets it. |
+| `--no-allow-unauthenticated` | on | Callers need `roles/run.invoker` on this service: only the app's service account gets it. |
 | `--service-account` | an account with no roles | Chromium renders user HTML here; it needs no access to anything. |
 | `--max-instances` | `1` | Enough for CV exports; bounds cost. |
 | `--concurrency` | `4` | Matches the app's queue; Gotenberg renders 2 at a time. |
 | `--memory` / `--cpu` | `2Gi` / `1` | Chromium. |
 | `--timeout` | `60` | A render takes about a second; Gotenberg stops at 30 s. |
 
-## kocha-cv (public)
+## The app (public)
 
 | Setting | Value | Why |
 |---|---|---|
@@ -32,9 +32,9 @@ Images go to the project's Artifact Registry; deploy with a project-scoped deplo
 | `--concurrency` | `80` (default) | Polling is cheap; one instance handles many users. |
 | `--timeout` | `120` | No request waits for Gemini; a PDF takes seconds. |
 | `--memory` | `1Gi` | Uploads in memory are capped at 256 MB (`src/store.ts`); no browser in this image. |
-| `--service-account` | `kocha-cv@` | Reads its two secrets and invokes `kocha-cv-pdf`; nothing else. |
-| `--set-env-vars` | `BACKEND=gemini,STORE=memory,GEMINI_SPEND_PER_HOUR=10,PDF_URL=<kocha-cv-pdf URL>,PDF_AUTH=id-token,KOCHA_HANDOFF_URL=https://kocha.co.il/api/cv-tool/handoff` | Without `BACKEND`/`STORE` the server starts in file mode. `PORT` is set by Cloud Run. |
-| `--set-secrets` | `GEMINI_API_KEY=<gemini key secret>:latest,KOCHA_HANDOFF_SECRET=kocha-cv-handoff-secret:latest` | Secrets stay in Secret Manager. The handoff secret is shared with kocha's server (`docs/kocha-handoff.md`). |
+| `--service-account` | its own account | Reads its secret and invokes the PDF renderer; nothing else. |
+| `--set-env-vars` | `BACKEND=gemini,STORE=memory,GEMINI_SPEND_PER_HOUR=10,PDF_URL=<PDF renderer URL>,PDF_AUTH=id-token` | Without `BACKEND`/`STORE` the server starts in file mode. `PORT` is set by Cloud Run. |
+| `--set-secrets` | `GEMINI_API_KEY=<gemini key secret>:latest` | Secrets stay in Secret Manager. The handoff to kocha (`docs/kocha-handoff.md`) adds `KOCHA_HANDOFF_URL` and a `KOCHA_HANDOFF_SECRET` secret. |
 
 ## Outside the app
 
