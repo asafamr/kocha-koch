@@ -16,10 +16,12 @@ import { CvDocumentView } from "../cv/CvDocumentView";
 import type { CvData } from "../cv/data";
 import type { CvDocument, CvPatch } from "../cv/document";
 import { cvHtmlFile, downloadCvHtml, downloadCvPdf } from "../cv/exportHtml";
+import { layoutReport, overflowOf, type Layout } from "../cv/layoutReport";
 import { PALETTE_LABELS, TEMPLATE_LABELS, TYPOGRAPHY_LABELS } from "../cv/labels";
 import { cvToOutline } from "../cv/outline";
 import { TEMPLATES, type TemplateName } from "../cv/templates";
 import { PALETTES, TYPOGRAPHY, type PaletteName, type TypographyName } from "../cv/theme";
+import { FIT_PREFIX } from "../../src/fit";
 import { kochaUrl } from "../links";
 import { ExportPanel, type PdfState } from "./ExportPanel";
 import { IntakeForm } from "./IntakeForm";
@@ -168,10 +170,20 @@ export function AppPage({
   }, [cv.theme?.key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Design: mm of content below the A4 page. The button asks kocha to cut it (cut, don't shrink: KB D2).
-  const [overflowMm, setOverflowMm] = useState(0);
+  const [layout, setLayout] = useState<Layout | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const overflowMm = layout ? overflowOf(layout) : 0;
   const overflowing = stage === 2 && overflowMm > 0;
   function askToFit() {
-    send(`קורות החיים חורגים מעמוד אחד בכ־${overflowMm} מ״מ בתבנית ${TEMPLATE_LABELS[template]} (${template}). אפשר לקצר כך שייכנסו בעמוד אחד?`);
+    send(`${FIT_PREFIX} בכ־${overflowMm} מ״מ בתבנית ${TEMPLATE_LABELS[template]} (${template}). אפשר לקצר כך שייכנסו בעמוד אחד?`);
+  }
+
+  // Hidden context for the model, sent with each message: only while the page is on screen, since
+  // that is when it is measured.
+  function layoutContext() {
+    if (stage !== 2 || !layout) return undefined;
+    const droppedPatches = Object.keys(cv.byTemplate).filter((t) => t !== template);
+    return layoutReport({ theme: { template, palette, typography }, layout, droppedPatches, warnings });
   }
 
   const doc = useMemo<CvDocument | null>(
@@ -198,7 +210,7 @@ export function AppPage({
   const points = (tips?.points ?? []).filter((p) => !dismissed.includes(p.id));
 
   function send(text: string) {
-    api.send(text).catch(fail);
+    api.send(text, layoutContext()).catch(fail);
   }
 
   // Users who agreed to share their CVs with kocha (consent cv_processing) send them on export
@@ -265,7 +277,8 @@ export function AppPage({
     setTypography("Bricolage");
     setThemeKey(undefined);
     setDismissed([]);
-    setOverflowMm(0);
+    setLayout(null);
+    setWarnings([]);
     setPdf({ status: "idle" });
     setConfirmReset(false);
   }
@@ -378,7 +391,7 @@ export function AppPage({
                     </>
                   }
                 >
-                  <CvDocumentView doc={doc} onOverflow={setOverflowMm} />
+                  <CvDocumentView doc={doc} onLayout={setLayout} onWarnings={setWarnings} />
                 </CvCanvas>
               )}
             </Block>
