@@ -1,12 +1,13 @@
 # Handing a CV-tool user to kocha.co.il
 
 Optional. With `KOCHA_HANDOFF_URL` and `KOCHA_HANDOFF_SECRET` set, a user who ticked the intake
-consent is handed to kocha with their CVs; without them, the practice button is a plain tracked
-link to `https://kocha.co.il/join`.
+consent is handed to kocha with their CVs; without them, there is no consent box, nothing is
+recorded, and the practice button is a plain tracked link to `https://kocha.co.il/join`.
 
 ## What this side does
 
-- The intake shows one unchecked box (`src/consent.ts`) that grants both purposes,
+- With the handoff on (`GET /api/messages` says `handoff: true`), the intake shows one unchecked
+  box (`src/consent.ts`) that grants both purposes,
   `cv_processing` and `marketing_email`, under one text and one version (`cv-2`). The server
   records each purpose with version, time, IP and user agent in the intake message. The text is
   registered with kocha under that version: change the text only with a new version.

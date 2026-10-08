@@ -12,16 +12,19 @@ export type Intake = { cv: File; role: string; jobDescription: string; consents:
 
 // Stage 1: kocha's opening words, then current CV, target role, optional job description, consent.
 // Next is enabled once a CV file and a target role are present.
+// The consent box is shown only with `askConsent` (the server has the handoff to kocha on).
 // `backend` says who processes the CV, for the privacy note: "gemini" (the managed version) or
 // "files" (a local run answered by the user's own AI tool).
 export function IntakeForm({
   onNext,
   sending = false,
   backend,
+  askConsent = false,
 }: {
   onNext: (intake: Intake) => void;
   sending?: boolean;
   backend?: string;
+  askConsent?: boolean;
 }) {
   const [cv, setCv] = useState<File | null>(null);
   const [role, setRole] = useState("");
@@ -31,7 +34,7 @@ export function IntakeForm({
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    if (cv && ready) onNext({ cv, role: role.trim(), jobDescription, consents: agreed ? CONSENT.purposes : [] });
+    if (cv && ready) onNext({ cv, role: role.trim(), jobDescription, consents: askConsent && agreed ? CONSENT.purposes : [] });
   }
 
   return (
@@ -68,7 +71,7 @@ export function IntakeForm({
         value={jobDescription}
         onChange={(e) => setJobDescription(e.target.value)}
       />
-      <Checkbox label={CONSENT.text} checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+      {askConsent && <Checkbox label={CONSENT.text} checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />}
       <p className="intake-privacy">
         {backend === "gemini"
           ? "קורות החיים והשיחה מעובדים בעזרת Gemini של Google, נשמרים רק בזיכרון השרת, ונמחקים אחרי 6 שעות בלי פעילות או כשלוחצים על \"התחלה מחדש\". "
