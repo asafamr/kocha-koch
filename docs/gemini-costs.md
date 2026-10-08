@@ -44,7 +44,7 @@ one line), Hebrew plural address. Both runs below follow the grounding rules in
 
 High costs about 3.5 times medium and is slower; the grounding rules did most of the work.
 Medium is the default; set `GEMINI_THINKING_LEVEL` to high or low to trade depth for cost. While it thinks, the page shows the
-seconds, the thinking tokens so far and the model's latest thought heading (streamed thought
+step, the seconds and the model's latest thought heading (streamed thought
 summaries), so a two-minute answer does not look stuck.
 
 ## What moved the cost
