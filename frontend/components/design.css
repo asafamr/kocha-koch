@@ -1,4 +1,4 @@
-/* Design language, taken from ../kohi/packages/ui (tokens.css, base.css, fonts.css).
+/* Design language, taken from kocha.co.il.
    Hebrew and Latin fonts. Components use logical properties, so they work in RTL and LTR;
    direction comes from the page (`dir`). Component classes are prefixed `ds-`. */
 
@@ -114,14 +114,14 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 .ds-checkbox:has(input:disabled) { color: var(--muted); cursor: not-allowed; }
 .ds-checkbox input:disabled { border-color: var(--hair); background: var(--hair); }
 
-/* Block (kohi .card) */
+/* Block */
 .ds-block { background: var(--paper); border: 2px solid var(--ink); padding: 1.25rem; }
 
 /* Modal: dims the page and centers its content */
 .ds-modal { position: fixed; inset: 0; display: grid; place-items: center; padding: 1.5rem; background: rgb(11 11 10 / 0.45); }
 .ds-modal > .ds-block { width: min(480px, 100%); padding: 2rem; }
 
-/* Highlight: yellow marker stroke (kohi .mark, drawn) */
+/* Highlight: yellow marker stroke, drawn */
 .ds-mark {
   color: #0B0B0A;
   background: linear-gradient(var(--marker), var(--marker)) no-repeat 0 .56em / 100% .86em;
@@ -184,7 +184,7 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 .ds-msg-bubble { padding: 0.5rem 0.75rem; font: var(--fs-md)/1.5 var(--f-body); white-space: pre-wrap; }
 .ds-msg-kocha .ds-msg-bubble { background: var(--surface); color: var(--ink); border: 1px solid var(--hair); }
 .ds-msg-user .ds-msg-bubble { background: var(--ink); color: var(--paper); }
-/* kohi's .warming-face */
+/* Face */
 .ds-avatar { inline-size: 36px; block-size: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--hair); flex: none; }
 
 /* TypingIndicator: three dots; still when the user asks for reduced motion */

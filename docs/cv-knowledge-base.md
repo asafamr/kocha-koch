@@ -10,34 +10,34 @@ would not load are listed at the end and are not cited.
 
 ## Conventions
 
-This file follows the conventions of kohi, kocha's interview-tips knowledge base (in kocha's
+This file follows the conventions of kocha's interview-tips knowledge base (in kocha's
 own repository, not published here):
 
-- **Source tiers, same three as kohi.** Each source carries one:
+- **Source tiers, same three as kocha's tips.** Each source carries one:
   - `study`: primary research or a peer-reviewed paper.
   - `practitioner`: first-hand standing in hiring. Here that covers university career
     services, government and legal guides, recruiters, and ATS vendors documenting their own
     product.
   - `popular`: content marketing, job boards, résumé-builder blogs, vendor press releases.
 
-  As in kohi, the tier is not a ranking. It shows what a tip rests on.
-- **Weight 1-3**, as in kohi. A hint for the agent about priority, not a score.
+  As there, the tier is not a ranking. It shows what a tip rests on.
+- **Weight 1-3**, as there. A hint for the agent about priority, not a score.
 - **No number that is not in the source.** Every figure in a tip's "Why" appears on the cited
   page. Numbers inside "How to apply" example rewrites are made up for illustration.
 - **Attribute rather than assert.** Popular claims without a traceable study sit in
-  [Myths and weak claims](#myths-and-weak-claims), the equivalent of kohi's `UNVERIFIED.md`.
+  [Myths and weak claims](#myths-and-weak-claims), the equivalent of the tips' list of unverified claims.
   If one is used, name who says it and drop the number.
 - **Independent sources with different vantage points** beat several pages repeating each
   other. Each tip says when a study supports only the general mechanism rather than the exact
   CV move.
 - **A video is cited to the second** (`&t=`). The one video found here has no verified
   timestamp, and the tip says so.
-- **The candidate faces an average reader.** kohi's tips are advice for the candidate, not
+- **The candidate faces an average reader.** kocha's interview tips are advice for the candidate, not
   best practice for the interviewer. Here the tips are advice for the CV, facing an average
   recruiter and an ordinary ATS (applicant tracking system, the software that stores and
   searches applications), not a well-run process.
 
-kohi has no evidence-strength scale beyond the tier. This file adds one, derived from the
+kocha's tips have no evidence-strength scale beyond the tier. This file adds one, derived from the
 tiers of a tip's sources:
 
 | Strength | Meaning |
@@ -52,7 +52,7 @@ repeats type, title, author or publisher, year and URL for its own sources.
 
 ### One rule for the agent before the tips
 
-**Never invent a number, a title or a result.** kohi's rule is that a number a candidate
+**Never invent a number, a title or a result.** kocha's rule is that a number a candidate
 could look up and find false costs everything. The CV version: a figure the user cannot
 defend in an interview does the same damage. When a bullet needs a number the CV does not
 have, ask the user. If they don't know it, write the result without a number (see A3).
@@ -209,8 +209,8 @@ the team. Write it without "we".
 - MIT: "Use action verbs instead of 'I' or 'we'" [S37]. Stanford: "Don't include personal
   pronouns (e.g. I, me, we)" [S77]. Harvard lists "I" and "We" under don'ts [S70].
 - The verb-first form (A5) forces an actor, and in a CV that actor is the candidate.
-- No source tests "own contribution vs team credit" on CVs directly. kohi's interview tip
-  `put-yourself-in-the-sentence` rests on the same advice for spoken answers (UVA career
+- No source tests "own contribution vs team credit" on CVs directly. kocha's interview tips
+  rest on the same advice for spoken answers (UVA career
   centre: use "I" rather than "we").
 
 **How to apply.**
@@ -1159,7 +1159,7 @@ committees and serious personal projects as experience entries with achievement 
   volunteering) next to work experience [S40].
 - NACE gives leadership 3.4, extracurriculars 3.2 and volunteer work 2.5 on its 1-5
   tie-breaker scale. They help, but less than internships [S38].
-- kohi's interview tip `unpaid-work-counts` makes the same point for spoken answers.
+- kocha's interview tips make the same point for spoken answers.
 
 **Sources.** [S40], [S38] (as above).
 
@@ -1378,7 +1378,7 @@ Shared videos (used under several tips):
 
 ## Myths and weak claims
 
-As in kohi's `UNVERIFIED.md`: these are not all false, but none has a study behind its
+As in kocha's list of unverified claims: these are not all false, but none has a study behind its
 number. Attribute them if used, and never repeat the number as fact.
 
 | Claim | Where it comes from | What is actually known |

@@ -5,8 +5,8 @@ import { getUpload, thread } from "./store";
 // Handing a user to kocha.co.il (docs/kocha-handoff.md). When the user agreed to share their CVs
 // with kocha (consent `cv_processing`), the practice button calls POST /api/handoff: this module
 // sends kocha's control server the original CV, the created CV (document and PDF), the contact
-// and the consents, signed with a shared secret. kocha answers with a token and, when it decides
-// where the user lands (/join is invitation-only, so maybe a waitlist), a `url`. Tokens go in
+// and the consents, signed with a shared secret. kocha answers with a token and a `url` where
+// the user lands. Tokens go in
 // the URL fragment, as kocha's invite links do, so they stay out of server logs.
 // Without KOCHA_HANDOFF_URL and KOCHA_HANDOFF_SECRET the feature is off and the button is a plain
 // tracked link.
