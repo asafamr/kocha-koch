@@ -6,7 +6,7 @@ import { Message } from "../components/Message";
 import { TextArea } from "../components/TextArea";
 import { TextField } from "../components/TextField";
 import { kochaUrl, REPO_URL } from "../links";
-import { CONSENTS, type ConsentPurpose } from "../../src/consent";
+import { CONSENT, type ConsentPurpose } from "../../src/consent";
 
 export type Intake = { cv: File; role: string; jobDescription: string; consents: ConsentPurpose[] };
 
@@ -26,12 +26,12 @@ export function IntakeForm({
   const [cv, setCv] = useState<File | null>(null);
   const [role, setRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
-  const [consents, setConsents] = useState<ConsentPurpose[]>([]); // all unchecked by default
+  const [agreed, setAgreed] = useState(false); // unchecked: consent is an active opt-in
   const ready = cv !== null && role.trim() !== "";
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    if (cv && ready) onNext({ cv, role: role.trim(), jobDescription, consents });
+    if (cv && ready) onNext({ cv, role: role.trim(), jobDescription, consents: agreed ? CONSENT.purposes : [] });
   }
 
   return (
@@ -68,16 +68,7 @@ export function IntakeForm({
         value={jobDescription}
         onChange={(e) => setJobDescription(e.target.value)}
       />
-      {CONSENTS.map((c) => (
-        <Checkbox
-          key={c.purpose}
-          label={c.text}
-          checked={consents.includes(c.purpose)}
-          onChange={(e) =>
-            setConsents((now) => (e.target.checked ? [...now, c.purpose] : now.filter((p) => p !== c.purpose)))
-          }
-        />
-      ))}
+      <Checkbox label={CONSENT.text} checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
       <p className="intake-privacy">
         {backend === "gemini"
           ? "קורות החיים והשיחה מעובדים בעזרת Gemini של Google, נשמרים רק בזיכרון השרת, ונמחקים אחרי 6 שעות בלי פעילות או כשלוחצים על \"התחלה מחדש\". "

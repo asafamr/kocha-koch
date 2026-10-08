@@ -58,12 +58,11 @@ function loadSaved(key?: string): Saved {
   };
 }
 
-// The typing indicator's progress line for a Gemini answer: phase, seconds, thinking tokens.
+// The typing indicator's progress line for a Gemini answer: phase and seconds.
 const PHASES = { thinking: "חושבת", lookup: "בודקת מקורות", writing: "כותבת", verifying: "בודקת דיוק" } as const;
 function progressText(p?: ThreadItem["progress"]): { detail?: string; note?: string } {
   if (!p) return {};
   const parts = [PHASES[p.phase], `${p.seconds} שנ׳`];
-  if (p.thinkingTokens > 0) parts.push(`${p.thinkingTokens.toLocaleString("he-IL")} טוקני חשיבה`);
   return { detail: parts.join(" · "), note: p.thought };
 }
 
@@ -112,12 +111,15 @@ export function AppPage({
   const messages = snapshot?.messages ?? [];
   const waiting = messages.length > 0 && !messages[messages.length - 1].reply;
 
-  // On reload, an intake already on the server means the form is done.
+  // On reload, the server decides the stage: an intake there means the form is done; none (a new
+  // or expired session) means start at the form, whatever stage the browser saved.
   const resumed = useRef(false);
   useEffect(() => {
     if (!snapshot || resumed.current) return;
     resumed.current = true;
-    if (stage === 0 && messages.some((m) => m.intake)) setStage(1);
+    const hasIntake = messages.some((m) => m.intake);
+    if (stage === 0 && hasIntake) setStage(1);
+    if (stage > 0 && !hasIntake) setStage(0);
   }, [snapshot]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The CV is the latest data any reply sent, with the patches that came with or after it: the
@@ -285,23 +287,6 @@ export function AppPage({
       <h1 className="ds-sr-only">קוחה</h1>
       <div className="app-page-stages">
         <StageGauge label="שלבי העבודה" stages={STAGES} current={stage} onSelect={setStage} canSelect={(i) => i > 0 && intakeSent} />
-        {messages.length > 0 && (
-          <div className="app-page-reset">
-            {confirmReset ? (
-              <div role="group" aria-label="התחלה מחדש" className="app-page-reset-confirm">
-                <span>למחוק את השיחה ואת קורות החיים ולהתחיל מחדש?</span>
-                <Button variant="secondary" onClick={startOver}>
-                  כן, להתחיל מחדש
-                </Button>
-                <Button onClick={() => setConfirmReset(false)}>ביטול</Button>
-              </div>
-            ) : (
-              <button type="button" className="app-page-reset-link" onClick={() => setConfirmReset(true)}>
-                התחלה מחדש
-              </button>
-            )}
-          </div>
-        )}
         <div role="alert" className="app-page-error">
           {error && `משהו השתבש בחיבור לשרת (${error}). מנסים שוב…`}
         </div>
@@ -421,6 +406,35 @@ export function AppPage({
           </section>
         </>
       )}
+      <footer className="app-page-footer">
+        <p className="app-page-footer-pitch">
+          כשתגיעו לראיון תהיו מוכנים אם תתאמנו עם{" "}
+          <a href={kochaUrl("footer")} target="_blank" rel="noopener">
+            קוֹחָה
+          </a>
+        </p>
+        {messages.length > 0 && (
+          <div className="app-page-reset">
+            {confirmReset ? (
+              <div role="group" aria-label="התחלה מחדש" className="app-page-reset-confirm">
+                <span>למחוק את השיחה ואת קורות החיים ולהתחיל מחדש?</span>
+                <Button variant="secondary" onClick={startOver}>
+                  כן, להתחיל מחדש
+                </Button>
+                <Button onClick={() => setConfirmReset(false)}>ביטול</Button>
+              </div>
+            ) : (
+              <button type="button" className="app-page-reset-link" onClick={() => setConfirmReset(true)}>
+                <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 1 0 3-6.7" />
+                  <path d="M3 4v5h5" />
+                </svg>
+                התחלה מחדש
+              </button>
+            )}
+          </div>
+        )}
+      </footer>
     </main>
   );
 }

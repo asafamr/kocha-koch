@@ -1,7 +1,7 @@
 import { join, normalize } from "node:path";
 import { addMessage, addReply, resetStore, saveUpload, STORE, thread, type ThreadItem } from "./store";
 import { answer, deleteCache, progress } from "./gemini";
-import { CONSENTS, isPurpose, type ConsentRecord } from "./consent";
+import { CONSENT, isPurpose, type ConsentRecord } from "./consent";
 import { handoff, handoffEnabled, NoConsent } from "./kocha";
 import { htmlToPdf, MAX_HTML, pdfAvailable, PdfBusy } from "./pdf";
 
@@ -82,7 +82,7 @@ async function postIntake(req: Request, s: Session) {
   const now = new Date().toISOString();
   const consents: ConsentRecord[] = (Array.isArray(purposes) ? purposes : []).filter(isPurpose).map((purpose) => ({
     purpose,
-    version: CONSENTS.find((c) => c.purpose === purpose)!.version,
+    version: CONSENT.version,
     grantedAt: now,
     ip: s.ip,
     userAgent: (req.headers.get("user-agent") ?? "").slice(0, 300),
