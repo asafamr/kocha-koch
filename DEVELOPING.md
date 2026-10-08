@@ -114,7 +114,8 @@ curl -XPOST localhost:3000/api/messages -H 'content-type: application/json' -d '
 ls .messages/agent/inbox          # new <id>.json
 # write .messages/agent/outbox/<id>.json as {id, ts, text, by} (add cv/tips, see AGENTS.md), then:
 curl localhost:3000/api/messages  # message now has a reply
-curl -XPOST localhost:3000/api/intake -F role='Backend Engineer' -F jobDescription= -F consent=true -F cv=@cv.pdf
+curl -XPOST localhost:3000/api/intake -F role='Backend Engineer' -F jobDescription= -F 'consents=["cv_processing"]' -F cv=@cv.pdf
+# consents is a JSON list of purposes; it is ignored unless the handoff env vars are set
 ls .messages/agent/uploads        # the PDF; the inbox message has intake.cvFile
 ```
 
