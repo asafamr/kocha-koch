@@ -6,7 +6,7 @@ import type { ConsentPurpose } from "../src/consent";
 import type { ThreadItem } from "../src/store";
 
 export type { ThreadItem };
-export type Snapshot = { backend: string; messages: ThreadItem[] };
+export type Snapshot = { backend: string; handoff?: boolean; messages: ThreadItem[] }; // handoff: the consent box is shown
 export type IntakeForm = { cv: File; role: string; jobDescription: string; consents: ConsentPurpose[] };
 
 // The app talks to the server only through this, so stories can pass a fake.

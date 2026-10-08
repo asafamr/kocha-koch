@@ -4,7 +4,7 @@ import { SAMPLE_CV } from "../cv/data";
 
 // A server stand-in for stories: fixed messages; sends are accepted and dropped.
 export function fakeApi(messages: ThreadItem[]): Api {
-  const snapshot: Snapshot = { backend: "fake", messages };
+  const snapshot: Snapshot = { backend: "fake", handoff: true, messages };
   return {
     load: async () => snapshot,
     send: async () => {},

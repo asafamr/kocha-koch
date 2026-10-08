@@ -73,9 +73,10 @@ async function postIntake(req: Request, s: Session) {
   const role = String(form?.get("role") ?? "").trim();
   const jobDescription = String(form?.get("jobDescription") ?? "").trim();
   // consents: a JSON list of the purposes the user ticked; recorded with the text version shown.
+  // The box is shown only with the handoff on, so without it nothing is recorded.
   let purposes: unknown = [];
   try {
-    purposes = JSON.parse(String(form?.get("consents") ?? "[]"));
+    if (handoffEnabled) purposes = JSON.parse(String(form?.get("consents") ?? "[]"));
   } catch {
     // no consent
   }
@@ -157,7 +158,7 @@ function withProgress(messages: ThreadItem[]) {
 
 async function api(req: Request, pathname: string, s: Session): Promise<Response> {
   const route = `${req.method} ${pathname}`;
-  if (route === "GET /api/messages") return Response.json({ backend: BACKEND, messages: withProgress(await thread(s.id)) });
+  if (route === "GET /api/messages") return Response.json({ backend: BACKEND, handoff: handoffEnabled, messages: withProgress(await thread(s.id)) });
   if (route === "POST /api/messages") return postMessage(req, s);
   if (route === "POST /api/intake") return postIntake(req, s);
   if (route === "POST /api/pdf") return postPdf(req, s);
