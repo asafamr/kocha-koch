@@ -27,10 +27,12 @@ export function CvDocumentView({
     // also keeps text clear of the printer's unprintable edge.
     const measure = () => {
       const page = root.current?.querySelector("article");
-      if (!live || !page || page.offsetHeight === 0) return;
-      const scale = page.getBoundingClientRect().height / page.offsetHeight; // canvas zoom
+      if (!live || !page) return;
+      const fixed = page.offsetHeight; // untransformed px, the A4 height
+      if (fixed === 0) return;
+      const scale = page.getBoundingClientRect().height / fixed; // canvas zoom
       page.style.blockSize = "auto";
-      const layout = measureLayout(page, scale);
+      const layout = measureLayout(page, scale, fixed);
       page.style.blockSize = "";
       onLayout(layout);
     };

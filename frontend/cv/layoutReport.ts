@@ -11,10 +11,10 @@ export type Layout = {
 
 const A4_MM = 297;
 
-// Measures the A4 `page` (an <article>) as rendered; `scale` is the canvas zoom. Call with the page
-// at its natural height, so content in stretched boxes is measured where it really ends.
-export function measureLayout(page: HTMLElement, scale: number): Layout {
-  const fixed = page.offsetHeight; // untransformed px
+// Measures the A4 `page` (an <article>) as rendered; `scale` is the canvas zoom and `fixed` the
+// page's A4 height in untransformed px, both read before the page is set to its natural height,
+// so content in stretched boxes is measured where it really ends.
+export function measureLayout(page: HTMLElement, scale: number, fixed: number): Layout {
   const mm = (px: number) => Math.round((px / scale / fixed) * A4_MM * 10) / 10;
   const top = page.getBoundingClientRect().top;
   const usable = fixed - parseFloat(getComputedStyle(page).paddingBlockEnd);

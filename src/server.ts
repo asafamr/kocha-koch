@@ -65,7 +65,8 @@ async function postMessage(req: Request, s: Session) {
 
   const msg = await addMessage(s.id, text, undefined, context);
   if (BACKEND === "gemini") startAnswer(s.id, msg.id);
-  return Response.json(msg, { status: 201 });
+  const { context: _hidden, ...shown } = msg;
+  return Response.json(shown, { status: 201 });
 }
 
 // The intake form: target role, optional job description, consent, and the current CV as a PDF.
