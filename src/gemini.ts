@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { FIT_PREFIX } from "./fit";
 import { lookup, researchIndex } from "./kb";
 import { addSpend, bucket, cacheCost, canSpend, turnCost } from "./spend";
 import { addReply, getUpload, thread, type ThreadItem } from "./store";
@@ -62,9 +63,10 @@ type Content = { role: "user" | "model"; parts: Part[] };
 export type Progress = { phase: "thinking" | "lookup" | "writing" | "verifying"; startedAt: number; thinkingTokens: number; thought?: string };
 export const progress = new Map<string, Progress>();
 
-// One user turn: the message text, and for the intake its fields and the CV PDF.
-async function userParts(session: string, m: ThreadItem): Promise<Part[]> {
+// One user turn: the message text, the layout report if `withContext`, and for the intake its fields and the CV PDF.
+async function userParts(session: string, m: ThreadItem, withContext: boolean): Promise<Part[]> {
   const parts: Part[] = [{ text: m.text }];
+  if (withContext && m.context) parts.push({ text: `Layout report (measured by the app, not written by the user):\n${m.context}` });
   if (m.intake) {
     const { role, jobDescription } = m.intake;
     parts.push({ text: `Intake.\nTarget role: ${role}\nJob description:\n${jobDescription || "(not given)"}` });
@@ -136,9 +138,10 @@ async function generate(
   thinkingBefore: number,
   json: boolean,
   useCache = true,
+  level = THINKING,
 ): Promise<{ parts: Part[]; usage: any }> {
   const generationConfig = {
-    thinkingConfig: { ...(THINKING ? { thinkingLevel: THINKING } : {}), includeThoughts: true },
+    thinkingConfig: { ...(level ? { thinkingLevel: level } : {}), includeThoughts: true },
     ...(json ? { responseMimeType: "application/json" } : {}),
   };
   const toolConfig = json ? { functionCallingConfig: { mode: "NONE" } } : undefined;
@@ -158,7 +161,7 @@ async function generate(
       // The cache may have expired or been rejected: drop it and send the instructions inline.
       console.error(`gemini with cache failed ${res.status}: ${err.slice(0, 300)}`);
       cache = null;
-      return generate(id, contents, thinkingBefore, json, false);
+      return generate(id, contents, thinkingBefore, json, false, level);
     }
     throw new Error(`Gemini ${res.status}: ${err}`);
   }
@@ -311,8 +314,10 @@ export async function answer(session: string, id: string) {
   try {
     const contents: Content[] = [];
     const history = (await thread(session)).filter((m) => m.id <= id);
+    // A fit request comes with real measurements, so the model only does arithmetic: low thinking.
+    const level = history.at(-1)?.text.startsWith(FIT_PREFIX) ? "low" : THINKING;
     for (const m of history) {
-      contents.push({ role: "user", parts: await userParts(session, m) });
+      contents.push({ role: "user", parts: await userParts(session, m, m.id === id) });
       if (m.reply) {
         const { text, cv, tips } = m.reply;
         contents.push({ role: "model", parts: [{ text: JSON.stringify({ text, cv, tips }) }] });
@@ -323,7 +328,7 @@ export async function answer(session: string, id: string) {
     let json = false; // the turn after a lookup, or a retry after a reply that was not JSON
     for (let round = 1; round <= MAX_ROUNDS; round++) {
       const started = Date.now();
-      const { parts, usage } = await generate(id, contents, thinkingSoFar, json);
+      const { parts, usage } = await generate(id, contents, thinkingSoFar, json, true, level);
       thinkingSoFar += usage.thoughtsTokenCount ?? 0;
       const calls = parts.filter((p) => p.functionCall).map((p) => p.functionCall as { name: string; args?: { ids?: string[] } });
       logUsage(id, round, usage, Date.now() - started, calls.length ? `lookup ${calls.flatMap((c) => c.args?.ids ?? []).join(",")}` : "answer");

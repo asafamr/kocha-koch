@@ -12,7 +12,7 @@ export type IntakeForm = { cv: File; role: string; jobDescription: string; conse
 // The app talks to the server only through this, so stories can pass a fake.
 export type Api = {
   load(): Promise<Snapshot>;
-  send(text: string): Promise<void>;
+  send(text: string, context?: string): Promise<void>; // context: hidden layout report for the model (cv/layoutReport.ts)
   sendIntake(intake: IntakeForm): Promise<void>;
   pdf(html: string): Promise<Blob>; // self-contained CV HTML (cv/exportHtml.ts) -> PDF
   reset(): Promise<void>; // start over: the server archives the conversation
@@ -25,11 +25,11 @@ export const httpApi: Api = {
     if (!res.ok) throw new Error(`load failed: ${res.status}`);
     return res.json();
   },
-  async send(text) {
+  async send(text, context) {
     const res = await fetch("/api/messages", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, context }),
     });
     if (!res.ok) throw new Error(`send failed: ${res.status}`);
   },
