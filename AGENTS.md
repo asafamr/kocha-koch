@@ -6,9 +6,12 @@ Dev workflow, code map and test steps: [DEVELOPING.md](DEVELOPING.md).
 ## Message protocol
 Messages for you are in `.messages/agent/` (mounted at `.messages/` inside the app
 container). The Gemini app keeps its messages in memory (`STORE=memory`); you never see them.
-- User message: `inbox/<id>.json` = `{ id, ts, text, intake? }`. Written by the server only.
+- User message: `inbox/<id>.json` = `{ id, ts, text, intake?, context? }`. Written by the server only.
   The first message comes from the intake form: `intake` = `{ role, jobDescription, consents, cvFile }`,
   where `cvFile` (e.g. `uploads/<id>.pdf`) is the user's current CV, relative to `.messages/agent/`.
+  `context` (design stage only) is the app's layout report of the CV page, measured in the browser: template, palette,
+  typography, page fill in mm, section heights, lines per bullet, renderer warnings. It is for you, never shown to the
+  user. Use it to size edits and fix warnings; only the latest one is current.
 - Reply: `outbox/<id>.json` = `{ id, ts, text, by, cv?, tips? }`, same `<id>` as the message.
   `text` is Hebrew chat. `cv` = `{ data?, theme?, patch? }` (`docs/cv-document.md`); `data` is a
   `CvData` (`frontend/cv/data.ts`), English, built by `docs/prompts/cv-content.md`. `tips` =

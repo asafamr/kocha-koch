@@ -18,7 +18,8 @@ import type { ConsentRecord } from "./consent";
 // The intake form, sent once at the start. cvFile is relative to the messages dir. consents: the
 // purposes the user agreed to (src/consent.ts), recorded with version, time, IP and user agent.
 export type Intake = { role: string; jobDescription: string; consents: ConsentRecord[]; cvFile: string };
-export type Message = { id: string; ts: string; text: string; intake?: Intake };
+// context: hidden text for the model (the browser's layout report), never shown to the user.
+export type Message = { id: string; ts: string; text: string; intake?: Intake; context?: string };
 // A reply may carry a CV update and tips as JSON (docs/cv-document.md, docs/prompts/prep-points.md).
 // The server passes them through unchanged; the frontend validates their shape.
 export type Reply = { id: string; ts: string; text: string; by: string; cv?: unknown; tips?: unknown };
@@ -132,8 +133,8 @@ const store =
 
 const newId = () => `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
 
-export async function addMessage(session: string, text: string, intake?: Intake): Promise<Message> {
-  const msg: Message = { id: newId(), ts: new Date().toISOString(), text, ...(intake ? { intake } : {}) };
+export async function addMessage(session: string, text: string, intake?: Intake, context?: string): Promise<Message> {
+  const msg: Message = { id: newId(), ts: new Date().toISOString(), text, ...(intake ? { intake } : {}), ...(context ? { context } : {}) };
   await store.put(session, "inbox", msg);
   return msg;
 }

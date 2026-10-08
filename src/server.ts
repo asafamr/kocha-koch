@@ -15,6 +15,7 @@ const PORT = Number(process.env.PORT ?? 3000);
 const DEV = process.env.DEV === "1";
 const DIST = join(import.meta.dir, "..", "dist");
 const MAX_TEXT = 20_000;
+const MAX_CONTEXT = 8_000;
 
 // Sessions (STORE=memory, the managed app): each browser gets a random id in an HttpOnly cookie
 // and sees only its own conversation. With STORE=files there is one local conversation.
@@ -57,10 +58,12 @@ async function postMessage(req: Request, s: Session) {
   const body = await req.json().catch(() => null);
   const text = typeof body?.text === "string" ? body.text.trim() : "";
   if (!text || text.length > MAX_TEXT) return Response.json({ error: "bad text" }, { status: 400 });
+  const context = typeof body?.context === "string" ? body.context.trim() : "";
+  if (context.length > MAX_CONTEXT) return Response.json({ error: "bad context" }, { status: 400 });
   const limited = overLimit(await thread(s.id), false);
   if (limited) return limited;
 
-  const msg = await addMessage(s.id, text);
+  const msg = await addMessage(s.id, text, undefined, context);
   if (BACKEND === "gemini") startAnswer(s.id, msg.id);
   return Response.json(msg, { status: 201 });
 }
@@ -147,8 +150,9 @@ async function postHandoff(req: Request, s: Session) {
 }
 
 // Pending messages the Gemini backend is answering get their live progress (typing indicator).
+// The hidden context is for the model only: it never goes to the page.
 function withProgress(messages: ThreadItem[]) {
-  return messages.map((m) => {
+  return messages.map(({ context: _hidden, ...m }) => {
     const p = !m.reply && progress.get(m.id);
     if (!p) return m;
     const { phase, thinkingTokens, thought } = p;
