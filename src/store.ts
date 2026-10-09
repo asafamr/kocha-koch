@@ -17,7 +17,8 @@ import type { ConsentRecord } from "./consent";
 
 // The intake form, sent once at the start. cvFile is relative to the messages dir. consents: the
 // purposes the user agreed to (src/consent.ts), recorded with version, time, IP and user agent.
-export type Intake = { role: string; jobDescription: string; consents: ConsentRecord[]; cvFile: string };
+// utm: the ad tags (utm_source, ...) the user arrived with, if any.
+export type Intake = { role: string; jobDescription: string; consents: ConsentRecord[]; cvFile: string; utm?: Record<string, string> };
 // context: hidden text for the model (the browser's layout report), never shown to the user.
 export type Message = { id: string; ts: string; text: string; intake?: Intake; context?: string };
 // A reply may carry a CV update and tips as JSON (docs/cv-document.md, docs/prompts/prep-points.md).

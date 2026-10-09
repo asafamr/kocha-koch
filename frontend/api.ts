@@ -1,3 +1,4 @@
+import { utmTags } from "./utm";
 import type { PrepPoint, PrepStrength } from "./components/PrepPoints";
 import type { Seniority, Track } from "./components/prepPointsSample";
 import type { CvData } from "./cv/data";
@@ -39,6 +40,7 @@ export const httpApi: Api = {
     form.set("role", role);
     form.set("jobDescription", jobDescription);
     form.set("consents", JSON.stringify(consents));
+    form.set("utm", JSON.stringify(utmTags()));
     const res = await fetch("/api/intake", { method: "POST", body: form });
     if (!res.ok) throw new Error(`intake failed: ${res.status}`);
   },

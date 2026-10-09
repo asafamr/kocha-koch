@@ -7,7 +7,7 @@ Dev workflow, code map and test steps: [DEVELOPING.md](DEVELOPING.md).
 Messages for you are in `.messages/agent/` (mounted at `.messages/` inside the app
 container). The Gemini app keeps its messages in memory (`STORE=memory`); you never see them.
 - User message: `inbox/<id>.json` = `{ id, ts, text, intake?, context? }`. Written by the server only.
-  The first message comes from the intake form: `intake` = `{ role, jobDescription, consents, cvFile }`,
+  The first message comes from the intake form: `intake` = `{ role, jobDescription, consents, cvFile, utm? }`,
   where `cvFile` (e.g. `uploads/<id>.pdf`) is the user's current CV, relative to `.messages/agent/`.
   `context` (design stage only) is the app's layout report of the CV page, measured in the browser: template, palette,
   typography, page fill in mm, section heights, lines per bullet, renderer warnings. It is for you, never shown to the

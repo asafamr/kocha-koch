@@ -37,7 +37,7 @@ The receiver rejects timestamps more than 5 minutes off.
   "originalCv": { "contentType": "application/pdf", "data": "<base64, at most 5 MB, or null>" },
   "createdCv": { "document": { "data": {}, "theme": {}, "patch": {} }, "pdf": "<base64 of the exported PDF>" },
   "tips": { "profile": {}, "target": "...", "strengths": [], "jobFit": [], "points": [] },
-  "utm": { "source": "cv-tool", "medium": "export", "campaign": "kocha-koch" }
+  "utm": { "source": "cv-tool", "medium": "export", "campaign": "kocha-koch" }  // or the visitor's own tags
 }
 ```
 
@@ -50,3 +50,11 @@ kocha keeps the CVs and the consents, and attaches the CVs to the user's account
 in to kocha.co.il with the same email, so the practice interview can use them. The CV is never
 sent to kocha's mailing list provider. The email comes from the CV and is unverified, so no
 marketing mail goes out before the user signs in.
+
+## Attribution
+
+The page reads `utm_source`, `utm_medium`, `utm_campaign`, `utm_term` and `utm_content` from its URL
+on load, keeps them for the browser session and sends them with the intake. The server keeps known
+keys only, each cut to 64 characters. The handoff sends them as `utm` (`source`, `medium`, `campaign`, plus `term` and `content`
+when set). A visitor who arrived with none of source, medium or campaign gets the fixed
+`cv-tool` / `export` / `kocha-koch` values, and the join-link fallback carries the same tags.

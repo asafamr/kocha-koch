@@ -69,6 +69,24 @@ async function postMessage(req: Request, s: Session) {
   return Response.json(shown, { status: 201 });
 }
 
+const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
+// Known keys only, short strings; anything else is dropped.
+export function parseUtm(raw: unknown): Record<string, string> | undefined {
+  let tags: unknown;
+  try {
+    tags = JSON.parse(String(raw ?? ""));
+  } catch {
+    return undefined;
+  }
+  if (typeof tags !== "object" || tags === null) return undefined;
+  const out: Record<string, string> = {};
+  for (const k of UTM_KEYS) {
+    const v = (tags as Record<string, unknown>)[k];
+    if (typeof v === "string" && v.trim()) out[k] = v.trim().slice(0, 64);
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
 // The intake form: target role, optional job description, consent, and the current CV as a PDF.
 // The PDF is saved under uploads/ and the message carries its path for the agent to read.
 const MAX_PDF = 5 * 1024 * 1024;
@@ -93,6 +111,7 @@ async function postIntake(req: Request, s: Session) {
     userAgent: (req.headers.get("user-agent") ?? "").slice(0, 300),
     page: "intake",
   }));
+  const utm = parseUtm(form?.get("utm"));
   const cv = form?.get("cv");
   if (!role || role.length > 200 || jobDescription.length > MAX_TEXT) {
     return Response.json({ error: "bad role or job description" }, { status: 400 });
@@ -110,7 +129,7 @@ async function postIntake(req: Request, s: Session) {
   const text = [`תפקיד מבוקש: ${role}`, jobDescription ? "צירפתי את תיאור המשרה." : "", `קורות חיים: ${cv.name}`]
     .filter(Boolean)
     .join("\n");
-  const msg = await addMessage(s.id, text, { role, jobDescription, consents, cvFile });
+  const msg = await addMessage(s.id, text, { role, jobDescription, consents, cvFile, ...(utm ? { utm } : {}) });
   if (BACKEND === "gemini") startAnswer(s.id, msg.id);
   return Response.json(msg, { status: 201 });
 }
