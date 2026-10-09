@@ -14,7 +14,7 @@ import { getUpload, thread } from "./store";
 const URL_ = process.env.KOCHA_HANDOFF_URL ?? "";
 const SECRET = process.env.KOCHA_HANDOFF_SECRET ?? "";
 const JOIN = process.env.KOCHA_JOIN_URL ?? "https://kocha.co.il/join";
-const UTM = { source: "cv-tool", medium: "export", campaign: "kocha-koch" };
+const DEFAULT_UTM = { source: "cv-tool", medium: "export", campaign: "kocha-koch" };
 export const handoffEnabled = Boolean(URL_ && SECRET);
 
 export class NoConsent extends Error {}
@@ -52,6 +52,11 @@ function latestTips(items: Awaited<ReturnType<typeof thread>>): Record<string, u
 
 type IntakeOf = NonNullable<Awaited<ReturnType<typeof thread>>[number]["intake"]>;
 async function send(session: string, intake: IntakeOf, tips: Record<string, unknown> | undefined, document: CvDocument, html: string): Promise<string> {
+  const t = intake.utm;
+  const utm: Record<string, string | undefined> =
+    t?.utm_source || t?.utm_medium || t?.utm_campaign
+      ? { source: t.utm_source, medium: t.utm_medium, campaign: t.utm_campaign, term: t.utm_term, content: t.utm_content }
+      : DEFAULT_UTM;
   const original = await getUpload(session, intake.cvFile);
   const pdf = await htmlToPdf(html, session);
   const body = JSON.stringify({
@@ -66,7 +71,7 @@ async function send(session: string, intake: IntakeOf, tips: Record<string, unkn
     originalCv: original ? { contentType: "application/pdf", data: Buffer.from(original).toString("base64") } : null,
     createdCv: { document, pdf: Buffer.from(pdf).toString("base64") },
     prep: tips,
-    utm: UTM,
+    utm,
   });
 
   // Signed as `${timestamp}.${body}` so the receiver can reject replays of an old request.
@@ -83,7 +88,7 @@ async function send(session: string, intake: IntakeOf, tips: Record<string, unkn
   const token = out.token;
   if (typeof token !== "string" || !/^[A-Za-z0-9_-]{8,200}$/.test(token)) throw new Error("kocha handoff: bad token");
 
-  const utm = `utm_source=${UTM.source}&utm_medium=${UTM.medium}&utm_campaign=${UTM.campaign}`;
+  const query = new URLSearchParams(Object.entries(utm).flatMap(([k, v]) => (v ? [[`utm_${k}`, v]] : []))).toString();
   const kochaUrl = typeof out.url === "string" && /^https:\/\/([a-z0-9-]+\.)*kocha\.co\.il\//.test(out.url) ? out.url : null;
-  return kochaUrl ?? `${JOIN}?${utm}#cv=${encodeURIComponent(token)}`;
+  return kochaUrl ?? `${JOIN}?${query}#cv=${encodeURIComponent(token)}`;
 }
