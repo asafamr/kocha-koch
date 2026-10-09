@@ -47,7 +47,7 @@ const MAX_TIPS_BYTES = 64 * 1024;
 function latestTips(items: Awaited<ReturnType<typeof thread>>): Record<string, unknown> | undefined {
   const tips = items.map((m) => m.reply?.tips).filter((t) => t != null).at(-1);
   if (typeof tips !== "object" || tips === null || Array.isArray(tips)) return undefined;
-  return JSON.stringify(tips).length <= MAX_TIPS_BYTES ? (tips as Record<string, unknown>) : undefined;
+  return Buffer.byteLength(JSON.stringify(tips)) <= MAX_TIPS_BYTES ? (tips as Record<string, unknown>) : undefined;
 }
 
 type IntakeOf = NonNullable<Awaited<ReturnType<typeof thread>>[number]["intake"]>;
