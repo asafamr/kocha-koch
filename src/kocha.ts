@@ -65,7 +65,7 @@ async function send(session: string, intake: IntakeOf, tips: Record<string, unkn
     consents: intake.consents,
     originalCv: original ? { contentType: "application/pdf", data: Buffer.from(original).toString("base64") } : null,
     createdCv: { document, pdf: Buffer.from(pdf).toString("base64") },
-    tips,
+    prep: tips,
     utm: UTM,
   });
 
