@@ -26,13 +26,14 @@ const done = new Map<string, { key: string; url: Promise<string> }>();
 type CvDocument = { data?: { name?: unknown; contact?: { email?: unknown } } };
 
 export async function handoff(session: string, document: CvDocument, html: string): Promise<string> {
-  const intake = (await thread(session)).filter((m) => m.intake).at(-1)?.intake;
+  const items = await thread(session);
+  const intake = items.filter((m) => m.intake).at(-1)?.intake;
   if (!intake?.consents?.some((c) => c.purpose === "cv_processing")) throw new NoConsent();
 
   const key = new Bun.CryptoHasher("sha256").update(JSON.stringify(document)).digest("hex");
   const previous = done.get(session);
   if (previous?.key === key) return previous.url;
-  const url = send(session, intake, document, html);
+  const url = send(session, intake, latestTips(items), document, html);
   done.set(session, { key, url });
   url.catch(() => {
     if (done.get(session)?.url === url) done.delete(session);
@@ -40,8 +41,17 @@ export async function handoff(session: string, document: CvDocument, html: strin
   return url;
 }
 
+const MAX_TIPS_BYTES = 64 * 1024;
+
+// Replies are model-written: pass only a plain object, and drop it if it is too big.
+function latestTips(items: Awaited<ReturnType<typeof thread>>): Record<string, unknown> | undefined {
+  const tips = items.map((m) => m.reply?.tips).filter((t) => t != null).at(-1);
+  if (typeof tips !== "object" || tips === null || Array.isArray(tips)) return undefined;
+  return JSON.stringify(tips).length <= MAX_TIPS_BYTES ? (tips as Record<string, unknown>) : undefined;
+}
+
 type IntakeOf = NonNullable<Awaited<ReturnType<typeof thread>>[number]["intake"]>;
-async function send(session: string, intake: IntakeOf, document: CvDocument, html: string): Promise<string> {
+async function send(session: string, intake: IntakeOf, tips: Record<string, unknown> | undefined, document: CvDocument, html: string): Promise<string> {
   const original = await getUpload(session, intake.cvFile);
   const pdf = await htmlToPdf(html, session);
   const body = JSON.stringify({
@@ -55,6 +65,7 @@ async function send(session: string, intake: IntakeOf, document: CvDocument, htm
     consents: intake.consents,
     originalCv: original ? { contentType: "application/pdf", data: Buffer.from(original).toString("base64") } : null,
     createdCv: { document, pdf: Buffer.from(pdf).toString("base64") },
+    tips,
     utm: UTM,
   });
 

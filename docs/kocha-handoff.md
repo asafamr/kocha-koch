@@ -13,7 +13,7 @@ recorded, and the practice button is a plain tracked link to `https://kocha.co.i
   registered with kocha under that version: change the text only with a new version.
 - `src/kocha.ts` and `POST /api/handoff`: on export (PDF or HTML, in the background) and on the
   practice click, if the user ticked `cv_processing`, build the payload below from the session's
-  intake upload, the CV document and a PDF rendered here, sign it, POST it to
+  intake upload, the latest `tips` any reply sent (left out if none, not an object, or over 64 KB), the CV document and a PDF rendered here, sign it, POST it to
   `KOCHA_HANDOFF_URL`, and open the returned link on the practice click. An export and a practice
   click on the same CV share one call. Without consent or on any error, the button opens the
   plain link.
@@ -36,6 +36,7 @@ The receiver rejects timestamps more than 5 minutes off.
   ],
   "originalCv": { "contentType": "application/pdf", "data": "<base64, at most 5 MB, or null>" },
   "createdCv": { "document": { "data": {}, "theme": {}, "patch": {} }, "pdf": "<base64 of the exported PDF>" },
+  "tips": { "profile": {}, "target": "...", "strengths": [], "jobFit": [], "points": [] },
   "utm": { "source": "cv-tool", "medium": "export", "campaign": "kocha-koch" }
 }
 ```
