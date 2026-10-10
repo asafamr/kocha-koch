@@ -3,6 +3,7 @@ import { addMessage, addReply, resetStore, saveUpload, STORE, thread, type Threa
 import { answer, deleteCache, progress } from "./gemini";
 import { CONSENT, isPurpose, type ConsentRecord } from "./consent";
 import { handoff, handoffEnabled, NoConsent } from "./kocha";
+import { GA_ID } from "./analytics";
 import { rateLimited } from "./limits";
 import { htmlToPdf, MAX_HTML, pdfAvailable, PdfBusy } from "./pdf";
 
@@ -184,7 +185,7 @@ function withProgress(messages: ThreadItem[]) {
 async function api(req: Request, pathname: string, s: Session): Promise<Response> {
   const route = `${req.method} ${pathname}`;
   if (STORE === "memory" && rateLimited(route, s.ip)) return Response.json({ error: "too many requests" }, { status: 429 });
-  if (route === "GET /api/messages") return Response.json({ backend: BACKEND, handoff: handoffEnabled, messages: withProgress(await thread(s.id)) });
+  if (route === "GET /api/messages") return Response.json({ backend: BACKEND, handoff: handoffEnabled, ga: GA_ID || undefined, messages: withProgress(await thread(s.id)) });
   if (route === "POST /api/messages") return postMessage(req, s);
   if (route === "POST /api/intake") return postIntake(req, s);
   if (route === "POST /api/pdf") return postPdf(req, s);
@@ -197,14 +198,16 @@ async function api(req: Request, pathname: string, s: Session): Promise<Response
 }
 
 // Security headers on every response outside dev (dev's hot reload needs looser rules). The page
-// loads only its own bundle, fonts and images; inline styles are React style props.
+// loads only its own bundle, fonts and images (plus Google Analytics when GA_MEASUREMENT_ID is
+// set); inline styles are React style props.
+const GA_HOSTS = "https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com";
 const CSP = [
   "default-src 'self'",
-  "script-src 'self'",
+  `script-src 'self'${GA_ID ? " https://www.googletagmanager.com" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  `img-src 'self' data: blob:${GA_ID ? " " + GA_HOSTS : ""}`,
   "font-src 'self' data:",
-  "connect-src 'self'",
+  `connect-src 'self'${GA_ID ? " " + GA_HOSTS : ""}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

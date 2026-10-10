@@ -34,7 +34,7 @@ Images go to the project's Artifact Registry; deploy with a project-scoped deplo
 | `--memory` | `1Gi` | Uploads in memory are capped at 256 MB (`src/store.ts`); no browser in this image. |
 | `--service-account` | its own account | Reads its secret and invokes the PDF renderer; nothing else. |
 | `--set-env-vars` | `BACKEND=gemini,STORE=memory,GEMINI_SPEND_PER_HOUR=10,PDF_URL=<PDF renderer URL>,PDF_AUTH=id-token` | Without `BACKEND`/`STORE` the server starts in file mode. `PORT` is set by Cloud Run. |
-| `--set-secrets` | `GEMINI_API_KEY=<gemini key secret>:latest` | Secrets stay in Secret Manager. The handoff to kocha (`docs/kocha-handoff.md`) adds `KOCHA_HANDOFF_URL` and a `KOCHA_HANDOFF_SECRET` secret. |
+| `--set-secrets` | `GEMINI_API_KEY=<gemini key secret>:latest` | Secrets stay in Secret Manager. The handoff to kocha (`docs/kocha-handoff.md`) adds `KOCHA_HANDOFF_URL` and a `KOCHA_HANDOFF_SECRET` secret. Set `--set-env-vars GA_MEASUREMENT_ID=G-XXXXXXXXXX` to turn on Google Analytics 4 (page views and a few events without personal data); empty means no Google script and the CSP stays closed to Google. |
 
 ## Outside the app
 
