@@ -1,6 +1,8 @@
 .git
 .claude
 .env
+.env.*
+!.env.example
 .messages
 node_modules
 dist
