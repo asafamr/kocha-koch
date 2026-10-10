@@ -6,7 +6,7 @@ import { Checkbox } from "../components/Checkbox";
 import { CONSENT } from "../../src/consent";
 
 // The consent, with the same versioned text as the intake form (src/consent.ts).
-export const CONSENT_LABEL = CONSENT.text;
+export const CONSENT_LABEL = CONSENT.texts.cv_processing;
 
 export function ConsentModal({
   onContinue,
