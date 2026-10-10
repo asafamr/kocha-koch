@@ -64,6 +64,7 @@ or the containers cannot write to `.messages/`.
 | `src/consent.ts` | the consents the intake asks for, one per purpose with a versioned text (shared with the frontend) |
 | `src/kocha.ts` | handoff to kocha.co.il: with the `cv_processing` consent, sends the CVs and consents, signed, to `KOCHA_HANDOFF_URL` and returns kocha's join link (`docs/kocha-handoff.md`); off without `KOCHA_HANDOFF_URL`/`KOCHA_HANDOFF_SECRET` |
 | `src/fit.ts` | the start of the visible fit-request sentence; the Gemini backend runs a turn that starts with it at low thinking |
+| `src/limits.ts` | `STORE=memory`: per-IP sliding-window limits per hour (10 intakes, 60 messages, 10 handoffs) and 60 handoffs per hour overall; over the limit the server answers 429 and the page shows a Hebrew message. The IP is the last `x-forwarded-for` entry (the proxy's). At most 4 handoffs are built at once (`src/kocha.ts`), and a running Gemini turn holds an estimated $0.10 in the spend bucket until it ends |
 | `src/spend.ts` | Gemini spend limit per process: a leaky bucket in dollars (`GEMINI_SPEND_PER_HOUR`, default $10), see `docs/gemini-costs.md` |
 | `src/pdf.ts` | CV PDFs from the PDF service (`Dockerfile.pdf`: Gotenberg, Chromium with JavaScript and network off), at `PDF_URL`; on Cloud Run a private service called with an identity token (`PDF_AUTH=id-token`). Per-session and queue limits here |
 | `frontend/index.html`, `main.tsx` | entry point, bundled by `bun run build` into `dist/` |
