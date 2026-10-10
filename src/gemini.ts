@@ -163,7 +163,7 @@ async function generate(
       cache = null;
       return generate(id, contents, thinkingBefore, json, false, level);
     }
-    throw new Error(`Gemini ${res.status}: ${err}`);
+    throw new Error(`Gemini ${res.status}: ${err.slice(0, 300)}`);
   }
 
   const parts: Part[] = [];

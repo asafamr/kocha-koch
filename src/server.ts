@@ -224,7 +224,7 @@ function secure(res: Response, req: Request): Response {
 
 async function serveStatic(pathname: string) {
   const path = normalize(join(DIST, pathname === "/" ? "index.html" : pathname));
-  if (!path.startsWith(DIST)) return new Response("forbidden", { status: 403 });
+  if (!path.startsWith(DIST + "/")) return new Response("forbidden", { status: 403 });
   const file = Bun.file(path);
   return (await file.exists()) ? new Response(file) : new Response("not found", { status: 404 });
 }
