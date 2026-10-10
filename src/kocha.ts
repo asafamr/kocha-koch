@@ -1,13 +1,13 @@
 import { createHmac } from "node:crypto";
-import { htmlToPdf } from "./pdf";
+import { htmlToPdf, PdfBusy } from "./pdf";
 import { getUpload, thread } from "./store";
 
 // Handing a user to kocha.co.il (docs/kocha-handoff.md). When the user agreed to share their CVs
 // with kocha (consent `cv_processing`), the practice button calls POST /api/handoff: this module
 // sends kocha's control server the original CV, the created CV (document and PDF), the contact
 // and the consents, signed with a shared secret. kocha answers with a token and a `url` where
-// the user lands. Tokens go in
-// the URL fragment, as kocha's invite links do, so they stay out of server logs.
+// the user lands. The token goes
+// in the URL fragment so it stays out of server logs.
 // Without KOCHA_HANDOFF_URL and KOCHA_HANDOFF_SECRET the feature is off and the button is a plain
 // tracked link.
 
@@ -23,6 +23,10 @@ export class NoConsent extends Error {}
 // share one call (also while it is still running). A failed call is forgotten, so it can retry.
 const done = new Map<string, { key: string; url: Promise<string> }>();
 
+// Building a handoff holds the PDFs as base64 in memory: only a few at a time.
+const MAX_BUILDS = 4;
+let building = 0;
+
 type CvDocument = { data?: { name?: unknown; contact?: { email?: unknown } } };
 
 export async function handoff(session: string, document: CvDocument, html: string): Promise<string> {
@@ -33,8 +37,11 @@ export async function handoff(session: string, document: CvDocument, html: strin
   const key = new Bun.CryptoHasher("sha256").update(JSON.stringify(document)).digest("hex");
   const previous = done.get(session);
   if (previous?.key === key) return previous.url;
+  if (building >= MAX_BUILDS) throw new PdfBusy();
+  building++;
   const url = send(session, intake, latestTips(items), document, html);
   done.set(session, { key, url });
+  url.then(() => building--, () => building--);
   url.catch(() => {
     if (done.get(session)?.url === url) done.delete(session);
   });

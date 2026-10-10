@@ -30,10 +30,21 @@ function drain() {
   at = now;
 }
 
-// Whether a new answer may start.
-export function canSpend(): boolean {
+// A turn in flight holds this much until it ends, so concurrent turns count before their
+// real cost (added as it is reported) arrives.
+const TURN_ESTIMATE = 0.1;
+
+// Whether a new answer may start; if so it is reserved until endTurn.
+export function startTurn(): boolean {
   drain();
-  return level < CAPACITY;
+  if (level >= CAPACITY) return false;
+  level += TURN_ESTIMATE;
+  return true;
+}
+
+export function endTurn() {
+  drain();
+  level = Math.max(0, level - TURN_ESTIMATE);
 }
 
 export function addSpend(dollars: number) {

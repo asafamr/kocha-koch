@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { FIT_PREFIX } from "./fit";
 import { lookup, researchIndex } from "./kb";
-import { addSpend, bucket, cacheCost, canSpend, turnCost } from "./spend";
+import { addSpend, bucket, cacheCost, endTurn, startTurn, turnCost } from "./spend";
 import { addReply, getUpload, thread, type ThreadItem } from "./store";
 
 const MODEL = process.env.GEMINI_MODEL ?? "gemini-3.8-flash";
@@ -304,7 +304,7 @@ function parseReply(raw: string): { text: string; cv?: unknown; tips?: unknown }
 // the same id, with the CV and tips the model sent. Works with either store.
 export async function answer(session: string, id: string) {
   if (!KEY) throw new Error("GEMINI_API_KEY is not set");
-  if (!canSpend()) {
+  if (!startTurn()) {
     // This pod's spend limit (src/spend.ts) is used up: refuse politely until it drains.
     console.log(`gemini ${id} refused: spend limit ($${bucket().level.toFixed(3)} in the bucket)`);
     await addReply(session, id, "קוחה עמוסה כרגע. נסו לשלוח שוב בעוד כמה דקות.", "server");
@@ -364,6 +364,7 @@ export async function answer(session: string, id: string) {
       return;
     }
   } finally {
+    endTurn();
     progress.delete(id);
   }
 }

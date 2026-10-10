@@ -20,6 +20,12 @@ export type Api = {
   handoff(body: { document: unknown; html: string }): Promise<string>; // kocha.co.il join link with the CVs (src/kocha.ts)
 };
 
+export class RateLimited extends Error {}
+const check = (res: Response, what: string) => {
+  if (res.status === 429) throw new RateLimited(what);
+  if (!res.ok) throw new Error(`${what} failed: ${res.status}`);
+};
+
 export const httpApi: Api = {
   async load() {
     const res = await fetch("/api/messages");
@@ -32,7 +38,7 @@ export const httpApi: Api = {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ text, context }),
     });
-    if (!res.ok) throw new Error(`send failed: ${res.status}`);
+    check(res, "send");
   },
   async sendIntake({ cv, role, jobDescription, consents }) {
     const form = new FormData();
@@ -42,7 +48,7 @@ export const httpApi: Api = {
     form.set("consents", JSON.stringify(consents));
     form.set("utm", JSON.stringify(utmTags()));
     const res = await fetch("/api/intake", { method: "POST", body: form });
-    if (!res.ok) throw new Error(`intake failed: ${res.status}`);
+    check(res, "intake");
   },
   async pdf(html) {
     const res = await fetch("/api/pdf", { method: "POST", headers: { "content-type": "text/html" }, body: html });

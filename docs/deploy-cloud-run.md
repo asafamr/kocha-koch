@@ -49,6 +49,8 @@ Images go to the project's Artifact Registry; deploy with a project-scoped deplo
 - One conversation per browser (HttpOnly cookie); idle sessions dropped after 6 hours.
 - Per session: one answer at a time, at most 80 messages and 5 intakes, one PDF render at a
   time; a global PDF queue of 4.
+- Per client IP (last `x-forwarded-for` entry), per hour: 10 intakes, 60 messages, 10 handoffs; 60 handoffs
+  per hour overall (`src/limits.ts`), at most 4 handoffs built at once. Over a limit: 429.
 - Per process: the spend bucket ($10/hour, starts empty) and the 10-minute Gemini cache,
   deleted on SIGTERM after up to 8 s for answers in flight.
 - Security headers on every response; logs carry token counts and costs, not CV text.

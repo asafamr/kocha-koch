@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { httpApi, readCv, readTips, type Api, type Snapshot, type ThreadItem } from "../api";
+import { httpApi, RateLimited, readCv, readTips, type Api, type Snapshot, type ThreadItem } from "../api";
 import { Block } from "../components/Block";
 import { Button } from "../components/Button";
 import { ChatInput } from "../components/ChatInput";
@@ -93,7 +93,8 @@ export function AppPage({
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-  const fail = (e: unknown) => setError(e instanceof Error ? e.message : String(e));
+  const [limited, setLimited] = useState(false);
+  const fail = (e: unknown) => (e instanceof RateLimited ? setLimited(true) : setError(e instanceof Error ? e.message : String(e)));
 
   useEffect(() => {
     let live = true;
@@ -210,6 +211,7 @@ export function AppPage({
   const points = (tips?.points ?? []).filter((p) => !dismissed.includes(p.id));
 
   function send(text: string) {
+    setLimited(false);
     api.send(text, layoutContext()).catch(fail);
   }
 
@@ -285,6 +287,7 @@ export function AppPage({
 
   async function submitIntake(intake: Parameters<Api["sendIntake"]>[0]) {
     setSending(true);
+    setLimited(false);
     try {
       await api.sendIntake(intake);
       setStage(1);
@@ -301,7 +304,8 @@ export function AppPage({
       <div className="app-page-stages">
         <StageGauge label="שלבי העבודה" stages={STAGES} current={stage} onSelect={setStage} canSelect={(i) => i > 0 && intakeSent} />
         <div role="alert" className="app-page-error">
-          {error && `משהו השתבש בחיבור לשרת (${error}). מנסים שוב…`}
+          {limited && "יותר מדי בקשות בזמן קצר. נסו שוב בעוד כמה דקות."}
+          {!limited && error && `משהו השתבש בחיבור לשרת (${error}). מנסים שוב…`}
         </div>
       </div>
 

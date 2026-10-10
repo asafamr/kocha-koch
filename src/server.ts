@@ -3,6 +3,7 @@ import { addMessage, addReply, resetStore, saveUpload, STORE, thread, type Threa
 import { answer, deleteCache, progress } from "./gemini";
 import { CONSENT, isPurpose, type ConsentRecord } from "./consent";
 import { handoff, handoffEnabled, NoConsent } from "./kocha";
+import { rateLimited } from "./limits";
 import { htmlToPdf, MAX_HTML, pdfAvailable, PdfBusy } from "./pdf";
 
 const BACKEND = process.env.BACKEND ?? "files"; // "files" | "gemini"
@@ -23,8 +24,8 @@ const COOKIE = "kocha_session";
 const SESSION_MAX_AGE_S = 6 * 3600;
 type Session = { id: string; setCookie?: string; ip: string };
 function sessionOf(req: Request, peer: string): Session {
-  // Behind Cloud Run's proxy the client is the first x-forwarded-for entry.
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || peer;
+  // The proxy appends the real client address as the last x-forwarded-for entry; earlier ones are client-supplied.
+  const ip = req.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() || peer;
   if (STORE !== "memory") return { id: "local", ip };
   const found = req.headers.get("cookie")?.match(/(?:^|;\s*)kocha_session=([0-9a-f-]{36})(?:;|$)/)?.[1];
   if (found) return { id: found, ip };
@@ -182,6 +183,7 @@ function withProgress(messages: ThreadItem[]) {
 
 async function api(req: Request, pathname: string, s: Session): Promise<Response> {
   const route = `${req.method} ${pathname}`;
+  if (STORE === "memory" && rateLimited(route, s.ip)) return Response.json({ error: "too many requests" }, { status: 429 });
   if (route === "GET /api/messages") return Response.json({ backend: BACKEND, handoff: handoffEnabled, messages: withProgress(await thread(s.id)) });
   if (route === "POST /api/messages") return postMessage(req, s);
   if (route === "POST /api/intake") return postIntake(req, s);
