@@ -8,6 +8,8 @@ import { TextField } from "../components/TextField";
 import { kochaUrl, REPO_URL } from "../links";
 import { CONSENT, type ConsentPurpose } from "../../src/consent";
 
+const purposes = Object.keys(CONSENT.texts) as ConsentPurpose[];
+
 export type Intake = { cv: File; role: string; jobDescription: string; consents: ConsentPurpose[] };
 
 // Stage 1: kocha's opening words, then current CV, target role, optional job description, consent.
@@ -29,12 +31,12 @@ export function IntakeForm({
   const [cv, setCv] = useState<File | null>(null);
   const [role, setRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
-  const [agreed, setAgreed] = useState(false); // unchecked: consent is an active opt-in
+  const [agreed, setAgreed] = useState<Record<ConsentPurpose, boolean>>({ cv_processing: false, marketing_email: false }); // unchecked: consent is an active opt-in
   const ready = cv !== null && role.trim() !== "";
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    if (cv && ready) onNext({ cv, role: role.trim(), jobDescription, consents: askConsent && agreed ? CONSENT.purposes : [] });
+    if (cv && ready) onNext({ cv, role: role.trim(), jobDescription, consents: askConsent ? purposes.filter((x) => agreed[x]) : [] });
   }
 
   return (
@@ -71,7 +73,15 @@ export function IntakeForm({
         value={jobDescription}
         onChange={(e) => setJobDescription(e.target.value)}
       />
-      {askConsent && <Checkbox label={CONSENT.text} checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />}
+      {askConsent &&
+        purposes.map((purpose) => (
+          <Checkbox
+            key={purpose}
+            label={CONSENT.texts[purpose]}
+            checked={agreed[purpose]}
+            onChange={(e) => setAgreed({ ...agreed, [purpose]: e.target.checked })}
+          />
+        ))}
       <p className="intake-privacy">
         {backend === "gemini"
           ? "קורות החיים והשיחה מעובדים בעזרת Gemini של Google, נשמרים רק בזיכרון השרת, ונמחקים אחרי 6 שעות בלי פעילות או כשלוחצים על \"התחלה מחדש\". "
