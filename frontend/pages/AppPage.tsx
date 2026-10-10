@@ -22,6 +22,7 @@ import { cvToOutline } from "../cv/outline";
 import { TEMPLATES, type TemplateName } from "../cv/templates";
 import { PALETTES, TYPOGRAPHY, type PaletteName, type TypographyName } from "../cv/theme";
 import { FIT_PREFIX } from "../../src/fit";
+import { initAnalytics, track } from "../analytics";
 import { kochaUrl } from "../links";
 import { ExportPanel, type PdfState } from "./ExportPanel";
 import { IntakeForm } from "./IntakeForm";
@@ -95,6 +96,11 @@ export function AppPage({
   const [sending, setSending] = useState(false);
   const [limited, setLimited] = useState(false);
   const fail = (e: unknown) => (e instanceof RateLimited ? setLimited(true) : setError(e instanceof Error ? e.message : String(e)));
+  // For user actions only: the 2 s poll would otherwise count one limit many times.
+  const failAction = (e: unknown) => {
+    if (e instanceof RateLimited) track("cv_rate_limited");
+    fail(e);
+  };
 
   useEffect(() => {
     let live = true;
@@ -110,6 +116,8 @@ export function AppPage({
       clearInterval(timer);
     };
   }, [api, pollMs]);
+
+  useEffect(() => initAnalytics(snapshot?.ga), [snapshot?.ga]);
 
   const messages = snapshot?.messages ?? [];
   const waiting = messages.length > 0 && !messages[messages.length - 1].reply;
@@ -146,6 +154,14 @@ export function AppPage({
     }
     return { data, patch, byTemplate, theme };
   }, [messages]);
+
+  // The first draft of a session: a CV that was not there when the page first saw the thread.
+  const hadCv = useRef<boolean | undefined>(undefined);
+  useEffect(() => {
+    if (!snapshot) return;
+    if (hadCv.current === false && cv.data) track("cv_draft_ready");
+    hadCv.current = Boolean(cv.data);
+  }, [snapshot, cv.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The latest tips any reply sent.
   const tips = useMemo(() => {
@@ -212,7 +228,7 @@ export function AppPage({
 
   function send(text: string) {
     setLimited(false);
-    api.send(text, layoutContext()).catch(fail);
+    api.send(text, layoutContext()).catch(failAction);
   }
 
   // Users who agreed to share their CVs with kocha (consent cv_processing) send them on export
@@ -232,12 +248,22 @@ export function AppPage({
     try {
       const name = await downloadCvPdf(d, api.pdf);
       setPdf({ status: "done", text: `הקובץ ${name} ירד לתיקיית ההורדות.` });
+      track("cv_pdf_export");
       shareWithKocha(d);
     } catch (e) {
       const unavailable = e instanceof Error && e.message.includes("503");
       setPdf({ status: "error", text: unavailable ? "יצירת PDF לא זמינה בשרת הזה." : "לא הצלחתי ליצור PDF. נסו שוב." });
     }
   }
+
+  const STAGE_EVENTS = [null, "tuning", "design", "export"] as const;
+  const shownStage = useRef(stage);
+  useEffect(() => {
+    if (stage === shownStage.current) return;
+    shownStage.current = stage;
+    const name = STAGE_EVENTS[stage];
+    if (name) track("cv_stage_view", { stage: name });
+  }, [stage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Stages after the intake can be opened from the gauge once the intake is sent.
   const intakeSent = messages.some((m) => m.intake);
@@ -290,9 +316,10 @@ export function AppPage({
     setLimited(false);
     try {
       await api.sendIntake(intake);
+      track("cv_intake_submitted");
       setStage(1);
     } catch (e) {
-      fail(e);
+      failAction(e);
     } finally {
       setSending(false);
     }
@@ -324,10 +351,12 @@ export function AppPage({
               onExportPdf={() => exportPdf(doc)}
               onExportHtml={() => {
                 downloadCvHtml(doc);
+                track("cv_html_export");
                 shareWithKocha(doc);
               }}
               practiceUrl={kochaUrl("export")}
               onPractice={sharesCvs ? () => practice(doc) : undefined}
+              onPracticeClick={() => track("cv_practice_click", { shared: sharesCvs, transport_type: "beacon" })}
             />
           ) : (
             <p className="ds-prep-empty">{READING}</p>

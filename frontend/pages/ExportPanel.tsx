@@ -14,6 +14,7 @@ export function ExportPanel({
   onExportHtml,
   practiceUrl,
   onPractice,
+  onPracticeClick,
   prep,
 }: {
   prep?: ReactNode;
@@ -22,6 +23,7 @@ export function ExportPanel({
   onExportHtml: () => void;
   practiceUrl: string; // kocha.co.il, where she runs a practice interview on camera
   onPractice?: () => void; // hands the CVs over first (src/kocha.ts); the link is the fallback
+  onPracticeClick?: () => void; // every click, whether or not the CVs are handed over
 }) {
   return (
     <div className="intake export-panel">
@@ -53,6 +55,7 @@ export function ExportPanel({
         target="_blank"
         rel="noopener"
         onClick={(e) => {
+          onPracticeClick?.();
           if (!onPractice) return;
           e.preventDefault();
           onPractice();
