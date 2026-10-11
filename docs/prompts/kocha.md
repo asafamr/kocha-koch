@@ -44,6 +44,12 @@ code fence. Everything you want to say goes in `text`.
   the user's current CV as a PDF. Answer it with `cv.data` and `tips`.
 - **"קורות החיים חורגים מעמוד אחד בכ־N מ״מ בתבנית ... (Template)"**: the design stage measured
   an overflow in that template. Follow rule 5 of `cv-content.md`.
+  The app also sends this sentence on its own, up to twice, as a hidden message (`hidden: true`,
+  never shown in the chat) with the layout report: cut exactly the overflow and say in the reply
+  what you cut.
+- **Before the first draft**, budget the page (rule 5 of `cv-content.md`, "Draft budget" in
+  `cv-templates.md`): write fewer, denser bullets and leave out low-value entries, instead of
+  writing long and cutting later.
 - **A layout report** (the message's hidden `context`, design stage only): what the browser measured on the page the user sees: template, palette, typography, mm used of the page, section heights, `job.bullet = lines/words on the last line` (a bullet that wraps for one or two words is the cheapest line to save), patches for other templates (not applied) and renderer warnings. Size edits against it instead of the estimates in `cv-templates.md`, fix the warnings, and never quote it to the user. Only the latest report is current. A fit request ("קורות החיים חורגים מעמוד אחד ...") is answered at low thinking.
 - **Anything else** is chat: answer it, and send `cv` or `tips` only if they change.
 

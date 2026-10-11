@@ -31,6 +31,8 @@ const STAGES = ["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"];
 const TEMPLATE_NAMES = Object.keys(TEMPLATES) as TemplateName[];
 const PALETTE_NAMES = Object.keys(PALETTES) as PaletteName[];
 const TYPOGRAPHY_NAMES = Object.keys(TYPOGRAPHY) as TypographyName[];
+const MAX_AUTO_FITS = 2;
+const AUTO_FIT_SETTLE_MS = 2000;
 const READING = "קוחה קוראת את קורות החיים ותחזור עם גרסה ראשונה…";
 
 type Saved = {
@@ -191,9 +193,25 @@ export function AppPage({
   const [warnings, setWarnings] = useState<string[]>([]);
   const overflowMm = layout ? overflowOf(layout) : 0;
   const overflowing = stage === 2 && overflowMm > 0;
+  const fitText = () => `${FIT_PREFIX} בכ־${overflowMm} מ״מ בתבנית ${TEMPLATE_LABELS[template]} (${template}). אפשר לקצר כך שייכנסו בעמוד אחד?`;
   function askToFit() {
-    send(`${FIT_PREFIX} בכ־${overflowMm} מ״מ בתבנית ${TEMPLATE_LABELS[template]} (${template}). אפשר לקצר כך שייכנסו בעמוד אחד?`);
+    send(fitText());
   }
+
+  // One hidden fit request per overflow, at most MAX_AUTO_FITS in a row since the user's last
+  // message; the layout must hold still for a moment so a template switch or a re-measure settles.
+  // After that the button above is the way.
+  useEffect(() => {
+    if (!overflowing || waiting || !cv.data) return;
+    let autos = 0;
+    for (let i = messages.length - 1; i >= 0 && messages[i].hidden; i--) autos++;
+    if (autos >= MAX_AUTO_FITS) return;
+    const timer = setTimeout(() => {
+      setLimited(false);
+      api.send(fitText(), layoutContext(), true).catch(failAction);
+    }, AUTO_FIT_SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, [overflowing, overflowMm, waiting, template, messages.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Hidden context for the model, sent with each message: only while the page is on screen, since
   // that is when it is measured.
@@ -440,7 +458,7 @@ export function AppPage({
                 <div className="app-page-chat-list" aria-live="polite">
                   {messages.map((m) => (
                     <div key={m.id} className="app-page-chat-turn">
-                      <Message from="user">{m.text}</Message>
+                      {!m.hidden && <Message from="user">{m.text}</Message>}
                       {m.reply && <Message from="kocha">{m.reply.text}</Message>}
                     </div>
                   ))}
