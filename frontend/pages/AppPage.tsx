@@ -356,7 +356,7 @@ export function AppPage({
 
       {stage === 0 ? (
         <section className="app-page-form" aria-label={STAGES[0]}>
-          <IntakeForm onNext={submitIntake} sending={sending} backend={snapshot?.backend} askConsent={snapshot?.handoff} />
+          <IntakeForm onNext={submitIntake} sending={sending} askConsent={snapshot?.handoff} />
         </section>
       ) : stage === 3 ? (
         // Export, laid out like the intake form. PDF from the server, the same in every browser.

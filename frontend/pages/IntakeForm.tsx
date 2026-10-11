@@ -27,17 +27,13 @@ export type Intake = { cv: File; role: string; jobDescription: string; consents:
 // Stage 1: kocha's opening words, then current CV, target role, optional job description, consent.
 // Next is enabled once a CV file and a target role are present.
 // The consent box is shown only with `askConsent` (the server has the handoff to kocha on).
-// `backend` says who processes the CV, for the privacy note: "gemini" (the managed version) or
-// "files" (a local run answered by the user's own AI tool).
 export function IntakeForm({
   onNext,
   sending = false,
-  backend,
   askConsent = false,
 }: {
   onNext: (intake: Intake) => void;
   sending?: boolean;
-  backend?: string;
   askConsent?: boolean;
 }) {
   const [cv, setCv] = useState<File | null>(null);
@@ -95,17 +91,12 @@ export function IntakeForm({
           />
         ))}
       <p className="intake-privacy">
-        {backend === "gemini"
-          ? "קורות החיים והשיחה מעובדים בעזרת Gemini של Google, נשמרים רק בזיכרון השרת, ונמחקים אחרי 6 שעות בלי פעילות או כשלוחצים על \"התחלה מחדש\". "
-          : backend === "files"
-            ? "הכלי רץ אצלכם: קורות החיים נשמרים בתיקייה .messages במחשב שלכם ומעובדים על ידי כלי ה־AI שבחרתם. "
-            : ""}
         {askConsent && <>{privacyLink}. </>}
-        רוצים פרטיות מלאה? הכלי הזה הוא{" "}
+        רוצים פרטיות מלאה? אפשר להריץ את הכלי אצלכם, הוא{" "}
         <a href={REPO_URL} target="_blank" rel="noopener">
           קוד פתוח ב־GitHub
         </a>
-        . אפשר להריץ אותו אצלכם עם Claude Code או Codex, וכך קורות החיים לא עוברים דרך השרת שלנו, רק דרך כלי ה־AI שתבחרו.
+        .
       </p>
       <Button type="submit" disabled={!ready || sending} style={{ justifySelf: "center" }}>
         הבא
