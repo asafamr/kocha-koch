@@ -58,8 +58,9 @@ or the containers cannot write to `.messages/`.
 
 | File | Role |
 |---|---|
-| `src/server.ts` | `GET/POST /api/messages` (POST takes `text` and an optional hidden `context`, kept in the store, never returned to the page), `POST /api/intake` (multipart: role, job description, consents (JSON list of purposes), optional `utm` JSON of the ad tags the page was opened with, CV PDF up to 5 MB), `POST /api/pdf` (CV HTML -> PDF), `POST /api/reset` (start over), `POST /api/handoff` (to kocha.co.il), static files from `dist/` |
+| `src/server.ts` | `GET/POST /api/messages` (POST takes `text` and an optional hidden `context`, kept in the store, never returned to the page), `POST /api/intake` (multipart: role, job description, consents (JSON list of purposes), optional `utm` JSON of the ad tags the page was opened with, CV PDF up to 5 MB), `POST /api/pdf` (CV HTML -> PDF), `POST /api/restore` (hosted app: rebuilds a conversation from the copy the page saved in its browser, only into an empty session; `src/restore.ts` validates it), `POST /api/reset` (start over), `POST /api/handoff` (to kocha.co.il), static files from `dist/` |
 | `src/store.ts` | `STORE=files`: one local conversation, inbox/outbox files, atomic writes (temp file + rename), uploads in `uploads/`, reset moves them to `archive/<time>/`. `STORE=memory`: one conversation per session cookie, idle sessions dropped after 6 h, nothing on disk. Types shared with the frontend |
+| `src/restore.ts`, `frontend/persist.ts` | the hosted app (`STORE=memory`, scale to zero) loses a conversation when the process stops, so the page keeps a copy: the thread in localStorage, the uploaded CV PDF in IndexedDB, written only when the backend is not `files`. When `GET /api/messages` comes back empty and a copy exists, the page posts it to `/api/restore` (thread JSON + PDF). The server drops unknown fields, caps sizes and counts, sets new ids, keeps consents only for known purposes at the current version (with the restoring request's IP and user agent), and accepts replies only as shape-checked, size-capped `cv`/`tips`. A trailing unanswered message is not restored: the page shows it with a resend button (an unanswered intake is answered again). "Start over" deletes both copies |
 | `src/gemini.ts` | `BACKEND=gemini`: sends the thread (with the intake PDF, and the latest message's `context` as its own part) to Gemini with `docs/prompts/kocha.md`, the CV and tips prompts and the research docs as instructions; adds its JSON reply (text, cv, tips) after a verification pass (`docs/prompts/verify.md`); streams progress for the typing indicator |
 | `src/consent.ts` | the consents the intake asks for, one per purpose with a versioned text (shared with the frontend) |
 | `src/kocha.ts` | handoff to kocha.co.il: with the `cv_processing` consent, sends the CVs and consents, signed, to `KOCHA_HANDOFF_URL` and returns kocha's join link (`docs/kocha-handoff.md`); off without `KOCHA_HANDOFF_URL`/`KOCHA_HANDOFF_SECRET` |
@@ -142,7 +143,7 @@ process must read the messages.
   `X-Frame-Options: DENY`, a referrer policy, a permissions policy, and HSTS behind HTTPS
   (`secure()` in `src/server.ts`; not in `DEV=1`).
 - The managed app keeps one conversation per browser session (HttpOnly cookie) in memory only,
-  deleted after 6 idle hours or "start over"; the intake says so, and says Gemini processes it.
+  deleted after 6 idle hours or "start over" (the page also keeps a copy in the browser until "start over"; see `src/restore.ts`); the intake says so, and says Gemini processes it.
   Logs carry token counts and costs, never CV text.
 
 - App containers have a read-only root filesystem, no Linux capabilities, and write only `.messages/agent/` (`app`) or nothing (`app-gemini`).

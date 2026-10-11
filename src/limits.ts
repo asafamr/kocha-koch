@@ -24,6 +24,7 @@ setInterval(() => {
 // an email to the receiving server).
 const PER_IP: Record<string, number> = {
   "POST /api/intake": 10,
+  "POST /api/restore": 10,
   "POST /api/messages": 60,
   "POST /api/handoff": 10,
 };

@@ -25,6 +25,7 @@ import { PALETTES, TYPOGRAPHY, type PaletteName, type TypographyName } from "../
 import { FIT_PREFIX } from "../../src/fit";
 import { initAnalytics, track } from "../analytics";
 import { kochaUrl } from "../links";
+import { clearSaved, loadPdf, loadThread, saveThread, savePdf, toSaved } from "../persist";
 import { ExportPanel, type PdfState } from "./ExportPanel";
 import { IntakeForm } from "./IntakeForm";
 
@@ -79,7 +80,9 @@ function progressText(p?: ThreadItem["progress"]): { detail?: string; note?: str
 // tips her replies carry (see AGENTS.md). Polls instead of pushing: file watching is unreliable
 // across container volume mounts.
 // With `persistKey`, the stage and the user's choices (design picks, dismissed tips)
-// are kept in this browser, so a reload returns to the same place. The real app passes it;
+// are kept in this browser, so a reload returns to the same place. On the hosted app (any backend
+// but "files") the thread and the uploaded CV are saved too, and restored to the server when it
+// has forgotten them (frontend/persist.ts). The real app passes it;
 // stories don't, so they never share saved state.
 export function AppPage({
   api = httpApi,
@@ -98,6 +101,10 @@ export function AppPage({
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [limited, setLimited] = useState(false);
+  const [unsent, setUnsent] = useState<string | null>(null); // a message the server lost before answering; shown with a resend button
+  const [restoreFailed, setRestoreFailed] = useState(false);
+  const restoring = useRef(false);
+  const epoch = useRef(0); // bumped by "start over", so a poll that started before it is ignored
   const fail = (e: unknown) => (e instanceof RateLimited ? setLimited(true) : setError(e instanceof Error ? e.message : String(e)));
   // For user actions only: the 2 s poll would otherwise count one limit many times.
   const failAction = (e: unknown) => {
@@ -107,11 +114,13 @@ export function AppPage({
 
   useEffect(() => {
     let live = true;
-    const refresh = () =>
-      api.load().then(
-        (s) => live && (setSnapshot(s), setError(null)),
+    const refresh = () => {
+      const started = epoch.current;
+      return api.load().then(
+        (s) => live && started === epoch.current && (setSnapshot(s), setError(null)),
         (e) => live && fail(e),
       );
+    };
     refresh();
     const timer = setInterval(refresh, pollMs);
     return () => {
@@ -124,6 +133,35 @@ export function AppPage({
 
   const messages = snapshot?.messages ?? [];
   const waiting = messages.length > 0 && !messages[messages.length - 1].reply;
+
+  // Hosted app only: the server holds a conversation in memory, the browser keeps the copy.
+  const saving = Boolean(persistKey) && Boolean(snapshot) && snapshot!.backend !== "files";
+  const restorable = saving && messages.length === 0 && !restoreFailed && loadThread(persistKey!) !== null;
+  useEffect(() => {
+    if (!restorable || restoring.current) return;
+    restoring.current = true;
+    const saved = loadThread(persistKey!)!;
+    loadPdf(persistKey!)
+      .then((pdf) => api.restore(saved, pdf))
+      .then(() => api.load())
+      .then((s) => {
+        const last = saved[saved.length - 1];
+        if (!last.reply && !last.intake && !last.hidden) setUnsent(last.text);
+        setSnapshot(s);
+        restoring.current = false;
+      })
+      .catch((e) => {
+        fail(e);
+        setRestoreFailed(true);
+      });
+  }, [restorable]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!saving || messages.length === 0) return;
+    const items = messages.map(toSaved);
+    if (unsent) items.push({ text: unsent, ts: new Date().toISOString() });
+    saveThread(persistKey!, items);
+  }, [saving, snapshot, unsent]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Phones show one pane at a time. Replies that arrive while the CV is shown leave a dot on the chat toggle.
   const [pane, setPane] = useState<"cv" | "chat">("cv");
@@ -138,12 +176,12 @@ export function AppPage({
   // or expired session) means start at the form, whatever stage the browser saved.
   const resumed = useRef(false);
   useEffect(() => {
-    if (!snapshot || resumed.current) return;
+    if (!snapshot || resumed.current || restorable) return;
     resumed.current = true;
     const hasIntake = messages.some((m) => m.intake);
     if (stage === 0 && hasIntake) setStage(1);
     if (stage > 0 && !hasIntake) setStage(0);
-  }, [snapshot]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [snapshot, restorable]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The CV is the latest data any reply sent, with the patches that came with or after it: the
   // latest general one, and the latest one per template (used while that template is selected).
@@ -256,6 +294,7 @@ export function AppPage({
 
   function send(text: string) {
     setLimited(false);
+    setUnsent(null);
     api.send(text, layoutContext()).catch(failAction);
   }
 
@@ -315,17 +354,21 @@ export function AppPage({
   // Start over: the server archives the conversation; this browser forgets its saved state.
   const [confirmReset, setConfirmReset] = useState(false);
   async function startOver() {
+    epoch.current++;
     try {
       await api.reset();
     } catch (e) {
       fail(e);
       return;
     }
+    epoch.current++;
     try {
       if (persistKey) localStorage.removeItem(persistKey);
     } catch {
       // storage blocked: nothing saved to forget
     }
+    if (persistKey) await clearSaved(persistKey);
+    setUnsent(null);
     setSnapshot((s) => ({ backend: s?.backend ?? "", handoff: s?.handoff, messages: [] }));
     setStage(0);
     setTemplate(TEMPLATE_NAMES[0]);
@@ -344,6 +387,7 @@ export function AppPage({
     setLimited(false);
     try {
       await api.sendIntake(intake);
+      if (saving) await savePdf(persistKey!, intake.cv);
       track("cv_intake_submitted");
       setStage(1);
     } catch (e) {
@@ -472,6 +516,14 @@ export function AppPage({
                       {m.reply && <Message from="kocha">{m.reply.text}</Message>}
                     </div>
                   ))}
+                  {unsent && (
+                    <div className="app-page-chat-turn">
+                      <Message from="user">{unsent}</Message>
+                      <Button variant="secondary" onClick={() => send(unsent)}>
+                        לא נשלחה. שליחה מחדש
+                      </Button>
+                    </div>
+                  )}
                   {waiting && <TypingIndicator {...progressText(messages[messages.length - 1].progress)} />}
                 </div>
               </div>

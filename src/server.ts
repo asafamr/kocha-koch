@@ -1,11 +1,13 @@
 import { join, normalize } from "node:path";
-import { addMessage, addReply, resetStore, saveUpload, STORE, thread, type ThreadItem } from "./store";
+import { addMessage, addReply, resetStore, restoreThread, saveUpload, STORE, thread, type ThreadItem } from "./store";
 import { answer, deleteCache, progress } from "./gemini";
 import { CONSENT, isPurpose, type ConsentRecord } from "./consent";
 import { handoff, handoffEnabled, NoConsent } from "./kocha";
 import { GA_ID } from "./analytics";
 import { FIT_PREFIX } from "./fit";
 import { rateLimited } from "./limits";
+import { parseRestore } from "./restore";
+import { parseUtm } from "./utm";
 import { htmlToPdf, MAX_HTML, pdfAvailable, PdfBusy } from "./pdf";
 
 const BACKEND = process.env.BACKEND ?? "files"; // "files" | "gemini"
@@ -72,24 +74,6 @@ async function postMessage(req: Request, s: Session) {
   return Response.json(shown, { status: 201 });
 }
 
-const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
-// Known keys only, short strings; anything else is dropped.
-export function parseUtm(raw: unknown): Record<string, string> | undefined {
-  let tags: unknown;
-  try {
-    tags = JSON.parse(String(raw ?? ""));
-  } catch {
-    return undefined;
-  }
-  if (typeof tags !== "object" || tags === null) return undefined;
-  const out: Record<string, string> = {};
-  for (const k of UTM_KEYS) {
-    const v = (tags as Record<string, unknown>)[k];
-    if (typeof v === "string" && v.trim()) out[k] = v.trim().slice(0, 64);
-  }
-  return Object.keys(out).length ? out : undefined;
-}
-
 // The intake form: target role, optional job description, consent, and the current CV as a PDF.
 // The PDF is saved under uploads/ and the message carries its path for the agent to read.
 const MAX_PDF = 5 * 1024 * 1024;
@@ -135,6 +119,41 @@ async function postIntake(req: Request, s: Session) {
   const msg = await addMessage(s.id, text, { role, jobDescription, consents, cvFile, ...(utm ? { utm } : {}) });
   if (BACKEND === "gemini") startAnswer(s.id, msg.id);
   return Response.json(msg, { status: 201 });
+}
+
+// The page saved its conversation in the browser and the server forgot it (STORE=memory): rebuild
+// it. Only into an empty session. A trailing message with no reply is dropped (the page offers to
+// resend it), except the intake, which is answered again.
+async function postRestore(req: Request, s: Session) {
+  if (STORE !== "memory") return Response.json({ error: "not available" }, { status: 404 });
+  if (Number(req.headers.get("content-length") ?? 0) > MAX_PDF + 4 * 1024 * 1024) return Response.json({ error: "too large" }, { status: 413 });
+  const form = await req.formData().catch(() => null);
+  let raw: unknown;
+  try {
+    raw = JSON.parse(String(form?.get("thread") ?? ""));
+  } catch {
+    return Response.json({ error: "bad thread" }, { status: 400 });
+  }
+  const parsed = parseRestore(raw, { maxItems: MAX_MESSAGES, maxText: MAX_TEXT, consentsOn: handoffEnabled });
+  if (typeof parsed === "string") return Response.json({ error: parsed }, { status: 400 });
+  if (parsed.filter((m) => m.intake).length > MAX_INTAKES) return Response.json({ error: "too many intakes" }, { status: 429 });
+  const last = parsed.at(-1)!;
+  const items = last.reply || last.intake ? parsed : parsed.slice(0, -1);
+  if (items.length === 0) return Response.json({ error: "nothing to restore" }, { status: 400 });
+
+  const cv = form?.get("cv");
+  let pdf: Uint8Array | null = null;
+  if (cv instanceof File) {
+    if (cv.size === 0 || cv.size > MAX_PDF) return Response.json({ error: "cv must be a PDF up to 5 MB" }, { status: 400 });
+    pdf = new Uint8Array(await cv.arrayBuffer());
+    if (new TextDecoder().decode(pdf.subarray(0, 5)) !== "%PDF-") return Response.json({ error: "cv must be a PDF" }, { status: 400 });
+  }
+  if ((await thread(s.id)).length > 0) return Response.json({ error: "session not empty" }, { status: 409 });
+
+  const restored = await restoreThread(s.id, items, pdf, { ip: s.ip, userAgent: (req.headers.get("user-agent") ?? "").slice(0, 300) });
+  const pending = items.at(-1)!.reply ? null : restored.at(-1)!;
+  if (pending && BACKEND === "gemini") startAnswer(s.id, pending.id);
+  return Response.json({ restored: restored.length }, { status: 201 });
 }
 
 // The CV as a PDF: the body is the self-contained CV HTML the frontend builds (cv/exportHtml.ts).
@@ -189,6 +208,7 @@ async function api(req: Request, pathname: string, s: Session): Promise<Response
   if (route === "GET /api/messages") return Response.json({ backend: BACKEND, handoff: handoffEnabled, ga: GA_ID || undefined, messages: withProgress(await thread(s.id)) });
   if (route === "POST /api/messages") return postMessage(req, s);
   if (route === "POST /api/intake") return postIntake(req, s);
+  if (route === "POST /api/restore") return postRestore(req, s);
   if (route === "POST /api/pdf") return postPdf(req, s);
   if (route === "POST /api/handoff") return postHandoff(req, s);
   if (route === "POST /api/reset") {

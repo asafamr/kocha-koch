@@ -46,7 +46,10 @@ Images go to the project's Artifact Registry; deploy with a project-scoped deplo
 
 ## What the app enforces itself
 
-- One conversation per browser (HttpOnly cookie); idle sessions dropped after 6 hours.
+- One conversation per browser (HttpOnly cookie); idle sessions dropped after 6 hours. The
+  server holds it in memory only while active: the page saves a copy (thread in localStorage, CV
+  PDF in IndexedDB) until "start over" and restores it through `POST /api/restore` (validated and
+  size-capped, 10 per IP per hour), so a restart or scale to zero loses nothing.
 - Per session: one answer at a time, at most 80 messages and 5 intakes, one PDF render at a
   time; a global PDF queue of 4.
 - Per client IP (last `x-forwarded-for` entry), per hour: 10 intakes, 60 messages, 10 handoffs; 60 handoffs
@@ -57,7 +60,7 @@ Images go to the project's Artifact Registry; deploy with a project-scoped deplo
 
 ## Moving past one instance
 
-Sessions in memory are the limit. More instances need an external store (e.g. Firestore for
+Sessions in memory are the limit (a restart no longer loses them: the browser restores them, but only one instance's memory is ever the live copy). More instances need an external store (e.g. Firestore for
 messages, Cloud Storage for uploads) behind the same `Store` interface in `src/store.ts`, a
 spend limit kept in that store instead of per process, and answers moved to a queue (e.g.
 Cloud Tasks) instead of running after the response.
