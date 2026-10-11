@@ -20,7 +20,8 @@ import type { ConsentRecord } from "./consent";
 // utm: the ad tags (utm_source, ...) the user arrived with, if any.
 export type Intake = { role: string; jobDescription: string; consents: ConsentRecord[]; cvFile: string; utm?: Record<string, string> };
 // context: hidden text for the model (the browser's layout report), never shown to the user.
-export type Message = { id: string; ts: string; text: string; intake?: Intake; context?: string };
+// hidden: the app sent it on its own (an automatic fit request); the chat does not show it.
+export type Message = { id: string; ts: string; text: string; intake?: Intake; context?: string; hidden?: boolean };
 // A reply may carry a CV update and tips as JSON (docs/cv-document.md, docs/prompts/prep-points.md).
 // The server passes them through unchanged; the frontend validates their shape.
 export type Reply = { id: string; ts: string; text: string; by: string; cv?: unknown; tips?: unknown };
@@ -134,8 +135,8 @@ const store =
 
 const newId = () => `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
 
-export async function addMessage(session: string, text: string, intake?: Intake, context?: string): Promise<Message> {
-  const msg: Message = { id: newId(), ts: new Date().toISOString(), text, ...(intake ? { intake } : {}), ...(context ? { context } : {}) };
+export async function addMessage(session: string, text: string, intake?: Intake, context?: string, hidden?: boolean): Promise<Message> {
+  const msg: Message = { id: newId(), ts: new Date().toISOString(), text, ...(intake ? { intake } : {}), ...(context ? { context } : {}), ...(hidden ? { hidden } : {}) };
   await store.put(session, "inbox", msg);
   return msg;
 }

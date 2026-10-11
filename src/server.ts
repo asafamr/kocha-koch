@@ -4,6 +4,7 @@ import { answer, deleteCache, progress } from "./gemini";
 import { CONSENT, isPurpose, type ConsentRecord } from "./consent";
 import { handoff, handoffEnabled, NoConsent } from "./kocha";
 import { GA_ID } from "./analytics";
+import { FIT_PREFIX } from "./fit";
 import { rateLimited } from "./limits";
 import { htmlToPdf, MAX_HTML, pdfAvailable, PdfBusy } from "./pdf";
 
@@ -65,7 +66,7 @@ async function postMessage(req: Request, s: Session) {
   const limited = overLimit(await thread(s.id), false);
   if (limited) return limited;
 
-  const msg = await addMessage(s.id, text, undefined, context);
+  const msg = await addMessage(s.id, text, undefined, context, body?.hidden === true && text.startsWith(FIT_PREFIX));
   if (BACKEND === "gemini") startAnswer(s.id, msg.id);
   const { context: _hidden, ...shown } = msg;
   return Response.json(shown, { status: 201 });

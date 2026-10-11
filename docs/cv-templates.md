@@ -26,6 +26,27 @@ Schibsted (Schibsted, Editorial). Use the smallest number when unsure.
 | Lede | one column, large summary | 115/121/111 | 5.6 | 1 | 12.1 | 55.3 (≈ 8 bullet lines) | 14/12/13 |
 | Margin | two columns: main + narrow side (contact, skills, education, service) | 82/86/79 | 5.16 | 1 | 11.2 | 125.9 (≈ 20 bullet lines) | set on each column |
 
+### Draft budget
+
+Budget before you write the first draft, so it fits without a fix. Computed from `frontend/cv/cv.css`
+(pt × 0.3528 = mm; heading = font size × line height + margin above + margin below, plus padding or
+rule where it has one):
+
+| Template | Usable height mm (297 − bottom margin) | Section heading mm | Role overhead mm | mm per bullet line | Chars per bullet line (smallest) |
+|---|---:|---:|---:|---:|---:|
+| Ledger | 288 | 8 (heading hangs in the label column: rule + padding + gap) | 10.6 | 4.98 | 93 |
+| Sidebar | 287 | 16.5 | 11.6 | 5.29 | 75 |
+| Bars | 287 | 13.5 | 5 | 4.98 | 117 |
+| Compact | 288 | 10.5 | 8.6 | 4.41 | 119 |
+| Lede | 285 | 19.7 | 12.1 | 5.6 | 111 |
+| Margin | 286 | 16.5 | 11.2 | 5.16 | 79 |
+
+- A bullet of up to the chars-per-line number is one line. One word over costs a whole extra line,
+  so write bullets to fit one line, or clearly fill two.
+- Two-column templates (Sidebar, Margin) spend the main column on summary and experience only;
+  contact, skills and education sit in the side column and cost the main column nothing.
+- Start from "Free with the sample CV" and add or subtract what your CV has more or less of than the sample, using the costs above. Aim for about 10 mm spare.
+
 Lede has the least room (its summary is set at 15pt). Sidebar and Margin have the narrowest
 bullet lines, so long bullets wrap sooner there.
 
