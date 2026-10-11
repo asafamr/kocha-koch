@@ -109,8 +109,8 @@ async function cachedInstructions(json: boolean): Promise<string | null> {
   }
   const c: any = await res.json();
   caches[kind] = { name: c.name, expires: Date.parse(c.expireTime), tokens: c.usageMetadata?.totalTokenCount ?? 0 };
-  addSpend(cacheCost(made.tokens, CACHE_TTL_S / 3600));
   const made = caches[kind]!;
+  addSpend(cacheCost(made.tokens, CACHE_TTL_S / 3600));
   console.log(`gemini ${kind} cache ${c.name} tokens=${c.usageMetadata?.totalTokenCount ?? "?"} until ${c.expireTime}`);
   return c.name;
 }
