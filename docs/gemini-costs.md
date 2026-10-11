@@ -85,21 +85,22 @@ Before that, those turns sent the instructions inline and paid full input price 
 
 ## Spend limit
 
-`src/spend.ts` caps spend per process (one pod on Cloud Run) with a leaky bucket in dollars:
-each model turn adds its cost (from Gemini's token counts; creating or extending the cache adds its
-storage), and the bucket drains at `GEMINI_SPEND_PER_HOUR` (default and hosted value $1). It holds at
-most `GEMINI_SPEND_BURST` (default one hour's worth) and starts empty, so a new pod has the full
-allowance. In any one hour it can therefore pass at most burst + rate = $2; sustained, $1/hour.
+`src/spend.ts` caps spend per process (one pod on Cloud Run) with a rolling 60-minute ledger in
+dollars: each model turn adds an entry with its cost (from Gemini's token counts; creating or
+extending the cache adds its storage), entries age out after 60 minutes, and the sum of any 60
+minutes never passes `GEMINI_SPEND_PER_HOUR` (default and hosted value $1). It starts empty, so a
+new pod has the full allowance.
 
-A turn does not start unless the bucket has room for its worst case (`maxTurnCost`, computed from
-the caps below and the size of that turn's instructions and history). It holds that amount until it
-ends, then the real cost replaces it, so concurrent turns never push the bucket over its capacity.
-While there is no room, new answers get "קוחה עמוסה כרגע" until it drains. Prices are
+A turn does not start unless the last hour's entries, the reservations of turns in flight and its own
+worst case (`maxTurnCost`, computed from the caps below and the size of that turn's instructions and
+history) add up to at most the limit. It holds the reservation until it ends; real costs are counted
+as reported, so a running turn counts twice, which only errs on the safe side. While there is no
+room, new answers get "קוחה עמוסה כרגע" until entries age out. Prices are
 `GEMINI_PRICE_INPUT`, `GEMINI_PRICE_CACHED`, `GEMINI_PRICE_OUTPUT` and
 `GEMINI_PRICE_CACHE_STORAGE` ($ per 1M tokens); update them when prices change (they double on
-2027-01-01). Each turn's log line shows its cost and the bucket level.
+2027-01-01). Each turn's log line shows its cost and the last hour's total.
 
-Per client IP (`src/limits.ts`): a sliding hour of model spend, `GEMINI_SPEND_PER_IP_HOUR`
+Per client IP (`src/limits.ts`): the same rolling 60 minutes of model spend, `GEMINI_SPEND_PER_IP_HOUR`
 (default $0.50). A turn reserves its worst case against the IP and settles to its real cost; an
 IP with less than $0.05 left gets 429 on intake and messages, and a turn that does not fit gets the
 busy reply. A normal turn costs $0.01-0.04 (see the benchmark), so one IP can do several CVs an hour.

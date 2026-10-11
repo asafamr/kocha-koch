@@ -3,7 +3,7 @@ import { FIT_PREFIX } from "./fit";
 import { lookup, researchIndex } from "./kb";
 import { CAPS, estTokens, firstKept } from "./caps";
 import { reserveIpSpend, settleIpSpend } from "./limits";
-import { addSpend, bucket, cacheCost, endTurn, maxTurnCost, startTurn, turnCost } from "./spend";
+import { addSpend, cacheCost, endTurn, maxTurnCost, startTurn, turnCost, window as spendWindow } from "./spend";
 import { addReply, getUpload, thread, type ThreadItem } from "./store";
 
 const MODEL = process.env.GEMINI_MODEL ?? "gemini-3.8-flash";
@@ -294,11 +294,11 @@ function logUsage(id: string, round: number, u: any, ms: number, note: string) {
   const cost = turnCost(u);
   addSpend(cost);
   costs.set(id, (costs.get(id) ?? 0) + cost);
-  const b = bucket();
+  const b = spendWindow();
   console.log(
     `gemini ${id} round ${round}: in=${u.promptTokenCount ?? "?"} cached=${u.cachedContentTokenCount ?? 0} ` +
       `out=${u.candidatesTokenCount ?? 0} thinking=${u.thoughtsTokenCount ?? 0} ${ms}ms $${cost.toFixed(4)} ` +
-      `bucket=$${b.level.toFixed(3)}/$${b.capacity} ${note}`,
+      `hour=$${b.spent.toFixed(3)}/$${b.limit} ${note}`,
   );
 }
 
@@ -360,7 +360,7 @@ export async function answer(session: string, id: string, ip: string) {
   const reserve = maxTurnCost(estTokens((await loadInstructions()).length), sizes.slice(first).reduce((a, b) => a + b, 0));
   if (!startTurn(reserve)) {
     // This pod's spend limit (src/spend.ts) is used up: refuse politely until it drains.
-    console.log(`gemini ${id} refused: spend limit ($${bucket().level.toFixed(3)} in the bucket)`);
+    console.log(`gemini ${id} refused: spend limit ($${spendWindow().spent.toFixed(3)} spent in the last hour)`);
     await addReply(session, id, "קוחה עמוסה כרגע. נסו לשלוח שוב בעוד כמה דקות.", "server");
     return;
   }

@@ -15,8 +15,8 @@ export function allow(key: string, max: number, windowMs = HOUR_MS, now = Date.n
   return true;
 }
 
-// Model spend per IP over the last hour: a turn reserves its worst case when it starts and
-// settles to its real cost when it ends.
+// Model spend per IP, rolling 60 minutes: a turn reserves its worst case when it starts and
+// settles to its real cost (dated when it ends) after.
 const IP_SPEND_PER_HOUR = Number(process.env.GEMINI_SPEND_PER_IP_HOUR || 0.5);
 const MIN_TURN = 0.05;
 export type Charge = { at: number; dollars: number };
@@ -38,7 +38,10 @@ export function reserveIpSpend(ip: string, dollars: number, now = Date.now()): C
   return charge;
 }
 
-export const settleIpSpend = (charge: Charge, actual: number) => void (charge.dollars = actual);
+export function settleIpSpend(charge: Charge, actual: number) {
+  charge.dollars = actual;
+  charge.at = Date.now();
+}
 
 setInterval(() => {
   const now = Date.now();
