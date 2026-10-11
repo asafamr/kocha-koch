@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type Keyboar
 const MIN = 0.2;
 const MAX = 3;
 const STEP = 1.2;
+const PHONE = 700;
 const clamp = (z: number) => Math.min(MAX, Math.max(MIN, z));
 
 // A page (e.g. a CV) on a gray canvas with zoom and pan, like a design tool.
@@ -27,7 +28,14 @@ export function CvCanvas({ label, controls, children }: { label: string; control
     if (!v || !p) return;
     const top = (tray.current?.offsetHeight ?? 0) + 24; // tray sits at top: 12px
     const h = v.clientHeight - top - 12;
-    const z = clamp(Math.min(v.clientWidth / p.offsetWidth, h / p.offsetHeight) * 0.92);
+    const byWidth = v.clientWidth / p.offsetWidth;
+    if (v.clientWidth <= PHONE) {
+      // On a phone the page fills the width and scrolls down, so it stays readable.
+      const z = clamp(byWidth * 0.96);
+      setView({ zoom: z, x: (v.clientWidth - p.offsetWidth * z) / 2, y: top });
+      return;
+    }
+    const z = clamp(Math.min(byWidth, h / p.offsetHeight) * 0.92);
     setView({ zoom: z, x: (v.clientWidth - p.offsetWidth * z) / 2, y: top + (h - p.offsetHeight * z) / 2 });
   }, []);
 
