@@ -78,9 +78,10 @@ summary wording in place of "resilient, cost-efficient systems". It errs on the 
 The explicit cache (~12k tokens) bills storage for as long as it exists, whether or not anyone
 is using it, and it is shared by everyone on the pod, not tied to a session. It lives 10
 minutes, is extended when used, and is deleted when the server gets SIGTERM (Cloud Run's stop
-signal), so an idle pod pays for at most about 10 minutes ($0.001). Turns that need JSON mode
-with tools off send the instructions inline, because a cached request cannot switch the tools
-off.
+signal), so an idle pod pays for at most about 10 minutes ($0.001). JSON-mode turns (the
+answer after a lookup) switch the tools off, and a cached request cannot set `toolConfig`, so
+they use a second cache with the same instructions and `toolConfig` NONE, created on first use.
+Before that, those turns sent the instructions inline and paid full input price (`cached=0`).
 
 ## Spend limit
 

@@ -39,6 +39,7 @@ const loadInstructions = () =>
     );
   })());
 
+const JSON_TOOL_CONFIG = { functionCallingConfig: { mode: "NONE" } };
 const TOOLS = [
   {
     functionDeclarations: [
@@ -76,13 +77,17 @@ async function userParts(session: string, m: ThreadItem, withContext: boolean): 
   return parts;
 }
 
-// Explicit cache of the instructions and tools. Storage is billed for as long as it exists, so
+// Explicit caches of the instructions and tools: one for the lookup turns and one for the JSON
+// turns, which also carry toolConfig NONE (a cached request cannot set tools or toolConfig). Storage is billed for as long as it exists, so
 // it lives 10 minutes, is extended when used, and is deleted when the server stops (Cloud Run
 // sends SIGTERM). An idle pod pays for at most 10 minutes.
 const CACHE_TTL_S = 600;
-let cache: { name: string; expires: number; tokens: number } | null = null;
-async function cachedInstructions(): Promise<string | null> {
+type Cache = { name: string; expires: number; tokens: number };
+const caches: Record<"tools" | "json", Cache | null> = { tools: null, json: null };
+async function cachedInstructions(json: boolean): Promise<string | null> {
   if (!EXPLICIT_CACHE) return null;
+  const kind = json ? "json" : "tools";
+  const cache = caches[kind];
   if (cache && cache.expires > Date.now() + 60_000) {
     if (cache.expires < Date.now() + (CACHE_TTL_S * 1000) / 2) await extendCache(cache);
     return cache.name;
@@ -94,6 +99,7 @@ async function cachedInstructions(): Promise<string | null> {
       model: `models/${MODEL}`,
       systemInstruction: { parts: [{ text: await loadInstructions() }] },
       tools: TOOLS,
+      ...(json ? { toolConfig: JSON_TOOL_CONFIG } : {}),
       ttl: `${CACHE_TTL_S}s`,
     }),
   });
@@ -102,13 +108,14 @@ async function cachedInstructions(): Promise<string | null> {
     return null;
   }
   const c: any = await res.json();
-  cache = { name: c.name, expires: Date.parse(c.expireTime), tokens: c.usageMetadata?.totalTokenCount ?? 0 };
-  addSpend(cacheCost(cache.tokens, CACHE_TTL_S / 3600));
-  console.log(`gemini cache ${c.name} tokens=${c.usageMetadata?.totalTokenCount ?? "?"} until ${c.expireTime}`);
+  caches[kind] = { name: c.name, expires: Date.parse(c.expireTime), tokens: c.usageMetadata?.totalTokenCount ?? 0 };
+  const made = caches[kind]!;
+  addSpend(cacheCost(made.tokens, CACHE_TTL_S / 3600));
+  console.log(`gemini ${kind} cache ${c.name} tokens=${c.usageMetadata?.totalTokenCount ?? "?"} until ${c.expireTime}`);
   return c.name;
 }
 
-async function extendCache(c: { name: string; expires: number; tokens: number }) {
+async function extendCache(c: Cache) {
   const res = await fetch(`${API}/${c.name}`, {
     method: "PATCH",
     headers: { "content-type": "application/json", "x-goog-api-key": KEY! },
@@ -121,11 +128,13 @@ async function extendCache(c: { name: string; expires: number; tokens: number })
 }
 
 export async function deleteCache() {
-  if (!cache) return;
-  const name = cache.name;
-  cache = null;
-  await fetch(`${API}/${name}`, { method: "DELETE", headers: { "x-goog-api-key": KEY! } }).catch(() => {});
-  console.log(`gemini cache ${name} deleted`);
+  for (const kind of ["tools", "json"] as const) {
+    const c = caches[kind];
+    if (!c) continue;
+    caches[kind] = null;
+    await fetch(`${API}/${c.name}`, { method: "DELETE", headers: { "x-goog-api-key": KEY! } }).catch(() => {});
+    console.log(`gemini ${kind} cache ${c.name} deleted`);
+  }
 }
 
 // One model turn, streamed so progress (thinking tokens, the latest thought heading) shows while
@@ -144,11 +153,11 @@ async function generate(
     thinkingConfig: { ...(level ? { thinkingLevel: level } : {}), includeThoughts: true },
     ...(json ? { responseMimeType: "application/json" } : {}),
   };
-  const toolConfig = json ? { functionCallingConfig: { mode: "NONE" } } : undefined;
-  // The cache holds the tools, and a cached request cannot switch them off: JSON turns go inline.
-  const cached = useCache && !json ? await cachedInstructions() : null;
+  const toolConfig = json ? JSON_TOOL_CONFIG : undefined;
+  // A cached request cannot carry systemInstruction, tools or toolConfig: they live in the cache.
+  const cached = useCache ? await cachedInstructions(json) : null;
   const body = cached
-    ? { cachedContent: cached, contents, generationConfig, toolConfig }
+    ? { cachedContent: cached, contents, generationConfig }
     : { systemInstruction: { parts: [{ text: await loadInstructions() }] }, contents, tools: TOOLS, toolConfig, generationConfig };
   const res = await fetch(`${API}/models/${MODEL}:streamGenerateContent?alt=sse`, {
     method: "POST",
@@ -160,7 +169,7 @@ async function generate(
     if (cached) {
       // The cache may have expired or been rejected: drop it and send the instructions inline.
       console.error(`gemini with cache failed ${res.status}: ${err.slice(0, 300)}`);
-      cache = null;
+      caches[json ? "json" : "tools"] = null;
       return generate(id, contents, thinkingBefore, json, false, level);
     }
     throw new Error(`Gemini ${res.status}: ${err.slice(0, 300)}`);
