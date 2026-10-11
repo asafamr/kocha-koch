@@ -6,7 +6,19 @@ import { Message } from "../components/Message";
 import { TextArea } from "../components/TextArea";
 import { TextField } from "../components/TextField";
 import { kochaUrl, REPO_URL } from "../links";
-import { CONSENT, type ConsentPurpose } from "../../src/consent";
+import { CONSENT, PRIVACY_LINK_TEXT, PRIVACY_URL, type ConsentPurpose } from "../../src/consent";
+
+const privacyLink = (
+  <a href={PRIVACY_URL} target="_blank" rel="noopener">
+    {PRIVACY_LINK_TEXT}
+  </a>
+);
+
+// The recorded text stays plain; the displayed label links the policy words.
+export function consentLabel(purpose: ConsentPurpose) {
+  const [before, after] = CONSENT.texts[purpose].split(PRIVACY_LINK_TEXT);
+  return after === undefined ? before : <>{before}{privacyLink}{after}</>;
+}
 
 const purposes = Object.keys(CONSENT.texts) as ConsentPurpose[];
 
@@ -77,7 +89,7 @@ export function IntakeForm({
         purposes.map((purpose) => (
           <Checkbox
             key={purpose}
-            label={CONSENT.texts[purpose]}
+            label={consentLabel(purpose)}
             checked={agreed[purpose]}
             onChange={(e) => setAgreed({ ...agreed, [purpose]: e.target.checked })}
           />
@@ -88,6 +100,7 @@ export function IntakeForm({
           : backend === "files"
             ? "הכלי רץ אצלכם: קורות החיים נשמרים בתיקייה .messages במחשב שלכם ומעובדים על ידי כלי ה־AI שבחרתם. "
             : ""}
+        {askConsent && <>{privacyLink}. </>}
         רוצים פרטיות מלאה? הכלי הזה הוא{" "}
         <a href={REPO_URL} target="_blank" rel="noopener">
           קוד פתוח ב־GitHub

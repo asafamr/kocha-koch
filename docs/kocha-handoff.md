@@ -8,7 +8,7 @@ recorded, and the practice button is a plain tracked link to `https://kocha.co.i
 
 - With the handoff on (`GET /api/messages` says `handoff: true`), the intake shows two separate
   unchecked boxes (`src/consent.ts`), one per purpose: `cv_processing` and `marketing_email`
-  (optional, independent). Each has its own text, both under version `cv-3`. The server records
+  (optional, independent). Each has its own text, both under version `cv-4`. The server records
   each ticked purpose with version, time, IP and user agent in the intake message. The texts are
   registered with kocha under that version: change a text only with a new version.
 - `src/kocha.ts` and `POST /api/handoff`: on export (PDF or HTML, in the background) and on the
@@ -31,8 +31,8 @@ The receiver rejects timestamps more than 5 minutes off.
   "jobDescription": "optional",
   "contact": { "email": "from the created CV, unverified", "name": "..." },
   "consents": [
-    { "purpose": "cv_processing", "version": "cv-3", "grantedAt": "ISO time", "ip": "...", "userAgent": "...", "page": "intake" },
-    { "purpose": "marketing_email", "version": "cv-3", "grantedAt": "...", "ip": "...", "userAgent": "...", "page": "intake" }
+    { "purpose": "cv_processing", "version": "cv-4", "grantedAt": "ISO time", "ip": "...", "userAgent": "...", "page": "intake" },
+    { "purpose": "marketing_email", "version": "cv-4", "grantedAt": "...", "ip": "...", "userAgent": "...", "page": "intake" }
   ],
   "originalCv": { "contentType": "application/pdf", "data": "<base64, at most 5 MB, or null>" },
   "createdCv": { "document": { "data": {}, "theme": {}, "patch": {} }, "pdf": "<base64 of the exported PDF>" },

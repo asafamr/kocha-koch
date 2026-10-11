@@ -4,11 +4,14 @@
 
 export type ConsentPurpose = "cv_processing" | "marketing_email";
 
+export const PRIVACY_URL = "https://kocha.co.il/privacy#cv-tool";
+export const PRIVACY_LINK_TEXT = "מדיניות הפרטיות";
+
 export const CONSENT = {
-  version: "cv-3",
+  version: "cv-4",
   texts: {
-    cv_processing: "אפשר לקוֹחָה לקבל את קורות החיים שלי ולפנות אליי לגבי הפיילוט",
-    marketing_email: "אשמח לקבל מקוֹחָה עדכונים וטיפים במייל",
+    cv_processing: "אני מאשר/ת לקוֹחָה לקבל את קורות החיים שלי לפי מדיניות הפרטיות",
+    marketing_email: "עדכונים במייל (לא חובה)",
   } satisfies Record<ConsentPurpose, string>,
 };
 
