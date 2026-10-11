@@ -1,6 +1,6 @@
 import { mkdir, readdir, rename } from "node:fs/promises";
 import { join } from "node:path";
-import type { ConsentRecord } from "./consent";
+import type { ConsentPurpose, ConsentRecord } from "./consent";
 
 // Two stores with the same shape:
 //   STORE=files (default): the file protocol in AGENTS.md, needed when an external agent answers.
@@ -66,8 +66,8 @@ function memoryStore(): Store {
       (conv(session)[box] as (Message | Reply)[]).push(item);
     },
     async list(session) {
-      const c = conv(session);
-      return { inbox: [...c.inbox], outbox: [...c.outbox] };
+      const c = convs.get(session); // a read creates nothing
+      return { inbox: [...(c?.inbox ?? [])], outbox: [...(c?.outbox ?? [])] };
     },
     async putFile(session, name, data) {
       conv(session).files.set(name, data);
@@ -150,6 +150,35 @@ export const getUpload = (session: string, path: string) => store.getFile(sessio
 // Save an uploaded file under a fresh name; returns its path relative to the messages dir.
 export async function saveUpload(session: string, ext: string, bytes: Uint8Array): Promise<string> {
   return store.putFile(session, `${newId()}.${ext}`, bytes);
+}
+
+// A conversation the page saved in its browser (src/restore.ts), already validated. Ids are new
+// and in order; the consent records get the restoring request's origin, not the original one.
+export type Restored = {
+  text: string;
+  ts: string;
+  hidden?: boolean;
+  intake?: { role: string; jobDescription: string; consents: { purpose: ConsentPurpose; version: string; grantedAt: string }[]; utm?: Record<string, string> };
+  reply?: { text: string; ts: string; cv?: unknown; tips?: unknown };
+};
+
+export async function restoreThread(session: string, items: Restored[], pdf: Uint8Array | null, origin: { ip: string; userAgent: string }): Promise<Message[]> {
+  const start = Date.now() - items.length;
+  const out: Message[] = [];
+  const cvFile = pdf ? await saveUpload(session, "pdf", pdf) : "";
+  for (const [i, r] of items.entries()) {
+    const id = `${start + i}-${crypto.randomUUID().slice(0, 8)}`;
+    let intake: Intake | undefined;
+    if (r.intake) {
+      const { consents, ...rest } = r.intake;
+      intake = { ...rest, cvFile, consents: consents.map((c) => ({ ...c, ...origin, page: "restore" })) };
+    }
+    const msg: Message = { id, ts: r.ts, text: r.text, ...(intake ? { intake } : {}), ...(r.hidden ? { hidden: true } : {}) };
+    await store.put(session, "inbox", msg);
+    if (r.reply) await store.put(session, "outbox", { id, ts: r.reply.ts, text: r.reply.text, by: "restored", ...(r.reply.cv ? { cv: r.reply.cv } : {}), ...(r.reply.tips ? { tips: r.reply.tips } : {}) });
+    out.push(msg);
+  }
+  return out;
 }
 
 export const resetStore = (session: string) => store.reset(session);

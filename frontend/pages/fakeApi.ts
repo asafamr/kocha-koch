@@ -11,6 +11,7 @@ export function fakeApi(messages: ThreadItem[]): Api {
     sendIntake: async () => {},
     pdf: async () => Promise.reject(new Error("no server")), // export shows its error state
     reset: async () => {},
+    restore: async () => {},
     handoff: async () => Promise.reject(new Error("no server")), // the practice link stays plain
   };
 }

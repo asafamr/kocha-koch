@@ -8,6 +8,14 @@ import type { ThreadItem } from "../src/store";
 
 export type { ThreadItem };
 export type Snapshot = { backend: string; handoff?: boolean; ga?: string; messages: ThreadItem[] }; // handoff: the consent box is shown; ga: Google Analytics id, if any
+// A thread item as saved in the browser and sent to POST /api/restore: no ids, no server-only fields.
+export type SavedItem = {
+  text: string;
+  ts: string;
+  hidden?: boolean;
+  intake?: { role: string; jobDescription: string; consents: { purpose: ConsentPurpose; version: string; grantedAt: string }[]; utm?: Record<string, string> };
+  reply?: { text: string; ts: string; cv?: unknown; tips?: unknown };
+};
 export type IntakeForm = { cv: File; role: string; jobDescription: string; consents: ConsentPurpose[] };
 
 // The app talks to the server only through this, so stories can pass a fake.
@@ -17,6 +25,7 @@ export type Api = {
   sendIntake(intake: IntakeForm): Promise<void>;
   pdf(html: string): Promise<Blob>; // self-contained CV HTML (cv/exportHtml.ts) -> PDF
   reset(): Promise<void>; // start over: the server archives the conversation
+  restore(thread: SavedItem[], pdf: Blob | null): Promise<void>; // hosted app: rebuild a conversation the server forgot from the copy saved in this browser (src/restore.ts)
   handoff(body: { document: unknown; html: string }): Promise<string>; // kocha.co.il join link with the CVs (src/kocha.ts)
 };
 
@@ -58,6 +67,12 @@ export const httpApi: Api = {
   async reset() {
     const res = await fetch("/api/reset", { method: "POST" });
     if (!res.ok) throw new Error(`reset failed: ${res.status}`);
+  },
+  async restore(thread, pdf) {
+    const form = new FormData();
+    form.set("thread", JSON.stringify(thread));
+    if (pdf) form.set("cv", pdf, "cv.pdf");
+    check(await fetch("/api/restore", { method: "POST", body: form }), "restore");
   },
   async handoff(body) {
     const res = await fetch("/api/handoff", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });

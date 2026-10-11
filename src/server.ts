@@ -1,11 +1,15 @@
+import { timingSafeEqual } from "node:crypto";
 import { join, normalize } from "node:path";
-import { addMessage, addReply, resetStore, saveUpload, STORE, thread, type ThreadItem } from "./store";
-import { answer, deleteCache, progress } from "./gemini";
+import { addMessage, addReply, resetStore, restoreThread, saveUpload, STORE, thread, type ThreadItem } from "./store";
+import { answer, deleteCache, pdfTokens, progress } from "./gemini";
+import { CAPS } from "./caps";
 import { CONSENT, isPurpose, type ConsentRecord } from "./consent";
 import { handoff, handoffEnabled, NoConsent } from "./kocha";
 import { GA_ID } from "./analytics";
 import { FIT_PREFIX } from "./fit";
 import { rateLimited } from "./limits";
+import { parseRestore } from "./restore";
+import { parseUtm } from "./utm";
 import { htmlToPdf, MAX_HTML, pdfAvailable, PdfBusy } from "./pdf";
 
 const BACKEND = process.env.BACKEND ?? "files"; // "files" | "gemini"
@@ -17,23 +21,25 @@ const PORT = Number(process.env.PORT ?? 3000);
 // Otherwise serve the bundle built by `bun run build` (see Dockerfile).
 const DEV = process.env.DEV === "1";
 const DIST = join(import.meta.dir, "..", "dist");
-const MAX_TEXT = 20_000;
-const MAX_CONTEXT = 8_000;
 
-// Sessions (STORE=memory, the managed app): each browser gets a random id in an HttpOnly cookie
-// and sees only its own conversation. With STORE=files there is one local conversation.
-const COOKIE = "kocha_session";
+// Sessions (STORE=memory, the managed app): each browser gets a random id in an HttpOnly cookie,
+// signed with a per-process secret, and sees only its own conversation. A restart invalidates the
+// cookies; the browser restores its thread into a fresh session. With STORE=files there is one
+// local conversation.
+const SECRET = crypto.getRandomValues(new Uint8Array(32));
+const sign = (id: string) => new Bun.CryptoHasher("sha256", SECRET).update(id).digest("hex");
 const SESSION_MAX_AGE_S = 6 * 3600;
 type Session = { id: string; setCookie?: string; ip: string };
 function sessionOf(req: Request, peer: string): Session {
   // The proxy appends the real client address as the last x-forwarded-for entry; earlier ones are client-supplied.
   const ip = req.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() || peer;
   if (STORE !== "memory") return { id: "local", ip };
-  const found = req.headers.get("cookie")?.match(/(?:^|;\s*)kocha_session=([0-9a-f-]{36})(?:;|$)/)?.[1];
-  if (found) return { id: found, ip };
+  const https = req.headers.get("x-forwarded-proto") === "https";
+  const name = https ? "__Host-kocha_session" : "kocha_session";
+  const found = req.headers.get("cookie")?.match(new RegExp(`(?:^|;\\s*)${name}=([0-9a-f-]{36})\\.([0-9a-f]{64})(?:;|$)`));
+  if (found && timingSafeEqual(Buffer.from(found[2]), Buffer.from(sign(found[1])))) return { id: found[1], ip };
   const id = crypto.randomUUID();
-  const secure = req.headers.get("x-forwarded-proto") === "https" ? "; Secure" : "";
-  return { id, ip, setCookie: `${COOKIE}=${id}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_MAX_AGE_S}${secure}` };
+  return { id, ip, setCookie: `${name}=${id}.${sign(id)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_MAX_AGE_S}${https ? "; Secure" : ""}` };
 }
 
 // Per-session limits for the in-process backend, where every message spends money: one answer
@@ -50,8 +56,8 @@ function overLimit(messages: ThreadItem[], intake: boolean): Response | null {
 
 // Start a Gemini answer in the background. Users see a generic message on failure; the detail
 // goes to the log, not the chat.
-function startAnswer(session: string, id: string) {
-  answer(session, id).catch((e) => {
+function startAnswer(session: string, id: string, ip: string) {
+  answer(session, id, ip).catch((e) => {
     console.error(`gemini ${id} failed:`, e?.message ?? e);
     return addReply(session, id, "משהו השתבש אצלי. נסו לשלוח שוב בעוד רגע.", "server");
   });
@@ -60,34 +66,16 @@ function startAnswer(session: string, id: string) {
 async function postMessage(req: Request, s: Session) {
   const body = await req.json().catch(() => null);
   const text = typeof body?.text === "string" ? body.text.trim() : "";
-  if (!text || text.length > MAX_TEXT) return Response.json({ error: "bad text" }, { status: 400 });
+  if (!text || text.length > CAPS.message) return Response.json({ error: "bad text" }, { status: 400 });
   const context = typeof body?.context === "string" ? body.context.trim() : "";
-  if (context.length > MAX_CONTEXT) return Response.json({ error: "bad context" }, { status: 400 });
+  if (context.length > CAPS.context) return Response.json({ error: "bad context" }, { status: 400 });
   const limited = overLimit(await thread(s.id), false);
   if (limited) return limited;
 
   const msg = await addMessage(s.id, text, undefined, context, body?.hidden === true && text.startsWith(FIT_PREFIX));
-  if (BACKEND === "gemini") startAnswer(s.id, msg.id);
+  if (BACKEND === "gemini") startAnswer(s.id, msg.id, s.ip);
   const { context: _hidden, ...shown } = msg;
   return Response.json(shown, { status: 201 });
-}
-
-const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
-// Known keys only, short strings; anything else is dropped.
-export function parseUtm(raw: unknown): Record<string, string> | undefined {
-  let tags: unknown;
-  try {
-    tags = JSON.parse(String(raw ?? ""));
-  } catch {
-    return undefined;
-  }
-  if (typeof tags !== "object" || tags === null) return undefined;
-  const out: Record<string, string> = {};
-  for (const k of UTM_KEYS) {
-    const v = (tags as Record<string, unknown>)[k];
-    if (typeof v === "string" && v.trim()) out[k] = v.trim().slice(0, 64);
-  }
-  return Object.keys(out).length ? out : undefined;
 }
 
 // The intake form: target role, optional job description, consent, and the current CV as a PDF.
@@ -116,7 +104,7 @@ async function postIntake(req: Request, s: Session) {
   }));
   const utm = parseUtm(form?.get("utm"));
   const cv = form?.get("cv");
-  if (!role || role.length > 200 || jobDescription.length > MAX_TEXT) {
+  if (!role || role.length > CAPS.role || jobDescription.length > CAPS.jobDescription) {
     return Response.json({ error: "bad role or job description" }, { status: 400 });
   }
   if (!(cv instanceof File) || cv.size === 0 || cv.size > MAX_PDF) {
@@ -128,13 +116,67 @@ async function postIntake(req: Request, s: Session) {
   if (new TextDecoder().decode(bytes.subarray(0, 5)) !== "%PDF-") {
     return Response.json({ error: "cv must be a PDF" }, { status: 400 });
   }
+  if (BACKEND === "gemini") {
+    const tokens = await pdfTokens(bytes).catch(() => null);
+    if (tokens === null) return Response.json({ error: "cannot check the cv" }, { status: 502 });
+    if (tokens > CAPS.pdfTokens) return Response.json({ error: "cv too long" }, { status: 400 });
+  }
   const cvFile = await saveUpload(s.id, "pdf", bytes);
   const text = [`תפקיד מבוקש: ${role}`, jobDescription ? "צירפתי את תיאור המשרה." : "", `קורות חיים: ${cv.name}`]
     .filter(Boolean)
     .join("\n");
   const msg = await addMessage(s.id, text, { role, jobDescription, consents, cvFile, ...(utm ? { utm } : {}) });
-  if (BACKEND === "gemini") startAnswer(s.id, msg.id);
+  if (BACKEND === "gemini") startAnswer(s.id, msg.id, s.ip);
   return Response.json(msg, { status: 201 });
+}
+
+// The page saved its conversation in the browser and the server forgot it (STORE=memory): rebuild
+// it. Only into an empty session. A trailing message with no reply is dropped (the page offers to
+// resend it), except the intake, which is answered again. At most one intake, since it carries the PDF.
+const restoring = new Set<string>();
+async function postRestore(req: Request, s: Session) {
+  if (STORE !== "memory") return Response.json({ error: "not available" }, { status: 404 });
+  if (Number(req.headers.get("content-length") ?? 0) > MAX_PDF + 4 * 1024 * 1024) return Response.json({ error: "too large" }, { status: 413 });
+  const form = await req.formData().catch(() => null);
+  let raw: unknown;
+  try {
+    raw = JSON.parse(String(form?.get("thread") ?? ""));
+  } catch {
+    return Response.json({ error: "bad thread" }, { status: 400 });
+  }
+  const parsed = parseRestore(raw, { maxItems: MAX_MESSAGES, consentsOn: handoffEnabled });
+  if (typeof parsed === "string") return Response.json({ error: parsed }, { status: 400 });
+  if (parsed.filter((m) => m.intake).length > 1) return Response.json({ error: "too many intakes" }, { status: 400 });
+  const last = parsed.at(-1)!;
+  const items = last.reply || last.intake ? parsed : parsed.slice(0, -1);
+  if (items.length === 0) return Response.json({ error: "nothing to restore" }, { status: 400 });
+
+  const cv = form?.get("cv");
+  let pdf: Uint8Array | null = null;
+  if (cv instanceof File) {
+    if (cv.size === 0 || cv.size > MAX_PDF) return Response.json({ error: "cv must be a PDF up to 5 MB" }, { status: 400 });
+    pdf = new Uint8Array(await cv.arrayBuffer());
+    if (new TextDecoder().decode(pdf.subarray(0, 5)) !== "%PDF-") return Response.json({ error: "cv must be a PDF" }, { status: 400 });
+    if (!items.some((m) => m.intake)) pdf = null;
+  }
+  if (pdf && BACKEND === "gemini") {
+    const tokens = await pdfTokens(pdf).catch(() => null);
+    if (tokens === null) return Response.json({ error: "cannot check the cv" }, { status: 502 });
+    if (tokens > CAPS.pdfTokens) return Response.json({ error: "cv too long" }, { status: 400 });
+  }
+
+  // The empty check and the write are one step: no await between the flag and the check's result.
+  if (restoring.has(s.id)) return Response.json({ error: "session not empty" }, { status: 409 });
+  restoring.add(s.id);
+  try {
+    if ((await thread(s.id)).length > 0) return Response.json({ error: "session not empty" }, { status: 409 });
+    const restored = await restoreThread(s.id, items, pdf, { ip: s.ip, userAgent: (req.headers.get("user-agent") ?? "").slice(0, 300) });
+    const pending = items.at(-1)!.reply ? null : restored.at(-1)!;
+    if (pending && BACKEND === "gemini") startAnswer(s.id, pending.id, s.ip);
+    return Response.json({ restored: restored.length }, { status: 201 });
+  } finally {
+    restoring.delete(s.id);
+  }
 }
 
 // The CV as a PDF: the body is the self-contained CV HTML the frontend builds (cv/exportHtml.ts).
@@ -189,6 +231,7 @@ async function api(req: Request, pathname: string, s: Session): Promise<Response
   if (route === "GET /api/messages") return Response.json({ backend: BACKEND, handoff: handoffEnabled, ga: GA_ID || undefined, messages: withProgress(await thread(s.id)) });
   if (route === "POST /api/messages") return postMessage(req, s);
   if (route === "POST /api/intake") return postIntake(req, s);
+  if (route === "POST /api/restore") return postRestore(req, s);
   if (route === "POST /api/pdf") return postPdf(req, s);
   if (route === "POST /api/handoff") return postHandoff(req, s);
   if (route === "POST /api/reset") {
@@ -242,6 +285,7 @@ Bun.serve({
     if (!pathname.startsWith("/api/")) return secure(await serveStatic(pathname), req);
     const s = sessionOf(req, server.requestIP(req)?.address ?? "");
     const res = await api(req, pathname, s);
+    res.headers.set("cache-control", "no-store");
     if (s.setCookie) res.headers.append("set-cookie", s.setCookie);
     return secure(res, req);
   },
