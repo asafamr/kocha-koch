@@ -6,7 +6,7 @@ export function Checkbox({ label, ...props }: CheckboxProps) {
   return (
     <label className="ds-checkbox">
       <input type="checkbox" {...props} />
-      {label}
+      <span>{label}</span>
     </label>
   );
 }
