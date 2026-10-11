@@ -8,6 +8,7 @@ import { CvOutline } from "../components/CvOutline";
 import { Drawer } from "../components/Drawer";
 import { Message } from "../components/Message";
 import { PrepPoints } from "../components/PrepPoints";
+import { Segmented } from "../components/Segmented";
 import { Select } from "../components/Select";
 import { StageGauge } from "../components/StageGauge";
 import { Text } from "../components/Text";
@@ -121,6 +122,15 @@ export function AppPage({
 
   const messages = snapshot?.messages ?? [];
   const waiting = messages.length > 0 && !messages[messages.length - 1].reply;
+
+  // Phones show one pane at a time. Replies that arrive while the CV is shown leave a dot on the chat toggle.
+  const [pane, setPane] = useState<"cv" | "chat">("cv");
+  const replies = messages.filter((m) => m.reply).length;
+  const [seenReplies, setSeenReplies] = useState<number | null>(null);
+  useEffect(() => {
+    if (snapshot && (seenReplies === null || pane === "chat")) setSeenReplies(replies);
+  }, [snapshot, pane, replies, seenReplies]);
+  const unread = pane === "cv" && seenReplies !== null && replies > seenReplies;
 
   // On reload, the server decides the stage: an intake there means the form is done; none (a new
   // or expired session) means start at the form, whatever stage the browser saved.
@@ -364,7 +374,7 @@ export function AppPage({
         </section>
       ) : (
         <>
-          <section className="app-page-cv" aria-label="קורות חיים">
+          <section className={`app-page-cv${pane === "chat" ? " app-page-pane-hidden" : ""}`} aria-label="קורות חיים">
             <Block>
               <div className="app-page-cv-head">
                 <Text variant="heading">קורות חיים</Text>
@@ -430,7 +440,7 @@ export function AppPage({
             </Block>
           </section>
 
-          <section className="app-page-chat" aria-label="צ'אט">
+          <section className={`app-page-chat${pane === "cv" ? " app-page-pane-hidden" : ""}`} aria-label="צ'אט">
             <Block>
               <Text variant="heading">צ'אט</Text>
               {/* tabIndex: a scrollable region must be reachable by keyboard.
@@ -450,6 +460,18 @@ export function AppPage({
               <ChatInput onSend={send} busy={waiting} />
             </Block>
           </section>
+
+          <Segmented
+            className="app-page-panes"
+            label="תצוגה"
+            value={pane}
+            options={[
+              { value: "cv", label: "קורות חיים" },
+              { value: "chat", label: "צ'אט", dot: unread },
+            ]}
+            dotLabel="הודעה חדשה"
+            onChange={setPane}
+          />
         </>
       )}
       <footer className="app-page-footer">

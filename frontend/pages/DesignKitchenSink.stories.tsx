@@ -15,6 +15,7 @@ import { Message } from "../components/Message";
 import { Paragraph } from "../components/Paragraph";
 import { PrepPoints } from "../components/PrepPoints";
 import { PREP_SAMPLES } from "../components/prepPointsSample";
+import { Segmented } from "../components/Segmented";
 import { Select } from "../components/Select";
 import { StageGauge } from "../components/StageGauge";
 import { Text, type TextVariant } from "../components/Text";
@@ -99,6 +100,21 @@ function DesignKitchenSink() {
       <section style={section}>
         <Text variant="heading">מד שלבים</Text>
         <StageGauge label="שלבי העבודה" stages={["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"]} current={1} />
+      </section>
+
+      <section style={section}>
+        <Text variant="heading">מתג תצוגה</Text>
+        <div style={{ maxInlineSize: 360 }}>
+          <Segmented
+            label="תצוגה"
+            value="cv"
+            options={[
+              { value: "cv", label: "קורות חיים" },
+              { value: "chat", label: "צ'אט", dot: true },
+            ]}
+            onChange={() => {}}
+          />
+        </div>
       </section>
 
       <section style={section}>
