@@ -1,6 +1,7 @@
 import { join, normalize } from "node:path";
 import { addMessage, addReply, resetStore, saveUpload, STORE, thread, type ThreadItem } from "./store";
-import { answer, deleteCache, progress } from "./gemini";
+import { answer, deleteCache, pdfTokens, progress } from "./gemini";
+import { CAPS } from "./caps";
 import { CONSENT, isPurpose, type ConsentRecord } from "./consent";
 import { handoff, handoffEnabled, NoConsent } from "./kocha";
 import { GA_ID } from "./analytics";
@@ -17,8 +18,6 @@ const PORT = Number(process.env.PORT ?? 3000);
 // Otherwise serve the bundle built by `bun run build` (see Dockerfile).
 const DEV = process.env.DEV === "1";
 const DIST = join(import.meta.dir, "..", "dist");
-const MAX_TEXT = 20_000;
-const MAX_CONTEXT = 8_000;
 
 // Sessions (STORE=memory, the managed app): each browser gets a random id in an HttpOnly cookie
 // and sees only its own conversation. With STORE=files there is one local conversation.
@@ -50,8 +49,8 @@ function overLimit(messages: ThreadItem[], intake: boolean): Response | null {
 
 // Start a Gemini answer in the background. Users see a generic message on failure; the detail
 // goes to the log, not the chat.
-function startAnswer(session: string, id: string) {
-  answer(session, id).catch((e) => {
+function startAnswer(session: string, id: string, ip: string) {
+  answer(session, id, ip).catch((e) => {
     console.error(`gemini ${id} failed:`, e?.message ?? e);
     return addReply(session, id, "משהו השתבש אצלי. נסו לשלוח שוב בעוד רגע.", "server");
   });
@@ -60,14 +59,14 @@ function startAnswer(session: string, id: string) {
 async function postMessage(req: Request, s: Session) {
   const body = await req.json().catch(() => null);
   const text = typeof body?.text === "string" ? body.text.trim() : "";
-  if (!text || text.length > MAX_TEXT) return Response.json({ error: "bad text" }, { status: 400 });
+  if (!text || text.length > CAPS.message) return Response.json({ error: "bad text" }, { status: 400 });
   const context = typeof body?.context === "string" ? body.context.trim() : "";
-  if (context.length > MAX_CONTEXT) return Response.json({ error: "bad context" }, { status: 400 });
+  if (context.length > CAPS.context) return Response.json({ error: "bad context" }, { status: 400 });
   const limited = overLimit(await thread(s.id), false);
   if (limited) return limited;
 
   const msg = await addMessage(s.id, text, undefined, context, body?.hidden === true && text.startsWith(FIT_PREFIX));
-  if (BACKEND === "gemini") startAnswer(s.id, msg.id);
+  if (BACKEND === "gemini") startAnswer(s.id, msg.id, s.ip);
   const { context: _hidden, ...shown } = msg;
   return Response.json(shown, { status: 201 });
 }
@@ -116,7 +115,7 @@ async function postIntake(req: Request, s: Session) {
   }));
   const utm = parseUtm(form?.get("utm"));
   const cv = form?.get("cv");
-  if (!role || role.length > 200 || jobDescription.length > MAX_TEXT) {
+  if (!role || role.length > CAPS.role || jobDescription.length > CAPS.jobDescription) {
     return Response.json({ error: "bad role or job description" }, { status: 400 });
   }
   if (!(cv instanceof File) || cv.size === 0 || cv.size > MAX_PDF) {
@@ -128,12 +127,17 @@ async function postIntake(req: Request, s: Session) {
   if (new TextDecoder().decode(bytes.subarray(0, 5)) !== "%PDF-") {
     return Response.json({ error: "cv must be a PDF" }, { status: 400 });
   }
+  if (BACKEND === "gemini") {
+    const tokens = await pdfTokens(bytes).catch(() => null);
+    if (tokens === null) return Response.json({ error: "cannot check the cv" }, { status: 502 });
+    if (tokens > CAPS.pdfTokens) return Response.json({ error: "cv too long" }, { status: 400 });
+  }
   const cvFile = await saveUpload(s.id, "pdf", bytes);
   const text = [`תפקיד מבוקש: ${role}`, jobDescription ? "צירפתי את תיאור המשרה." : "", `קורות חיים: ${cv.name}`]
     .filter(Boolean)
     .join("\n");
   const msg = await addMessage(s.id, text, { role, jobDescription, consents, cvFile, ...(utm ? { utm } : {}) });
-  if (BACKEND === "gemini") startAnswer(s.id, msg.id);
+  if (BACKEND === "gemini") startAnswer(s.id, msg.id, s.ip);
   return Response.json(msg, { status: 201 });
 }
 
