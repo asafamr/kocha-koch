@@ -6,6 +6,8 @@ import type { SavedItem, ThreadItem } from "./api";
 // errors: blocked storage just means no restore.
 
 const threadKey = (key: string) => `${key}-thread`;
+const savedAtKey = (key: string) => `${key}-saved-at`;
+const MAX_AGE_MS = 3 * 24 * 3_600_000; // older copies are deleted when the page loads
 const DB = "kocha-koch";
 const FILES = "files";
 
@@ -26,6 +28,7 @@ export function saveThread(key: string, items: SavedItem[]) {
   if (json === lastJson) return;
   try {
     localStorage.setItem(threadKey(key), json);
+    localStorage.setItem(savedAtKey(key), String(Date.now()));
     lastJson = json;
   } catch {
     // storage blocked or full
@@ -34,6 +37,11 @@ export function saveThread(key: string, items: SavedItem[]) {
 
 export function loadThread(key: string): SavedItem[] | null {
   try {
+    const savedAt = Number(localStorage.getItem(savedAtKey(key)));
+    if (!(Date.now() - savedAt < MAX_AGE_MS)) {
+      if (localStorage.getItem(threadKey(key)) !== null) void clearSaved(key);
+      return null;
+    }
     const v = JSON.parse(localStorage.getItem(threadKey(key)) ?? "null");
     return Array.isArray(v) && v.length > 0 ? v : null;
   } catch {
@@ -70,6 +78,7 @@ export async function clearSaved(key: string) {
   lastJson = "";
   try {
     localStorage.removeItem(threadKey(key));
+    localStorage.removeItem(savedAtKey(key));
   } catch {
     // nothing saved to forget
   }

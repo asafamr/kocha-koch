@@ -66,8 +66,8 @@ function memoryStore(): Store {
       (conv(session)[box] as (Message | Reply)[]).push(item);
     },
     async list(session) {
-      const c = conv(session);
-      return { inbox: [...c.inbox], outbox: [...c.outbox] };
+      const c = convs.get(session); // a read creates nothing
+      return { inbox: [...(c?.inbox ?? [])], outbox: [...(c?.outbox ?? [])] };
     },
     async putFile(session, name, data) {
       conv(session).files.set(name, data);

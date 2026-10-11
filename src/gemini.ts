@@ -1,19 +1,19 @@
 import { join } from "node:path";
 import { FIT_PREFIX } from "./fit";
 import { lookup, researchIndex } from "./kb";
-import { addSpend, bucket, cacheCost, endTurn, startTurn, turnCost } from "./spend";
+import { CAPS, estTokens, firstKept } from "./caps";
+import { reserveIpSpend, settleIpSpend } from "./limits";
+import { addSpend, cacheCost, endTurn, maxTurnCost, startTurn, turnCost, window as spendWindow } from "./spend";
 import { addReply, getUpload, thread, type ThreadItem } from "./store";
 
 const MODEL = process.env.GEMINI_MODEL ?? "gemini-3.8-flash";
 const KEY = process.env.GEMINI_API_KEY;
 const ROOT = join(import.meta.dir, "..");
-const MAX_ROUNDS = 4; // model turns per reply: up to 3 lookups, then the answer
 // Knobs, measured in docs/gemini-costs.md. Thinking level: medium (default), high or low
-// (gemini-3.8-flash has no minimal); "default" leaves it to the model. GEMINI_CACHE: explicit
+// (gemini-3.8-flash has no minimal); anything else is medium. GEMINI_CACHE: explicit
 // (default) caches the instructions and tools (10 minutes, extended on use); "none" sends them
 // with every call.
-const LEVEL = process.env.GEMINI_THINKING_LEVEL ?? "medium";
-const THINKING = LEVEL === "default" ? undefined : LEVEL;
+const THINKING = ["low", "medium", "high"].includes(process.env.GEMINI_THINKING_LEVEL ?? "") ? process.env.GEMINI_THINKING_LEVEL! : "medium";
 const EXPLICIT_CACHE = (process.env.GEMINI_CACHE ?? "explicit") === "explicit";
 const API = "https://generativelanguage.googleapis.com/v1beta";
 
@@ -63,6 +63,7 @@ type Content = { role: "user" | "model"; parts: Part[] };
 // Live progress of answers being written, by message id, for the page's typing indicator.
 export type Progress = { phase: "thinking" | "lookup" | "writing" | "verifying"; startedAt: number; thinkingTokens: number; thought?: string };
 export const progress = new Map<string, Progress>();
+const costs = new Map<string, number>(); // dollars spent so far on each answer, by message id
 
 // One user turn: the message text, the layout report if `withContext`, and for the intake its fields and the CV PDF.
 async function userParts(session: string, m: ThreadItem, withContext: boolean): Promise<Part[]> {
@@ -150,7 +151,8 @@ async function generate(
   level = THINKING,
 ): Promise<{ parts: Part[]; usage: any }> {
   const generationConfig = {
-    thinkingConfig: { ...(level ? { thinkingLevel: level } : {}), includeThoughts: true },
+    thinkingConfig: { thinkingLevel: level, includeThoughts: true },
+    maxOutputTokens: CAPS.maxOutput,
     ...(json ? { responseMimeType: "application/json" } : {}),
   };
   const toolConfig = json ? JSON_TOOL_CONFIG : undefined;
@@ -200,6 +202,8 @@ async function generate(
       const got: Part[] = msg.candidates?.[0]?.content?.parts ?? [];
       parts.push(...got);
       if (msg.usageMetadata) usage = msg.usageMetadata;
+      // Backstop for maxOutputTokens: stop reading, and so stop paying for, a runaway stream.
+      if ((usage.candidatesTokenCount ?? 0) + (usage.thoughtsTokenCount ?? 0) > CAPS.maxOutput) break;
       const p = progress.get(id);
       if (p) {
         p.thinkingTokens = thinkingBefore + (usage.thoughtsTokenCount ?? 0);
@@ -231,7 +235,7 @@ async function verifyCv(id: string, sources: Part[], data: unknown): Promise<unk
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: await verifyPrompt }] },
       contents: [{ role: "user", parts: [...sources, { text: `New CV (JSON):\n${JSON.stringify(data)}` }] }],
-      generationConfig: { responseMimeType: "application/json", thinkingConfig: { thinkingLevel: "low" } },
+      generationConfig: { responseMimeType: "application/json", thinkingConfig: { thinkingLevel: "low" }, maxOutputTokens: CAPS.verifyOutput },
     }),
   });
   if (!res.ok) {
@@ -263,16 +267,23 @@ async function verifyCv(id: string, sources: Part[], data: unknown): Promise<unk
   return fixed;
 }
 
-// What the CV may claim: the user's uploaded CV, the intake fields and the user's messages.
+// What the CV may claim: the latest intake (CV, role, job description) and the user's recent
+// messages, newest first up to CAPS.verifyChatChars.
 async function sourceParts(session: string, messages: ThreadItem[]): Promise<Part[]> {
   const parts: Part[] = [];
+  const intake = [...messages].reverse().find((m) => m.intake)?.intake;
+  if (intake) {
+    parts.push({ text: `Target role: ${intake.role}\nJob description:\n${intake.jobDescription || "(not given)"}` });
+    const pdf = await getUpload(session, intake.cvFile);
+    if (pdf) parts.push({ text: "The user's CV:" }, { inlineData: { mimeType: "application/pdf", data: Buffer.from(pdf).toString("base64") } });
+  }
   const said: string[] = [];
-  for (const m of messages) {
-    if (m.intake) {
-      parts.push({ text: `Target role: ${m.intake.role}\nJob description:\n${m.intake.jobDescription || "(not given)"}` });
-      const pdf = await getUpload(session, m.intake.cvFile);
-      if (pdf) parts.push({ text: "The user's CV:" }, { inlineData: { mimeType: "application/pdf", data: Buffer.from(pdf).toString("base64") } });
-    } else said.push(m.text);
+  let chars = 0;
+  for (const m of [...messages].reverse()) {
+    if (m.intake) continue;
+    chars += m.text.length;
+    if (chars > CAPS.verifyChatChars) break;
+    said.unshift(m.text);
   }
   if (said.length) parts.push({ text: `What the user said in the chat:\n${said.map((t) => `- ${t}`).join("\n")}` });
   return parts;
@@ -282,11 +293,12 @@ async function sourceParts(session: string, messages: ThreadItem[]): Promise<Par
 function logUsage(id: string, round: number, u: any, ms: number, note: string) {
   const cost = turnCost(u);
   addSpend(cost);
-  const b = bucket();
+  costs.set(id, (costs.get(id) ?? 0) + cost);
+  const b = spendWindow();
   console.log(
     `gemini ${id} round ${round}: in=${u.promptTokenCount ?? "?"} cached=${u.cachedContentTokenCount ?? 0} ` +
       `out=${u.candidatesTokenCount ?? 0} thinking=${u.thoughtsTokenCount ?? 0} ${ms}ms $${cost.toFixed(4)} ` +
-      `bucket=$${b.level.toFixed(3)}/$${b.capacity} ${note}`,
+      `hour=$${b.spent.toFixed(3)}/$${b.limit} ${note}`,
   );
 }
 
@@ -309,47 +321,76 @@ function parseReply(raw: string): { text: string; cv?: unknown; tips?: unknown }
   return null;
 }
 
+// Tokens of a CV PDF, counted by Gemini (countTokens is free), so intake can refuse long ones.
+export async function pdfTokens(pdf: Uint8Array): Promise<number> {
+  const res = await fetch(`${API}/models/${MODEL}:countTokens`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-goog-api-key": KEY! },
+    body: JSON.stringify({ contents: [{ role: "user", parts: [{ inlineData: { mimeType: "application/pdf", data: Buffer.from(pdf).toString("base64") } }] }] }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!res.ok) throw new Error(`countTokens ${res.status}`);
+  return ((await res.json()) as any).totalTokens;
+}
+
+const contentTokens = (c: Content) =>
+  c.parts.reduce((n, p) => n + (p.inlineData ? CAPS.pdfTokens : estTokens(String(p.text ?? "").length)), 0);
+
 // Answer one message the same way an external agent would: read the thread, add a reply with
 // the same id, with the CV and tips the model sent. Works with either store.
-export async function answer(session: string, id: string) {
+export async function answer(session: string, id: string, ip: string) {
   if (!KEY) throw new Error("GEMINI_API_KEY is not set");
-  if (!startTurn()) {
+  const history = (await thread(session)).filter((m) => m.id <= id);
+  // A fit request comes with real measurements, so the model only does arithmetic: low thinking.
+  const level = history.at(-1)?.text.startsWith(FIT_PREFIX) ? "low" : THINKING;
+  const turns: Content[][] = [];
+  for (const m of history) {
+    const turn: Content[] = [{ role: "user", parts: await userParts(session, m, m.id === id) }];
+    if (m.reply) {
+      const { text, cv, tips } = m.reply;
+      turn.push({ role: "model", parts: [{ text: JSON.stringify({ text, cv, tips }) }] });
+    }
+    turns.push(turn);
+  }
+  // The oldest turns beyond CAPS.history are not sent.
+  const sizes = turns.map((t) => t.reduce((n, c) => n + contentTokens(c), 0));
+  const first = firstKept(sizes, CAPS.history);
+  const contents = turns.slice(first).flat();
+
+  const reserve = maxTurnCost(estTokens((await loadInstructions()).length), sizes.slice(first).reduce((a, b) => a + b, 0));
+  if (!startTurn(reserve)) {
     // This pod's spend limit (src/spend.ts) is used up: refuse politely until it drains.
-    console.log(`gemini ${id} refused: spend limit ($${bucket().level.toFixed(3)} in the bucket)`);
+    console.log(`gemini ${id} refused: spend limit ($${spendWindow().spent.toFixed(3)} spent in the last hour)`);
     await addReply(session, id, "קוחה עמוסה כרגע. נסו לשלוח שוב בעוד כמה דקות.", "server");
     return;
   }
+  const charge = reserveIpSpend(ip, reserve);
+  if (!charge) {
+    endTurn(reserve);
+    console.log(`gemini ${id} refused: ip spend limit`);
+    await addReply(session, id, "הגעתם למכסת השימוש לשעה הזו. נסו שוב בעוד כמה דקות.", "server");
+    return;
+  }
   progress.set(id, { phase: "thinking", startedAt: Date.now(), thinkingTokens: 0 });
+  let done = false;
   try {
-    const contents: Content[] = [];
-    const history = (await thread(session)).filter((m) => m.id <= id);
-    // A fit request comes with real measurements, so the model only does arithmetic: low thinking.
-    const level = history.at(-1)?.text.startsWith(FIT_PREFIX) ? "low" : THINKING;
-    for (const m of history) {
-      contents.push({ role: "user", parts: await userParts(session, m, m.id === id) });
-      if (m.reply) {
-        const { text, cv, tips } = m.reply;
-        contents.push({ role: "model", parts: [{ text: JSON.stringify({ text, cv, tips }) }] });
-      }
-    }
-
     let thinkingSoFar = 0;
     let json = false; // the turn after a lookup, or a retry after a reply that was not JSON
-    for (let round = 1; round <= MAX_ROUNDS; round++) {
+    for (let round = 1; round <= CAPS.rounds; round++) {
       const started = Date.now();
       const { parts, usage } = await generate(id, contents, thinkingSoFar, json, true, level);
       thinkingSoFar += usage.thoughtsTokenCount ?? 0;
       const calls = parts.filter((p) => p.functionCall).map((p) => p.functionCall as { name: string; args?: { ids?: string[] } });
       logUsage(id, round, usage, Date.now() - started, calls.length ? `lookup ${calls.flatMap((c) => c.args?.ids ?? []).join(",")}` : "answer");
 
-      if (calls.length && !json && round < MAX_ROUNDS) {
+      if (calls.length && !json && round < CAPS.rounds) {
         const p = progress.get(id);
         if (p) Object.assign(p, { phase: "lookup", thinkingTokens: thinkingSoFar });
         // Send the model's turn back unchanged (it carries thought signatures), then the results.
         contents.push({ role: "model", parts });
         const responses = await Promise.all(
           calls.map(async (c) => ({
-            functionResponse: { name: c.name, response: { result: await lookup(ROOT, c.args?.ids ?? []) } },
+            functionResponse: { name: c.name, response: { result: (await lookup(ROOT, (c.args?.ids ?? []).slice(0, CAPS.lookupIds))).slice(0, Math.floor(CAPS.lookupChars / calls.length)) } },
           })),
         );
         contents.push({ role: "user", parts: responses });
@@ -360,7 +401,7 @@ export async function answer(session: string, id: string) {
 
       const raw = parts.map((p) => (typeof p.text === "string" && !p.thought ? p.text : "")).join("");
       const reply = parseReply(raw);
-      if (reply === null && round < MAX_ROUNDS) {
+      if (reply === null && round < CAPS.rounds) {
         // Ask again in JSON mode; the invalid reply is dropped. JSON mode alone is not a guarantee
         // (one reply closed an object with "]"), and a loose schema made the model drop cv and tips.
         json = true;
@@ -370,10 +411,16 @@ export async function answer(session: string, id: string) {
       const cv = reply?.cv as { data?: unknown } | undefined;
       if (cv?.data) cv.data = await verifyCv(id, await sourceParts(session, history), cv.data);
       await addReply(session, id, text, `gemini:${MODEL}`, { cv, tips: reply?.tips });
+      done = true;
       return;
     }
   } finally {
-    endTurn();
+    endTurn(reserve);
+    // A failed turn may have been billed for calls whose usage never reached us: charge the whole reservation.
+    const spent = costs.get(id) ?? 0;
+    if (!done) addSpend(Math.max(0, reserve - spent));
+    settleIpSpend(charge, done ? spent : reserve);
+    costs.delete(id);
     progress.delete(id);
   }
 }

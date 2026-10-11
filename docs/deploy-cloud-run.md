@@ -26,14 +26,14 @@ Images go to the project's Artifact Registry; deploy with a project-scoped deplo
 
 | Setting | Value | Why |
 |---|---|---|
-| `--max-instances` | `1` | Sessions live in one process's memory: a second instance would not see them (a poll landing there shows an empty chat). It also makes the per-pod spend limit (`src/spend.ts`, $10/hour) the global limit. |
+| `--max-instances` | `1` | Sessions live in one process's memory: a second instance would not see them (a poll landing there shows an empty chat). It also makes the per-pod spend limit (`src/spend.ts`, $1/hour) the global limit. |
 | `--no-cpu-throttling` | on | Answers run after the HTTP response (1–3 minutes). With request-based billing Cloud Run throttles the CPU between requests and they stall. |
-| `--min-instances` | `0` or `1` | 0 scales to zero when idle (sessions are lost then, and the bucket starts empty again); 1 keeps sessions and the cache warm at the cost of an always-on instance. |
+| `--min-instances` | `0` or `1` | 0 scales to zero when idle (sessions are lost then, and the spend ledger starts empty again); 1 keeps sessions and the cache warm at the cost of an always-on instance. |
 | `--concurrency` | `80` (default) | Polling is cheap; one instance handles many users. |
 | `--timeout` | `120` | No request waits for Gemini; a PDF takes seconds. |
 | `--memory` | `1Gi` | Uploads in memory are capped at 256 MB (`src/store.ts`); no browser in this image. |
 | `--service-account` | its own account | Reads its secret and invokes the PDF renderer; nothing else. |
-| `--set-env-vars` | `BACKEND=gemini,STORE=memory,GEMINI_SPEND_PER_HOUR=10,PDF_URL=<PDF renderer URL>,PDF_AUTH=id-token` | Without `BACKEND`/`STORE` the server starts in file mode. `PORT` is set by Cloud Run. |
+| `--set-env-vars` | `BACKEND=gemini,STORE=memory,GEMINI_SPEND_PER_HOUR=1,PDF_URL=<PDF renderer URL>,PDF_AUTH=id-token` | Without `BACKEND`/`STORE` the server starts in file mode. `PORT` is set by Cloud Run. |
 | `--set-secrets` | `GEMINI_API_KEY=<gemini key secret>:latest` | Secrets stay in Secret Manager. The handoff to kocha (`docs/kocha-handoff.md`) adds `KOCHA_HANDOFF_URL` and a `KOCHA_HANDOFF_SECRET` secret. Set `--set-env-vars GA_MEASUREMENT_ID=G-XXXXXXXXXX` to turn on Google Analytics 4 (page views and a few events without personal data); empty means no Google script and the CSP stays closed to Google. |
 
 ## Outside the app
@@ -46,16 +46,23 @@ Images go to the project's Artifact Registry; deploy with a project-scoped deplo
 
 ## What the app enforces itself
 
-- One conversation per browser (HttpOnly cookie); idle sessions dropped after 6 hours. The
+- One conversation per browser (HttpOnly cookie, `__Host-` prefixed over HTTPS, signed with a per-process secret, so a restart gives every browser a fresh session; reading creates no session); idle sessions dropped after 6 hours. The
   server holds it in memory only while active: the page saves a copy (thread in localStorage, CV
-  PDF in IndexedDB) until "start over" and restores it through `POST /api/restore` (validated and
-  size-capped, 10 per IP per hour), so a restart or scale to zero loses nothing.
+  PDF in IndexedDB) until "start over" or 3 days, and restores it through `POST /api/restore` (validated against the caps in
+  `docs/gemini-costs.md`, one intake, the same PDF token check as intake, 10 per IP per hour), so a restart or scale to zero loses nothing.
 - Per session: one answer at a time, at most 80 messages and 5 intakes, one PDF render at a
   time; a global PDF queue of 4.
-- Per client IP (last `x-forwarded-for` entry), per hour: 10 intakes, 60 messages, 10 handoffs; 60 handoffs
-  per hour overall (`src/limits.ts`), at most 4 handoffs built at once. Over a limit: 429.
-- Per process: the spend bucket ($10/hour, starts empty) and the 10-minute Gemini cache,
+- Per client IP (last `x-forwarded-for` entry; an IPv6 address counts as its /64), per hour: 10 intakes, 60 messages, 10 handoffs, 1200 message reads; 60 handoffs and 120 intakes
+  per hour overall (`src/limits.ts`), at most 4 handoffs built at once; and $0.50 of model spend in any 60 minutes
+  (`GEMINI_SPEND_PER_IP_HOUR`, reserved at the turn's worst case, settled to its real cost; a turn that fails midway is charged the whole reservation). Over a limit: 429. `/api/*` responses are `no-store`.
+- Per process: a rolling 60-minute spend ledger ($1 in any 60 minutes, starts empty; a turn reserves its
+  worst case of up to about $0.31, so the limit is never exceeded) and the 10-minute Gemini cache,
   deleted on SIGTERM after up to 8 s for answers in flight.
+- Per request, so one turn cannot send or receive unbounded tokens (`src/caps.ts`, values in
+  `docs/gemini-costs.md`): message 4,000 characters, job description 10,000, role 200, layout
+  report 8,000, CV PDF 5 MB and 4,000 tokens, conversation 16,000 estimated tokens per call
+  (oldest turns dropped), lookup 8,000 characters, 3 model calls per reply, 12,288 output
+  tokens per call (thinking included) and 8,192 for verification.
 - Security headers on every response; logs carry token counts and costs, not CV text.
 
 ## Moving past one instance

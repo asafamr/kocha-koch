@@ -43,7 +43,7 @@ one line), Hebrew plural address. Both runs below follow the grounding rules in
 | low | $0.039 | 56 s | all checks pass; 5 sources |
 
 High costs about 3.5 times medium and is slower; the grounding rules did most of the work.
-Medium is the default; set `GEMINI_THINKING_LEVEL` to high or low to trade depth for cost. While it thinks, the page shows the
+Medium is the default; set `GEMINI_THINKING_LEVEL` to high or low (anything else is medium) to trade depth for cost. While it thinks, the page shows the
 step, the seconds and the model's latest thought heading (streamed thought
 summaries), so a two-minute answer does not look stuck.
 
@@ -85,14 +85,48 @@ Before that, those turns sent the instructions inline and paid full input price 
 
 ## Spend limit
 
-`src/spend.ts` caps spend per process (one pod on Cloud Run) with a leaky bucket in dollars:
-each model turn adds its cost (from Gemini's token counts; creating or extending the cache adds its
-storage), and the bucket drains at `GEMINI_SPEND_PER_HOUR` (default $10). It holds at most
-`GEMINI_SPEND_BURST` (default one hour's worth) and starts empty, so a new pod has the full
-allowance. While it is full, new answers get "קוחה עמוסה כרגע" until it drains. Prices are
+`src/spend.ts` caps spend per process (one pod on Cloud Run) with a rolling 60-minute ledger in
+dollars: each model turn adds an entry with its cost (from Gemini's token counts; creating or
+extending the cache adds its storage), entries age out after 60 minutes, and the sum of any 60
+minutes never passes `GEMINI_SPEND_PER_HOUR` (default and hosted value $1). It starts empty, so a
+new pod has the full allowance.
+
+A turn does not start unless the last hour's entries, the reservations of turns in flight and its own
+worst case (`maxTurnCost`, computed from the caps below and the size of that turn's instructions and
+history) add up to at most the limit. It holds the reservation until it ends; real costs are counted
+as reported, so a running turn counts twice, which only errs on the safe side. While there is no
+room, new answers get "קוחה עמוסה כרגע" until entries age out. Prices are
 `GEMINI_PRICE_INPUT`, `GEMINI_PRICE_CACHED`, `GEMINI_PRICE_OUTPUT` and
 `GEMINI_PRICE_CACHE_STORAGE` ($ per 1M tokens); update them when prices change (they double on
-2027-01-01). Each turn's log line shows its cost and the bucket level.
+2027-01-01). Each turn's log line shows its cost and the last hour's total.
+
+Per client IP (`src/limits.ts`): the same rolling 60 minutes of model spend, `GEMINI_SPEND_PER_IP_HOUR`
+(default $0.50). A turn reserves its worst case against the IP and settles to its real cost (a failed turn keeps the whole reservation, on the global ledger too); an IPv6 client is its /64; an
+IP with less than $0.05 left gets 429 on intake and messages, and a turn that does not fit gets the
+busy reply. A normal turn costs $0.01-0.04 (see the benchmark), so one IP can do several CVs an hour.
+
+## Caps per request
+
+`src/caps.ts`; tokens are estimated as characters / 2, which overestimates both English and Hebrew.
+
+| Cap | Value | Where |
+|---|---|---|
+| One chat message | 4,000 characters | 400 "bad text" |
+| Job description | 10,000 characters | 400 at intake |
+| Target role | 200 characters | 400 at intake |
+| Hidden layout report (`context`) | 8,000 characters | 400 "bad context" |
+| CV PDF | 5 MB and 4,000 tokens (about 15 pages), counted by Gemini's free `countTokens` | 400 "cv too long" at intake and restore |
+| Restored thread | the same caps per message, role and job description; a restored reply (text, `cv`, `tips`) at most 49,152 characters; one intake | 400 at restore |
+| Conversation sent per model call | 16,000 estimated tokens; the oldest turns are dropped, the last is always kept | `firstKept` |
+| Lookup result | 8 ids, 8,000 characters per round, one lookup round per reply | cut |
+| Model calls per reply | 3 (lookup, answer, one JSON retry) | `CAPS.rounds` |
+| Output per call, thinking included | 12,288 tokens (`maxOutputTokens`); the stream is also dropped if it passes this | `generate` |
+| Thinking level | low, medium (default) or high; fit requests low; verification low | |
+| Verification call | output 8,192 tokens; sources are the latest intake and the last 20,000 characters of chat | `verifyCv` |
+
+Normal answers use 2-3k output and about 5k thinking tokens, under the cap. Worst case, about
+$0.31 per reply: 3 calls of about 38k input tokens and 12k output, the first call's output
+sent back to the others, plus the verification call. That is the amount a reply reserves at most.
 
 ## Not done yet
 
