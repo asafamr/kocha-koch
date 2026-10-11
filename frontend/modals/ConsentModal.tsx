@@ -4,9 +4,11 @@ import { Button } from "../components/Button";
 import { Checkbox } from "../components/Checkbox";
 
 import { CONSENT } from "../../src/consent";
+import { consentLabel } from "../pages/IntakeForm";
 
 // The consent, with the same versioned text as the intake form (src/consent.ts).
 export const CONSENT_LABEL = CONSENT.texts.cv_processing;
+const LABEL_NODE = consentLabel("cv_processing");
 
 export function ConsentModal({
   onContinue,
@@ -21,7 +23,7 @@ export function ConsentModal({
       <Block role="dialog" aria-modal="true" aria-label="הסכמה לשמירת מידע">
         <div style={{ display: "grid", gap: "1.5rem", justifyItems: "start" }}>
           <Checkbox
-            label={CONSENT_LABEL}
+            label={LABEL_NODE}
             checked={agreed}
             onChange={(e) => setAgreed(e.target.checked)}
             autoFocus
