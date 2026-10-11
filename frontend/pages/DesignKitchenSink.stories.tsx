@@ -82,6 +82,7 @@ function DesignKitchenSink() {
         <div style={{ display: "flex", gap: "1rem" }}>
           <Button>שליחה</Button>
           <Button variant="secondary">משני</Button>
+          <Button variant="dark">כהה</Button>
           <Button disabled>לא זמין</Button>
         </div>
       </section>

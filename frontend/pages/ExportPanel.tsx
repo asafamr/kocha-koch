@@ -5,8 +5,8 @@ import { Message } from "../components/Message";
 export type PdfState = { status: "idle" | "working" | "done" | "error"; text?: string };
 
 // Last stage, laid out like the intake form: kocha thanks the user, export buttons (PDF, HTML)
-// with the PDF's status under them, the questions to prepare for (`prep`), then the call to
-// action: practise those questions with kocha on camera at kocha.co.il. The PDF is rendered by
+// with the PDF's status under them, the call to action (practise with kocha on camera at
+// kocha.co.il), then the questions to prepare for (`prep`). The PDF is rendered by
 // the server (src/pdf.ts) the same way for every browser, then downloaded.
 export function ExportPanel({
   pdf,
@@ -31,26 +31,17 @@ export function ExportPanel({
         תודה שבניתם איתי את קורות החיים! הם מוכנים. אפשר לייצא אותם עכשיו ולהתחיל לשלוח. בהצלחה!
       </Message>
       <div className="export-actions">
-        <Button onClick={onExportPdf} disabled={pdf.status === "working"}>
+        <Button variant="dark" onClick={onExportPdf} disabled={pdf.status === "working"}>
           {pdf.status === "working" ? "מכין PDF…" : "ייצוא PDF"}
         </Button>
-        <Button onClick={onExportHtml}>ייצוא HTML</Button>
+        <Button variant="dark" onClick={onExportHtml}>ייצוא HTML</Button>
       </div>
       <p className={`export-status${pdf.status === "error" ? " is-error" : ""}`} role="status">
         {pdf.text}
       </p>
-      {prep && (
-        <>
-          <Message from="kocha">לפני שיחת הגיוס, אלה שאלות שכדאי להכין עליהן תשובה קצרה:</Message>
-          <h2 className="ds-sr-only">הכנה לשיחת הגיוס</h2>
-          {prep}
-        </>
-      )}
-      <Message from="kocha">
-        רוצים להגיע מוכנים? תרגלו איתי את השאלות האלה בראיון טכני מול מצלמה, בעברית. 15 דקות, בחינם.
-      </Message>
+      <Message from="kocha">לפני שאתם מגיעים לראיון בואו לתרגל איתי אחד מול המצלמה!</Message>
       <a
-        className="ds-button ds-button-secondary export-practice"
+        className="ds-button export-practice"
         href={practiceUrl}
         target="_blank"
         rel="noopener"
@@ -61,8 +52,15 @@ export function ExportPanel({
           onPractice();
         }}
       >
-        לתרגול ב־kocha.co.il
+        קבע ראיון עם קוחה
       </a>
+      {prep && (
+        <>
+          <Message from="kocha">לפני שיחת הגיוס, אלה שאלות שכדאי להכין עליהן תשובה קצרה:</Message>
+          <h2 className="ds-sr-only">הכנה לשיחת הגיוס</h2>
+          {prep}
+        </>
+      )}
     </div>
   );
 }
