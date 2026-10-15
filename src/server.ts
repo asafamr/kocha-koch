@@ -244,10 +244,16 @@ async function api(req: Request, pathname: string, s: Session): Promise<Response
 // Security headers on every response outside dev (dev's hot reload needs looser rules). The page
 // loads only its own bundle, fonts and images (plus Google Analytics when GA_MEASUREMENT_ID is
 // set); inline styles are React style props.
-const GA_HOSTS = "https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com";
+// gtag also reports to the apex analytics.google.com and, when Ads-linked, to google.com, doubleclick.net
+// and your country's google TLD (.co.il here); change that one if you serve elsewhere.
+const GA_HOSTS =
+  "https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com " +
+  "https://*.googletagmanager.com https://*.doubleclick.net https://www.google.com https://www.google.co.il " +
+  "https://www.googleadservices.com";
+const GA_SCRIPT_HOSTS = "https://*.googletagmanager.com https://googleads.g.doubleclick.net https://www.googleadservices.com";
 const CSP = [
   "default-src 'self'",
-  `script-src 'self'${GA_ID ? " https://www.googletagmanager.com" : ""}`,
+  `script-src 'self'${GA_ID ? " " + GA_SCRIPT_HOSTS : ""}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob:${GA_ID ? " " + GA_HOSTS : ""}`,
   "font-src 'self' data:",
