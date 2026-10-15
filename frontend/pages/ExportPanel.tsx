@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { Button } from "../components/Button";
+import { Checkbox } from "../components/Checkbox";
 import { Message } from "../components/Message";
+import { consentLabel } from "./IntakeForm";
 
 export type PdfState = { status: "idle" | "working" | "done" | "error"; text?: string };
 
@@ -15,6 +17,7 @@ export function ExportPanel({
   practiceUrl,
   onPractice,
   onPracticeClick,
+  consent,
   prep,
 }: {
   prep?: ReactNode;
@@ -24,6 +27,7 @@ export function ExportPanel({
   practiceUrl: string; // kocha.co.il, where she runs a practice interview on camera
   onPractice?: () => void; // hands the CVs over first (src/kocha.ts); the link is the fallback
   onPracticeClick?: () => void; // every click, whether or not the CVs are handed over
+  consent?: { checked: boolean; onChange: (checked: boolean) => void }; // asked of users who did not agree at intake; practice waits for it
 }) {
   return (
     <div className="intake export-panel">
@@ -40,20 +44,29 @@ export function ExportPanel({
         {pdf.text}
       </p>
       <Message from="kocha">לפני שאתם מגיעים לראיון בואו לתרגל איתי אחד מול המצלמה!</Message>
-      <a
-        className="ds-button export-practice"
-        href={practiceUrl}
-        target="_blank"
-        rel="noopener"
-        onClick={(e) => {
-          onPracticeClick?.();
-          if (!onPractice) return;
-          e.preventDefault();
-          onPractice();
-        }}
-      >
-        קבע ראיון עם קוחה
-      </a>
+      {consent && (
+        <Checkbox label={consentLabel("cv_processing")} checked={consent.checked} onChange={(e) => consent.onChange(e.target.checked)} />
+      )}
+      {consent && !consent.checked ? (
+        <Button className="export-practice" disabled>
+          קבע ראיון עם קוחה
+        </Button>
+      ) : (
+        <a
+          className="ds-button export-practice"
+          href={practiceUrl}
+          target="_blank"
+          rel="noopener"
+          onClick={(e) => {
+            onPracticeClick?.();
+            if (!onPractice) return;
+            e.preventDefault();
+            onPractice();
+          }}
+        >
+          קבע ראיון עם קוחה
+        </a>
+      )}
       {prep && (
         <>
           <Message from="kocha">לפני שיחת הגיוס, אלה שאלות שכדאי להכין עליהן תשובה קצרה:</Message>

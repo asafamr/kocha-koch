@@ -26,7 +26,7 @@ export type Api = {
   pdf(html: string): Promise<Blob>; // self-contained CV HTML (cv/exportHtml.ts) -> PDF
   reset(): Promise<void>; // start over: the server archives the conversation
   restore(thread: SavedItem[], pdf: Blob | null): Promise<void>; // hosted app: rebuild a conversation the server forgot from the copy saved in this browser (src/restore.ts)
-  handoff(body: { document: unknown; html: string }): Promise<string>; // kocha.co.il join link with the CVs (src/kocha.ts)
+  handoff(body: { document: unknown; html: string; consents?: ConsentPurpose[] }): Promise<string>; // kocha.co.il join link with the CVs (src/kocha.ts)
 };
 
 export class RateLimited extends Error {}

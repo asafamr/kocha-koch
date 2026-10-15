@@ -1,5 +1,6 @@
 import { createHmac } from "node:crypto";
 import { htmlToPdf, PdfBusy } from "./pdf";
+import type { ConsentRecord } from "./consent";
 import { getUpload, thread } from "./store";
 
 // Handing a user to kocha.co.il (docs/kocha-handoff.md). When the user agreed to share their CVs
@@ -29,17 +30,20 @@ let building = 0;
 
 type CvDocument = { data?: { name?: unknown; contact?: { email?: unknown } } };
 
-export async function handoff(session: string, document: CvDocument, html: string): Promise<string> {
+export async function handoff(session: string, document: CvDocument, html: string, given: ConsentRecord[] = []): Promise<string> {
   const items = await thread(session);
   const intake = items.filter((m) => m.intake).at(-1)?.intake;
-  if (!intake?.consents?.some((c) => c.purpose === "cv_processing")) throw new NoConsent();
+  if (!intake) throw new NoConsent();
+  const byPurpose = new Map([...given, ...intake.consents].map((c) => [c.purpose, c]));
+  const consents = [...byPurpose.values()];
+  if (!consents.some((c) => c.purpose === "cv_processing")) throw new NoConsent();
 
   const key = new Bun.CryptoHasher("sha256").update(JSON.stringify(document)).digest("hex");
   const previous = done.get(session);
   if (previous?.key === key) return previous.url;
   if (building >= MAX_BUILDS) throw new PdfBusy();
   building++;
-  const url = send(session, intake, latestTips(items), document, html);
+  const url = send(session, { ...intake, consents }, latestTips(items), document, html);
   done.set(session, { key, url });
   url.then(() => building--, () => building--);
   url.catch(() => {

@@ -301,11 +301,17 @@ export function AppPage({
   // Users who agreed to share their CVs with kocha (consent cv_processing) send them on export
   // too, in the background; the server reuses the result for an unchanged CV, so a later practice
   // click adds nothing. A failure never affects the download.
-  const sharesCvs = messages.some((m) => m.intake?.consents?.some((c) => c.purpose === "cv_processing"));
+  // A user who did not agree at intake can agree on the export page; the server keeps nothing of
+  // that, so every handoff then carries it.
+  const [lateConsent, setLateConsent] = useState(false);
+  const agreedAtIntake = messages.some((m) => m.intake?.consents?.some((c) => c.purpose === "cv_processing"));
+  const askLate = Boolean(snapshot?.handoff) && !agreedAtIntake;
+  const sharesCvs = agreedAtIntake || (askLate && lateConsent);
+  const handoffCv = async (d: CvDocument) =>
+    api.handoff({ document: d, html: await cvHtmlFile(d), ...(askLate ? { consents: ["cv_processing" as const] } : {}) });
   function shareWithKocha(d: CvDocument) {
     if (!sharesCvs) return;
-    cvHtmlFile(d)
-      .then((html) => api.handoff({ document: d, html }))
+    handoffCv(d)
       .catch(() => {});
   }
 
@@ -343,7 +349,7 @@ export function AppPage({
     if (tab) tab.opener = null;
     let url = kochaUrl("export");
     try {
-      url = await api.handoff({ document: d, html: await cvHtmlFile(d) });
+      url = await handoffCv(d);
     } catch {
       // plain link
     }
@@ -369,6 +375,7 @@ export function AppPage({
     }
     if (persistKey) await clearSaved(persistKey);
     setUnsent(null);
+    setLateConsent(false);
     setSnapshot((s) => ({ backend: s?.backend ?? "", handoff: s?.handoff, messages: [] }));
     setStage(0);
     setTemplate(TEMPLATE_NAMES[0]);
@@ -428,6 +435,7 @@ export function AppPage({
               }}
               practiceUrl={kochaUrl("export")}
               onPractice={sharesCvs ? () => practice(doc) : undefined}
+              consent={askLate ? { checked: lateConsent, onChange: setLateConsent } : undefined}
               onPracticeClick={() => track("cv_practice_click", { shared: sharesCvs, transport_type: "beacon" })}
             />
           ) : (

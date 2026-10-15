@@ -11,6 +11,9 @@ recorded, and the practice button is a plain tracked link to `https://kocha.co.i
   (optional, independent). Each has its own text, both under version `cv-4`. The server records
   each ticked purpose with version, time, IP and user agent in the intake message. The texts are
   registered with kocha under that version: change a text only with a new version.
+  A user who did not tick `cv_processing` sees that box again above the practice button on the
+  export screen, which stays disabled until it is ticked; `POST /api/handoff` then takes
+  `consents: ["cv_processing"]` and records it with `page: "export"`, merged with the intake's.
 - `src/kocha.ts` and `POST /api/handoff`: on export (PDF or HTML, in the background) and on the
   practice click, if the user ticked `cv_processing`, build the payload below from the session's
   intake upload, the latest tips any reply sent, as `prep` (left out if none, not an object, or over 64 KB), the CV document and a PDF rendered here, sign it, POST it to

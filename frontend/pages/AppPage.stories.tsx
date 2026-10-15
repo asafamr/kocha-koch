@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { AppPage } from "./AppPage";
-import { fakeApi, OVERFLOW_THREAD, SAMPLE_THREAD } from "./fakeApi";
+import { CONSENTED_THREAD, fakeApi, OVERFLOW_THREAD, SAMPLE_THREAD } from "./fakeApi";
 
 const meta = {
   title: "Pages/App",
@@ -14,5 +14,7 @@ export const Intake: Story = { args: { initialStage: 0, api: fakeApi([]) } };
 export const CvAndChat: Story = { args: { initialStage: 1, api: fakeApi(SAMPLE_THREAD) } };
 export const Waiting: Story = { args: { initialStage: 1, api: fakeApi([{ ...SAMPLE_THREAD[0], reply: null }]) } };
 export const Design: Story = { args: { initialStage: 2, api: fakeApi(SAMPLE_THREAD) } };
-export const Export: Story = { args: { initialStage: 3, api: fakeApi(SAMPLE_THREAD) } };
+// No consent at intake: the box is unticked and the practice button disabled.
+export const ExportUnconsented: Story = { args: { initialStage: 3, api: fakeApi(SAMPLE_THREAD) } };
+export const ExportConsented: Story = { args: { initialStage: 3, api: fakeApi(CONSENTED_THREAD) } };
 export const DesignOverflow: Story = { args: { initialStage: 2, api: fakeApi(OVERFLOW_THREAD) } };

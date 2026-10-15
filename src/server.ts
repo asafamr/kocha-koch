@@ -81,6 +81,18 @@ async function postMessage(req: Request, s: Session) {
 // The intake form: target role, optional job description, consent, and the current CV as a PDF.
 // The PDF is saved under uploads/ and the message carries its path for the agent to read.
 const MAX_PDF = 5 * 1024 * 1024;
+function consentRecords(purposes: unknown, req: Request, ip: string, page: string): ConsentRecord[] {
+  const now = new Date().toISOString();
+  return (Array.isArray(purposes) ? purposes : []).filter(isPurpose).map((purpose) => ({
+    purpose,
+    version: CONSENT.version,
+    grantedAt: now,
+    ip,
+    userAgent: (req.headers.get("user-agent") ?? "").slice(0, 300),
+    page,
+  }));
+}
+
 async function postIntake(req: Request, s: Session) {
   const form = await req.formData().catch(() => null);
   const role = String(form?.get("role") ?? "").trim();
@@ -93,15 +105,7 @@ async function postIntake(req: Request, s: Session) {
   } catch {
     // no consent
   }
-  const now = new Date().toISOString();
-  const consents: ConsentRecord[] = (Array.isArray(purposes) ? purposes : []).filter(isPurpose).map((purpose) => ({
-    purpose,
-    version: CONSENT.version,
-    grantedAt: now,
-    ip: s.ip,
-    userAgent: (req.headers.get("user-agent") ?? "").slice(0, 300),
-    page: "intake",
-  }));
+  const consents = consentRecords(purposes, req, s.ip, "intake");
   const utm = parseUtm(form?.get("utm"));
   const cv = form?.get("cv");
   if (!role || role.length > CAPS.role || jobDescription.length > CAPS.jobDescription) {
@@ -195,7 +199,8 @@ async function postPdf(req: Request, s: Session) {
 }
 
 // The practice button: hand the user to kocha.co.il with their CVs (src/kocha.ts). The body is
-// the CV document and its self-contained HTML (for the PDF). Without the feature or consent the
+// the CV document and its self-contained HTML (for the PDF), plus `consents` given on the export page
+// by users who did not tick the box at intake. Without the feature or consent the
 // page falls back to the plain link; errors are logged, never shown.
 async function postHandoff(req: Request, s: Session) {
   if (!handoffEnabled) return Response.json({ error: "off" }, { status: 404 });
@@ -205,7 +210,7 @@ async function postHandoff(req: Request, s: Session) {
     return Response.json({ error: "bad request" }, { status: 400 });
   }
   try {
-    return Response.json({ url: await handoff(s.id, body.document, body.html) });
+    return Response.json({ url: await handoff(s.id, body.document, body.html, consentRecords(body.consents, req, s.ip, "export")) });
   } catch (e) {
     if (e instanceof NoConsent) return Response.json({ error: "no consent" }, { status: 403 });
     if (e instanceof PdfBusy) return Response.json({ error: "busy" }, { status: 429 });
