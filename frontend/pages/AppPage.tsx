@@ -28,6 +28,7 @@ import { kochaUrl } from "../links";
 import { clearSaved, loadPdf, loadThread, saveThread, savePdf, toSaved } from "../persist";
 import { ExportPanel, type PdfState } from "./ExportPanel";
 import { IntakeForm } from "./IntakeForm";
+import { Reading } from "./Reading";
 
 const STAGES = ["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"];
 const TEMPLATE_NAMES = Object.keys(TEMPLATES) as TemplateName[];
@@ -35,7 +36,6 @@ const PALETTE_NAMES = Object.keys(PALETTES) as PaletteName[];
 const TYPOGRAPHY_NAMES = Object.keys(TYPOGRAPHY) as TypographyName[];
 const MAX_AUTO_FITS = 2;
 const AUTO_FIT_SETTLE_MS = 2000;
-const READING = "קוחה קוראת את קורות החיים ותחזור עם גרסה ראשונה…";
 
 type Saved = {
   stage?: number;
@@ -301,11 +301,17 @@ export function AppPage({
   // Users who agreed to share their CVs with kocha (consent cv_processing) send them on export
   // too, in the background; the server reuses the result for an unchanged CV, so a later practice
   // click adds nothing. A failure never affects the download.
-  const sharesCvs = messages.some((m) => m.intake?.consents?.some((c) => c.purpose === "cv_processing"));
+  // A user who did not agree at intake can agree on the export page; the server keeps nothing of
+  // that, so every handoff then carries it.
+  const [lateConsent, setLateConsent] = useState(false);
+  const agreedAtIntake = messages.some((m) => m.intake?.consents?.some((c) => c.purpose === "cv_processing"));
+  const askLate = Boolean(snapshot?.handoff) && !agreedAtIntake;
+  const sharesCvs = agreedAtIntake || (askLate && lateConsent);
+  const handoffCv = async (d: CvDocument) =>
+    api.handoff({ document: d, html: await cvHtmlFile(d), ...(askLate ? { consents: ["cv_processing" as const] } : {}) });
   function shareWithKocha(d: CvDocument) {
     if (!sharesCvs) return;
-    cvHtmlFile(d)
-      .then((html) => api.handoff({ document: d, html }))
+    handoffCv(d)
       .catch(() => {});
   }
 
@@ -343,7 +349,7 @@ export function AppPage({
     if (tab) tab.opener = null;
     let url = kochaUrl("export");
     try {
-      url = await api.handoff({ document: d, html: await cvHtmlFile(d) });
+      url = await handoffCv(d);
     } catch {
       // plain link
     }
@@ -369,6 +375,7 @@ export function AppPage({
     }
     if (persistKey) await clearSaved(persistKey);
     setUnsent(null);
+    setLateConsent(false);
     setSnapshot((s) => ({ backend: s?.backend ?? "", handoff: s?.handoff, messages: [] }));
     setStage(0);
     setTemplate(TEMPLATE_NAMES[0]);
@@ -428,10 +435,11 @@ export function AppPage({
               }}
               practiceUrl={kochaUrl("export")}
               onPractice={sharesCvs ? () => practice(doc) : undefined}
+              consent={askLate ? { checked: lateConsent, onChange: setLateConsent } : undefined}
               onPracticeClick={() => track("cv_practice_click", { shared: sharesCvs, transport_type: "beacon" })}
             />
           ) : (
-            <p className="ds-prep-empty">{READING}</p>
+            <Reading />
           )}
         </section>
       ) : (
@@ -454,11 +462,11 @@ export function AppPage({
                       חזרה
                     </Button>
                   )}
-                  <Button onClick={() => setStage(stage + 1)}>הבא</Button>
+                  <Button onClick={() => setStage(stage + 1)} disabled={!doc}>הבא</Button>
                 </div>
               </div>
               {!doc ? (
-                <p className="ds-prep-empty">{READING}</p>
+                <Reading />
               ) : stage === 1 ? (
                 // Fine-tuning: plain structured content. tabIndex: scrollable regions need keyboard access.
                 <div className="app-page-cv-body">
@@ -531,17 +539,25 @@ export function AppPage({
             </Block>
           </section>
 
-          <Segmented
-            className="app-page-panes"
-            label="תצוגה"
-            value={pane}
-            options={[
-              { value: "cv", label: "קורות חיים" },
-              { value: "chat", label: "צ'אט", dot: unread },
-            ]}
-            dotLabel="הודעה חדשה"
-            onChange={setPane}
-          />
+          {/* Phones only: the pane toggle with Back and Next, one bar in thumb reach. */}
+          <div className="app-page-bar">
+            {stage > 1 && (
+              <Button variant="secondary" onClick={() => setStage(stage - 1)}>
+                חזרה
+              </Button>
+            )}
+            <Segmented
+              label="תצוגה"
+              value={pane}
+              options={[
+                { value: "cv", label: "קורות חיים" },
+                { value: "chat", label: "צ'אט", dot: unread },
+              ]}
+              dotLabel="הודעה חדשה"
+              onChange={setPane}
+            />
+            <Button onClick={() => setStage(stage + 1)} disabled={!doc}>הבא</Button>
+          </div>
         </>
       )}
       <footer className="app-page-footer">

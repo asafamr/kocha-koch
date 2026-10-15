@@ -5,7 +5,7 @@ import { FileInput } from "../components/FileInput";
 import { Message } from "../components/Message";
 import { TextArea } from "../components/TextArea";
 import { TextField } from "../components/TextField";
-import { kochaUrl, REPO_URL } from "../links";
+import { REPO_URL } from "../links";
 import { CONSENT, PRIVACY_LINK_TEXT, PRIVACY_URL, type ConsentPurpose } from "../../src/consent";
 
 const privacyLink = (
@@ -24,8 +24,8 @@ const purposes = Object.keys(CONSENT.texts) as ConsentPurpose[];
 
 export type Intake = { cv: File; role: string; jobDescription: string; consents: ConsentPurpose[] };
 
-// Stage 1: kocha's opening words, then current CV, target role, optional job description, consent.
-// Next is enabled once a CV file and a target role are present.
+// Stage 1: kocha's instruction, then current CV, target role, optional job description (folded), consent.
+// Next is enabled once a CV file and a target role are present; on phones it is pinned to the bottom.
 // The consent box is shown only with `askConsent` (the server has the handoff to kocha on).
 export function IntakeForm({
   onNext,
@@ -49,23 +49,7 @@ export function IntakeForm({
 
   return (
     <form className="intake" onSubmit={submit}>
-      <Message from="kocha">
-        היי, אני קוחה, מאמנת הראיונות של{" "}
-        <a href={kochaUrl("intake")} target="_blank" rel="noopener">
-          kocha.co.il
-        </a>
-        . כאן אני עוזרת לכם לבנות קורות חיים שמתאימים בדיוק לתפקיד שאתם מחפשים, ואחר כך אפשר גם לתרגל איתי ראיון טכני
-        מול מצלמה.
-      </Message>
-      <Message from="kocha">
-        כדי להתחיל, העלו את קורות החיים הנוכחיים שלכם וכתבו לאיזה תפקיד אתם מכוונים. אם יש לכם את תיאור המשרה המלא,
-        הדביקו אותו למטה. זה יעזור להתאים את קורות החיים בדיוק למשרה המיועדת.
-      </Message>
-      <Message from="kocha">
-        טיפ: כדאי ליצור גרסה נפרדת של קורות החיים לכל משרה שאתם מגישים אליה. מערכות סינון אוטומטיות ומגייסים מחפשים את
-        המילים והכישורים שמופיעים בתיאור המשרה, וגרסה מותאמת מציגה קודם את הניסיון הכי רלוונטי לתפקיד. כך קל יותר לראות
-        שאתם מתאימים.
-      </Message>
+      <Message from="kocha">כדי להתחיל, העלו את קורות החיים הנוכחיים שלכם וכתבו לאיזה תפקיד אתם מכוונים.</Message>
 
       <FileInput label="קורות חיים נוכחיים (PDF)" accept="application/pdf" file={cv} onChange={setCv} />
       <TextField
@@ -75,12 +59,15 @@ export function IntakeForm({
         onChange={(e) => setRole(e.target.value)}
         required
       />
-      <TextArea
-        label="תיאור המשרה המלא (לא חובה)"
-        placeholder="הדביקו כאן את תיאור המשרה"
-        value={jobDescription}
-        onChange={(e) => setJobDescription(e.target.value)}
-      />
+      <details className="intake-more">
+        <summary>תיאור המשרה המלא (לא חובה)</summary>
+        <TextArea
+          label="תיאור המשרה המלא (לא חובה)"
+          placeholder="הדביקו כאן את תיאור המשרה"
+          value={jobDescription}
+          onChange={(e) => setJobDescription(e.target.value)}
+        />
+      </details>
       {askConsent &&
         purposes.map((purpose) => (
           <Checkbox
@@ -98,9 +85,11 @@ export function IntakeForm({
         </a>
         .
       </p>
-      <Button type="submit" disabled={!ready || sending} style={{ justifySelf: "center" }}>
-        הבא
-      </Button>
+      <div className="intake-bar">
+        <Button type="submit" disabled={!ready || sending}>
+          הבא
+        </Button>
+      </div>
     </form>
   );
 }

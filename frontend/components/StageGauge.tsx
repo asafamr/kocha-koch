@@ -1,5 +1,6 @@
 // Progress through ordered stages: circles on a line, filled up to the current stage.
 // Follows page direction (RTL: first stage on the right).
+// On phones it shrinks to one line: the dots, and the current stage with its count.
 // With `onSelect`, stages that `canSelect` allows are buttons that jump to that stage.
 export function StageGauge({
   stages,
@@ -20,7 +21,8 @@ export function StageGauge({
         const content = (
           <>
             <span className="ds-stages-dot" aria-hidden="true" />
-            {name}
+            <span className="ds-stages-name">{name}</span>
+            {i === current && <span className="ds-stages-count" aria-hidden="true">{i + 1}/{stages.length}</span>}
           </>
         );
         return (

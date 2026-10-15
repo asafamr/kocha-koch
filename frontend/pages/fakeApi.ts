@@ -47,3 +47,13 @@ const longCv = {
 export const OVERFLOW_THREAD: ThreadItem[] = [
   { ...SAMPLE_THREAD[0], reply: { ...SAMPLE_THREAD[0].reply!, cv: { data: longCv } } },
 ];
+
+export const CONSENTED_THREAD: ThreadItem[] = [
+  {
+    ...SAMPLE_THREAD[0],
+    intake: {
+      ...SAMPLE_THREAD[0].intake!,
+      consents: [{ purpose: "cv_processing", version: "cv-4", grantedAt: ts, ip: "", userAgent: "", page: "intake" }],
+    },
+  },
+];

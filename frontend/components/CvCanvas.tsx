@@ -7,14 +7,15 @@ const PHONE = 700;
 const clamp = (z: number) => Math.min(MAX, Math.max(MIN, z));
 
 // A page (e.g. a CV) on a gray canvas with zoom and pan, like a design tool.
-// Drag or wheel to pan, Ctrl/Cmd + wheel to zoom at the cursor, tray buttons to zoom/fit.
+// Drag or wheel to pan, Ctrl/Cmd + wheel or a two-finger pinch to zoom, tray buttons to zoom/fit
+// (phones show only the `controls`).
 // `controls` (e.g. template/palette pickers) sit at the start of the tray, top-right.
 // Keyboard (canvas focused): arrows pan, + / - zoom, 0 fits.
 export function CvCanvas({ label, controls, children }: { label: string; controls?: ReactNode; children: ReactNode }) {
   const viewport = useRef<HTMLDivElement>(null);
   const page = useRef<HTMLDivElement>(null);
   const tray = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ x: number; y: number } | null>(null);
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
   const [view, setView] = useState({ zoom: 1, x: 0, y: 0 });
   const viewRef = useRef(view);
   viewRef.current = view;
@@ -75,17 +76,28 @@ export function CvCanvas({ label, controls, children }: { label: string; control
     return () => v.removeEventListener("wheel", onWheel);
   }, [zoomTo]);
 
+  // One pointer pans; two pointers (a pinch on a phone) zoom around their midpoint.
   function onPointerDown(e: PointerEvent<HTMLDivElement>) {
     if ((e.target as HTMLElement).closest(".ds-canvas-tray")) return;
-    drag.current = { x: e.clientX - view.x, y: e.clientY - view.y };
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     e.currentTarget.setPointerCapture(e.pointerId);
   }
   function onPointerMove(e: PointerEvent<HTMLDivElement>) {
-    const d = drag.current;
-    if (d) setPan(() => ({ x: e.clientX - d.x, y: e.clientY - d.y }));
+    const prev = pointers.current.get(e.pointerId);
+    if (!prev) return;
+    const next = { x: e.clientX, y: e.clientY };
+    pointers.current.set(e.pointerId, next);
+    const other = [...pointers.current].find(([id]) => id !== e.pointerId)?.[1];
+    if (!other) {
+      setPan((p) => ({ x: p.x + next.x - prev.x, y: p.y + next.y - prev.y }));
+      return;
+    }
+    const r = e.currentTarget.getBoundingClientRect();
+    const spread = (a: { x: number; y: number }) => Math.hypot(a.x - other.x, a.y - other.y) || 1;
+    zoomTo(viewRef.current.zoom * (spread(next) / spread(prev)), (next.x + other.x) / 2 - r.left, (next.y + other.y) / 2 - r.top);
   }
-  function onPointerUp() {
-    drag.current = null;
+  function onPointerUp(e: PointerEvent<HTMLDivElement>) {
+    pointers.current.delete(e.pointerId);
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
