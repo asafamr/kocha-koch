@@ -3,7 +3,8 @@
 // `evidence` holds sources from docs/cv-weak-points-research.md and docs/cv-knowledge-base.md,
 // added whenever one exists; an item without sources shows no sources toggle.
 // Each group renders only when given: the app shows strengths and job fit in the fine-tuning
-// drawer (they improve the CV) and the questions on the export page (they prepare for the call).
+// drawer (they improve the CV) and the questions on the export page (they prepare for the call;
+// there each shows only its question until opened).
 export type PrepEvidence = { label: string; url: string };
 export type PrepPoint = {
   id: string;
@@ -53,7 +54,7 @@ export function PrepPoints({
           {points.length === 0 ? (
             <p className="ds-prep-empty">אין כרגע שאלות להתכונן אליהן.</p>
           ) : (
-            <PointList points={points} onDismiss={onDismiss} />
+            <PointList points={points} onDismiss={onDismiss} collapsed />
           )}
         </section>
       )}
@@ -61,22 +62,39 @@ export function PrepPoints({
   );
 }
 
-function PointList({ points, onDismiss }: { points: PrepPoint[]; onDismiss: (id: string) => void }) {
+// `collapsed`: only the question shows; the answer opens on tap.
+function PointList({ points, onDismiss, collapsed = false }: { points: PrepPoint[]; onDismiss: (id: string) => void; collapsed?: boolean }) {
   return (
-          <ul className="ds-prep-points">
-            {points.map((p) => (
-              <li key={p.id}>
+    <ul className="ds-prep-points">
+      {points.map((p) => {
+        const body = (
+          <>
+            <p className="ds-prep-prepare">{p.prepare}</p>
+            <Sources evidence={p.evidence} />
+            <div className="ds-prep-foot">
+              <button type="button" onClick={() => onDismiss(p.id)} aria-label={`לא רלוונטי: ${p.question}`}>
+                לא רלוונטי
+              </button>
+            </div>
+          </>
+        );
+        return (
+          <li key={p.id}>
+            {collapsed ? (
+              <details className="ds-prep-more">
+                <summary className="ds-prep-question">{p.question}</summary>
+                {body}
+              </details>
+            ) : (
+              <>
                 <p className="ds-prep-question">{p.question}</p>
-                <p className="ds-prep-prepare">{p.prepare}</p>
-                <Sources evidence={p.evidence} />
-                <div className="ds-prep-foot">
-                  <button type="button" onClick={() => onDismiss(p.id)} aria-label={`לא רלוונטי: ${p.question}`}>
-                    לא רלוונטי
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+                {body}
+              </>
+            )}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

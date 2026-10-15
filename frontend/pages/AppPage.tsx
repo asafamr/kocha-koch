@@ -28,6 +28,7 @@ import { kochaUrl } from "../links";
 import { clearSaved, loadPdf, loadThread, saveThread, savePdf, toSaved } from "../persist";
 import { ExportPanel, type PdfState } from "./ExportPanel";
 import { IntakeForm } from "./IntakeForm";
+import { Reading } from "./Reading";
 
 const STAGES = ["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"];
 const TEMPLATE_NAMES = Object.keys(TEMPLATES) as TemplateName[];
@@ -35,7 +36,6 @@ const PALETTE_NAMES = Object.keys(PALETTES) as PaletteName[];
 const TYPOGRAPHY_NAMES = Object.keys(TYPOGRAPHY) as TypographyName[];
 const MAX_AUTO_FITS = 2;
 const AUTO_FIT_SETTLE_MS = 2000;
-const READING = "קוחה קוראת את קורות החיים ותחזור עם גרסה ראשונה…";
 
 type Saved = {
   stage?: number;
@@ -439,7 +439,7 @@ export function AppPage({
               onPracticeClick={() => track("cv_practice_click", { shared: sharesCvs, transport_type: "beacon" })}
             />
           ) : (
-            <p className="ds-prep-empty">{READING}</p>
+            <Reading />
           )}
         </section>
       ) : (
@@ -462,11 +462,11 @@ export function AppPage({
                       חזרה
                     </Button>
                   )}
-                  <Button onClick={() => setStage(stage + 1)}>הבא</Button>
+                  <Button onClick={() => setStage(stage + 1)} disabled={!doc}>הבא</Button>
                 </div>
               </div>
               {!doc ? (
-                <p className="ds-prep-empty">{READING}</p>
+                <Reading />
               ) : stage === 1 ? (
                 // Fine-tuning: plain structured content. tabIndex: scrollable regions need keyboard access.
                 <div className="app-page-cv-body">
@@ -539,17 +539,25 @@ export function AppPage({
             </Block>
           </section>
 
-          <Segmented
-            className="app-page-panes"
-            label="תצוגה"
-            value={pane}
-            options={[
-              { value: "cv", label: "קורות חיים" },
-              { value: "chat", label: "צ'אט", dot: unread },
-            ]}
-            dotLabel="הודעה חדשה"
-            onChange={setPane}
-          />
+          {/* Phones only: the pane toggle with Back and Next, one bar in thumb reach. */}
+          <div className="app-page-bar">
+            {stage > 1 && (
+              <Button variant="secondary" onClick={() => setStage(stage - 1)}>
+                חזרה
+              </Button>
+            )}
+            <Segmented
+              label="תצוגה"
+              value={pane}
+              options={[
+                { value: "cv", label: "קורות חיים" },
+                { value: "chat", label: "צ'אט", dot: unread },
+              ]}
+              dotLabel="הודעה חדשה"
+              onChange={setPane}
+            />
+            <Button onClick={() => setStage(stage + 1)} disabled={!doc}>הבא</Button>
+          </div>
         </>
       )}
       <footer className="app-page-footer">

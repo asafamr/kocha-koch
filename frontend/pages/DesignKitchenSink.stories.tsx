@@ -14,6 +14,7 @@ import { Highlight } from "../components/Highlight";
 import { Message } from "../components/Message";
 import { Paragraph } from "../components/Paragraph";
 import { PrepPoints } from "../components/PrepPoints";
+import { Progress } from "../components/Progress";
 import { PREP_SAMPLES } from "../components/prepPointsSample";
 import { Segmented } from "../components/Segmented";
 import { Select } from "../components/Select";
@@ -84,6 +85,7 @@ function DesignKitchenSink() {
           <Button>שליחה</Button>
           <Button variant="secondary">משני</Button>
           <Button variant="dark">כהה</Button>
+          <Button variant="link">קישור</Button>
           <Button disabled>לא זמין</Button>
         </div>
       </section>
@@ -100,6 +102,14 @@ function DesignKitchenSink() {
       <section style={section}>
         <Text variant="heading">מד שלבים</Text>
         <StageGauge label="שלבי העבודה" stages={["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"]} current={1} />
+      </section>
+
+      <section style={section}>
+        <Text variant="heading">התקדמות</Text>
+        <div style={{ maxInlineSize: 360 }}>
+          <span id="kitchen-progress" className="ds-sr-only">קוחה קוראת את קורות החיים ותחזור עם גרסה ראשונה…</span>
+          <Progress labelledBy="kitchen-progress" />
+        </div>
       </section>
 
       <section style={section}>
