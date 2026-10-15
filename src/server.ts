@@ -209,8 +209,10 @@ async function postHandoff(req: Request, s: Session) {
   if (!body?.document || typeof body.html !== "string" || body.html.length > MAX_HTML) {
     return Response.json({ error: "bad request" }, { status: 400 });
   }
+  // The export page only ever shows the CV-sharing box, so that is the only purpose it can grant.
+  const late = Array.isArray(body.consents) ? body.consents.filter((p: unknown) => p === "cv_processing") : [];
   try {
-    return Response.json({ url: await handoff(s.id, body.document, body.html, consentRecords(body.consents, req, s.ip, "export")) });
+    return Response.json({ url: await handoff(s.id, body.document, body.html, consentRecords(late, req, s.ip, "export")) });
   } catch (e) {
     if (e instanceof NoConsent) return Response.json({ error: "no consent" }, { status: 403 });
     if (e instanceof PdfBusy) return Response.json({ error: "busy" }, { status: 429 });
