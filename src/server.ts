@@ -324,7 +324,7 @@ async function serveStatic(pathname: string) {
 
 Bun.serve({
   port: PORT,
-  maxRequestBodySize: MAX_BODY,
+  maxRequestBodySize: Math.max(MAX_BODY, MAX_HTML * 2), // the largest body any route accepts: intake/restore or handoff
   development: DEV && { hmr: true },
   routes: DEV ? { "/": (await import("../frontend/index.html")).default } : undefined,
   async fetch(req, server) {
