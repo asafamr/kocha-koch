@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { httpApi, RateLimited, readCv, readTips, type Api, type Snapshot, type ThreadItem } from "../api";
+import { httpApi, IntakeError, RateLimited, readCv, readTips, type Api, type Snapshot, type ThreadItem } from "../api";
 import { Block } from "../components/Block";
 import { Button } from "../components/Button";
 import { ChatInput } from "../components/ChatInput";
@@ -389,7 +389,7 @@ export function AppPage({
     setConfirmReset(false);
   }
 
-  async function submitIntake(intake: Parameters<Api["sendIntake"]>[0]) {
+  async function submitIntake(intake: Parameters<Api["sendIntake"]>[0]): Promise<IntakeError["code"] | undefined> {
     setSending(true);
     setLimited(false);
     try {
@@ -398,6 +398,7 @@ export function AppPage({
       track("cv_intake_submitted");
       setStage(1);
     } catch (e) {
+      if (e instanceof IntakeError) return e.code;
       failAction(e);
     } finally {
       setSending(false);

@@ -14,3 +14,4 @@ export const Empty: Story = {};
 export const Chosen: Story = {
   args: { file: new File(["%PDF-1.4"], "cv-2026.pdf", { type: "application/pdf" }) },
 };
+export const WithError: Story = { args: { error: "הקובץ אינו קובץ PDF. אנא העלו את קורות החיים בפורמט PDF." } };

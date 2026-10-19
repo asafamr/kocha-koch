@@ -16,3 +16,4 @@ type Story = StoryObj<typeof meta>;
 
 export const Empty: Story = {};
 export const Scrolling: Story = { args: { defaultValue: longText } };
+export const WithError: Story = { args: { error: "תיאור המשרה ארוך מדי. אנא קצרו אותו." } };
