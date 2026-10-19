@@ -8,21 +8,28 @@ export function FileInput({
   file,
   onChange,
   prompt = "בחירת קובץ או גרירה לכאן",
+  error,
 }: {
   label: string;
   accept?: string;
   file: File | null;
   onChange: (file: File | null) => void;
   prompt?: string;
+  error?: string;
 }) {
   const id = useId();
   return (
     <div className="ds-field">
       <label htmlFor={id}>{label}</label>
       <div className={`ds-file${file ? " has-file" : ""}`}>
-        <input id={id} type="file" accept={accept} onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
+        <input id={id} type="file" accept={accept} aria-invalid={error ? true : undefined} aria-describedby={error ? `${id}-error` : undefined} onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
         <span aria-hidden="true">{file ? file.name : prompt}</span>
       </div>
+      {error && (
+        <p id={`${id}-error`} className="ds-error" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

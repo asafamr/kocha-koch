@@ -5,6 +5,7 @@ import type { CvData } from "./cv/data";
 import type { CvPatch, CvTheme } from "./cv/document";
 import type { ConsentPurpose } from "../src/consent";
 import type { ThreadItem } from "../src/store";
+import { INTAKE_CODES, type IntakeCode } from "../src/cvFile";
 
 export type { ThreadItem };
 export type Snapshot = { backend: string; handoff?: boolean; ga?: string; messages: ThreadItem[] }; // handoff: the consent box is shown; ga: Google Analytics id, if any
@@ -30,6 +31,18 @@ export type Api = {
 };
 
 export class RateLimited extends Error {}
+export type IntakeErrorCode = IntakeCode | "generic";
+export class IntakeError extends Error {
+  constructor(readonly code: IntakeErrorCode) {
+    super(`intake rejected: ${code}`);
+  }
+}
+async function intakeCode(res: Response): Promise<IntakeErrorCode> {
+  const body: unknown = await res.json().catch(() => null);
+  const code = typeof body === "object" && body !== null && "code" in body ? body.code : undefined;
+  const known = INTAKE_CODES.find((c) => c === code);
+  return known ?? (res.status === 413 ? "too_large" : "generic"); // the server's own body limit answers 413 without a body
+}
 const check = (res: Response, what: string) => {
   if (res.status === 429) throw new RateLimited(what);
   if (!res.ok) throw new Error(`${what} failed: ${res.status}`);
@@ -57,6 +70,7 @@ export const httpApi: Api = {
     form.set("consents", JSON.stringify(consents));
     form.set("utm", JSON.stringify(utmTags()));
     const res = await fetch("/api/intake", { method: "POST", body: form });
+    if ([400, 413, 502].includes(res.status)) throw new IntakeError(await intakeCode(res));
     check(res, "intake");
   },
   async pdf(html) {

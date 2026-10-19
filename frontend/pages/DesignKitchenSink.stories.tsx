@@ -131,8 +131,11 @@ function DesignKitchenSink() {
         <Text variant="heading">שדות טופס</Text>
         <div style={{ display: "grid", gap: "1rem", maxInlineSize: 480 }}>
           <FileInput label="קורות חיים נוכחיים (PDF)" accept="application/pdf" file={null} onChange={() => {}} />
+          <FileInput label="קורות חיים נוכחיים (PDF)" accept="application/pdf" file={null} onChange={() => {}} error="הקובץ אינו קובץ PDF. אנא העלו את קורות החיים בפורמט PDF." />
           <TextField label="תפקיד מבוקש" placeholder="למשל: מפתח פרונטאנד בכיר" />
+          <TextField label="תפקיד מבוקש" error="אנא כתבו לאיזה תפקיד אתם מכוונים." />
           <TextArea label="תיאור המשרה המלא (לא חובה)" placeholder="הדביקו כאן את תיאור המשרה" rows={3} />
+          <TextArea label="תיאור המשרה המלא (לא חובה)" rows={3} error="תיאור המשרה ארוך מדי. אנא קצרו אותו." />
           <Select label="תבנית" value="Ledger" options={["Ledger", "Sidebar", "Bars"]} onChange={() => {}} />
           <Select compact label="צבעים" value="Slate" options={["Ink", "Slate", "Cobalt"]} onChange={() => {}} />
         </div>

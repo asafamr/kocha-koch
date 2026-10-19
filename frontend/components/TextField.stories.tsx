@@ -11,3 +11,4 @@ type Story = StoryObj<typeof meta>;
 
 export const Empty: Story = {};
 export const Filled: Story = { args: { defaultValue: "מנהלת מוצר" } };
+export const WithError: Story = { args: { error: "אנא כתבו לאיזה תפקיד אתם מכוונים." } };

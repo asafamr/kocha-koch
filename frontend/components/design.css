@@ -208,6 +208,8 @@ body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/1.6 
 }
 .ds-input::placeholder { color: var(--muted); }
 .ds-input:focus-visible, .ds-file:focus-within { outline: 3px solid var(--audio); outline-offset: 2px; }
+.ds-error { margin: 0; font: 700 var(--fs-sm)/1.4 var(--f-body); color: var(--ink); }
+.ds-error::before { content: "! "; }
 .ds-textarea { resize: vertical; overflow-y: auto; }
 
 /* FileInput: transparent native input over a dashed box */

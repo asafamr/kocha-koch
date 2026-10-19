@@ -3,6 +3,7 @@ import { join, normalize } from "node:path";
 import { addMessage, addReply, resetStore, restoreThread, saveUpload, STORE, thread, type ThreadItem } from "./store";
 import { answer, deleteCache, pdfTokens, progress } from "./gemini";
 import { CAPS } from "./caps";
+import { cvProblem, MAX_PDF, type IntakeCode } from "./cvFile";
 import { CONSENT, isPurpose, type ConsentRecord } from "./consent";
 import { handoff, handoffEnabled, NoConsent } from "./kocha";
 import { GA_ID } from "./analytics";
@@ -80,7 +81,36 @@ async function postMessage(req: Request, s: Session) {
 
 // The intake form: target role, optional job description, consent, and the current CV as a PDF.
 // The PDF is saved under uploads/ and the message carries its path for the agent to read.
-const MAX_PDF = 5 * 1024 * 1024;
+const MAX_BODY = MAX_PDF + 4 * 1024 * 1024;
+const REJECTIONS: Record<IntakeCode, [number, string]> = {
+  role_missing: [400, "role is required"],
+  role_too_long: [400, "role is too long"],
+  job_description_too_long: [400, "job description is too long"],
+  cv_missing: [400, "cv is required"],
+  cv_empty: [400, "cv is empty"],
+  cv_too_big: [400, "cv must be up to 5 MB"],
+  cv_word: [400, "cv must be a PDF, not a Word file"],
+  cv_image: [400, "cv must be a PDF, not an image"],
+  cv_not_pdf: [400, "cv must be a PDF"],
+  cv_too_long: [400, "cv too long"],
+  cv_unreadable: [502, "cannot check the cv"],
+  too_large: [413, "too large"],
+};
+
+// One log line per rejection: fixed strings and numbers only, never user text.
+function reject(tag: "intake" | "restore", code: IntakeCode, size?: number, head?: Uint8Array) {
+  const hex = head ? Buffer.from(head.subarray(0, 4)).toString("hex") : "-";
+  console.log(`${tag} rejected: code=${code} size=${size ?? "-"} head=${hex || "-"}`);
+  const [status, error] = REJECTIONS[code];
+  return Response.json({ error, code }, { status });
+}
+
+const sizeProblem = (cv: File): IntakeCode | null => (cv.size === 0 ? "cv_empty" : cv.size > MAX_PDF ? "cv_too_big" : null);
+
+async function tokenProblem(bytes: Uint8Array): Promise<IntakeCode | null> {
+  const tokens = await pdfTokens(bytes).catch(() => null);
+  return tokens === null ? "cv_unreadable" : tokens > CAPS.pdfTokens ? "cv_too_long" : null;
+}
 function consentRecords(purposes: unknown, req: Request, ip: string, page: string): ConsentRecord[] {
   const now = new Date().toISOString();
   return (Array.isArray(purposes) ? purposes : []).filter(isPurpose).map((purpose) => ({
@@ -94,6 +124,8 @@ function consentRecords(purposes: unknown, req: Request, ip: string, page: strin
 }
 
 async function postIntake(req: Request, s: Session) {
+  const length = Number(req.headers.get("content-length") ?? 0);
+  if (length > MAX_BODY) return reject("intake", "too_large", length);
   const form = await req.formData().catch(() => null);
   const role = String(form?.get("role") ?? "").trim();
   const jobDescription = String(form?.get("jobDescription") ?? "").trim();
@@ -108,22 +140,21 @@ async function postIntake(req: Request, s: Session) {
   const consents = consentRecords(purposes, req, s.ip, "intake");
   const utm = parseUtm(form?.get("utm"));
   const cv = form?.get("cv");
-  if (!role || role.length > CAPS.role || jobDescription.length > CAPS.jobDescription) {
-    return Response.json({ error: "bad role or job description" }, { status: 400 });
-  }
-  if (!(cv instanceof File) || cv.size === 0 || cv.size > MAX_PDF) {
-    return Response.json({ error: "cv must be a PDF up to 5 MB" }, { status: 400 });
-  }
+  const size = cv instanceof File ? cv.size : undefined;
+  if (!role) return reject("intake", "role_missing", size);
+  if (role.length > CAPS.role) return reject("intake", "role_too_long", size);
+  if (jobDescription.length > CAPS.jobDescription) return reject("intake", "job_description_too_long", size);
+  if (!(cv instanceof File)) return reject("intake", "cv_missing");
+  const tooBig = sizeProblem(cv);
+  if (tooBig) return reject("intake", tooBig, cv.size);
   const limited = overLimit(await thread(s.id), true);
   if (limited) return limited;
   const bytes = new Uint8Array(await cv.arrayBuffer());
-  if (new TextDecoder().decode(bytes.subarray(0, 5)) !== "%PDF-") {
-    return Response.json({ error: "cv must be a PDF" }, { status: 400 });
-  }
+  const notPdf = cvProblem(bytes.subarray(0, 12));
+  if (notPdf) return reject("intake", notPdf, cv.size, bytes);
   if (BACKEND === "gemini") {
-    const tokens = await pdfTokens(bytes).catch(() => null);
-    if (tokens === null) return Response.json({ error: "cannot check the cv" }, { status: 502 });
-    if (tokens > CAPS.pdfTokens) return Response.json({ error: "cv too long" }, { status: 400 });
+    const bad = await tokenProblem(bytes);
+    if (bad) return reject("intake", bad, cv.size, bytes);
   }
   const cvFile = await saveUpload(s.id, "pdf", bytes);
   const text = [`תפקיד מבוקש: ${role}`, jobDescription ? "צירפתי את תיאור המשרה." : "", `קורות חיים: ${cv.name}`]
@@ -140,7 +171,8 @@ async function postIntake(req: Request, s: Session) {
 const restoring = new Set<string>();
 async function postRestore(req: Request, s: Session) {
   if (STORE !== "memory") return Response.json({ error: "not available" }, { status: 404 });
-  if (Number(req.headers.get("content-length") ?? 0) > MAX_PDF + 4 * 1024 * 1024) return Response.json({ error: "too large" }, { status: 413 });
+  const length = Number(req.headers.get("content-length") ?? 0);
+  if (length > MAX_BODY) return reject("restore", "too_large", length);
   const form = await req.formData().catch(() => null);
   let raw: unknown;
   try {
@@ -158,15 +190,16 @@ async function postRestore(req: Request, s: Session) {
   const cv = form?.get("cv");
   let pdf: Uint8Array | null = null;
   if (cv instanceof File) {
-    if (cv.size === 0 || cv.size > MAX_PDF) return Response.json({ error: "cv must be a PDF up to 5 MB" }, { status: 400 });
+    const tooBig = sizeProblem(cv);
+    if (tooBig) return reject("restore", tooBig, cv.size);
     pdf = new Uint8Array(await cv.arrayBuffer());
-    if (new TextDecoder().decode(pdf.subarray(0, 5)) !== "%PDF-") return Response.json({ error: "cv must be a PDF" }, { status: 400 });
+    const notPdf = cvProblem(pdf.subarray(0, 12));
+    if (notPdf) return reject("restore", notPdf, cv.size, pdf);
     if (!items.some((m) => m.intake)) pdf = null;
   }
   if (pdf && BACKEND === "gemini") {
-    const tokens = await pdfTokens(pdf).catch(() => null);
-    if (tokens === null) return Response.json({ error: "cannot check the cv" }, { status: 502 });
-    if (tokens > CAPS.pdfTokens) return Response.json({ error: "cv too long" }, { status: 400 });
+    const bad = await tokenProblem(pdf);
+    if (bad) return reject("restore", bad, pdf.length, pdf);
   }
 
   // The empty check and the write are one step: no await between the flag and the check's result.
@@ -291,6 +324,7 @@ async function serveStatic(pathname: string) {
 
 Bun.serve({
   port: PORT,
+  maxRequestBodySize: MAX_BODY,
   development: DEV && { hmr: true },
   routes: DEV ? { "/": (await import("../frontend/index.html")).default } : undefined,
   async fetch(req, server) {
