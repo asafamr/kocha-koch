@@ -30,7 +30,7 @@ import { ExportPanel, type PdfState } from "./ExportPanel";
 import { IntakeForm } from "./IntakeForm";
 import { Reading } from "./Reading";
 
-const STAGES = ["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"];
+const STAGES = ["קורות החיים שלכם", "עריכת תוכן", "עיצוב", "הורדה"];
 const TEMPLATE_NAMES = Object.keys(TEMPLATES) as TemplateName[];
 const PALETTE_NAMES = Object.keys(PALETTES) as PaletteName[];
 const TYPOGRAPHY_NAMES = Object.keys(TYPOGRAPHY) as TypographyName[];
@@ -317,7 +317,7 @@ export function AppPage({
 
   const [pdf, setPdf] = useState<PdfState>({ status: "idle" });
   async function exportPdf(d: CvDocument) {
-    setPdf({ status: "working", text: "מכין את קובץ ה־PDF…" });
+    setPdf({ status: "working", text: "מכינה את קובץ ה־PDF…" });
     try {
       const name = await downloadCvPdf(d, api.pdf);
       setPdf({ status: "done", text: `הקובץ ${name} ירד לתיקיית ההורדות.` });
