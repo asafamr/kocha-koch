@@ -52,7 +52,7 @@ export function PrepPoints({
         <section aria-label="שאלות שכדאי להתכונן אליהן">
           <h3 className="ds-prep-title">שאלות שכדאי להתכונן אליהן</h3>
           {points.length === 0 ? (
-            <p className="ds-prep-empty">אין כרגע שאלות להתכונן אליהן.</p>
+            <p className="ds-prep-empty">אין כרגע שאלות להצגה.</p>
           ) : (
             <PointList points={points} onDismiss={onDismiss} collapsed />
           )}

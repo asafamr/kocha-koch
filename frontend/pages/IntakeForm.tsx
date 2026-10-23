@@ -35,8 +35,8 @@ const MESSAGES: Record<IntakeErrorCode, string> = {
   cv_word: "נראה שזה קובץ Word. אנא שמרו אותו כ-PDF והעלו שוב.",
   cv_image: "נראה שזו תמונה. אנא העלו את קורות החיים כקובץ PDF.",
   cv_not_pdf: "הקובץ אינו קובץ PDF. אנא העלו את קורות החיים בפורמט PDF.",
-  cv_too_long: "קורות החיים ארוכים מכדי שנוכל לקרוא (המקסימום הוא כ-15 עמודים). אנא העלו גרסה קצרה יותר.",
-  cv_unreadable: "לא הצלחנו לקרוא את קובץ ה-PDF הזה. אנא ייצאו (export) אותו מחדש ונסו שוב.",
+  cv_too_long: "אפשר לקרוא קורות חיים באורך של עד כ־15 עמודים. העלו גרסה קצרה יותר.",
+  cv_unreadable: "לא הצלחתי לקרוא את קובץ ה־PDF הזה. שמרו אותו מחדש כ־PDF ונסו להעלות שוב.",
   generic: "משהו השתבש אצלנו. אנא נסו שוב בעוד דקה.",
 };
 type Field = "cv" | "role" | "jobDescription";
@@ -103,9 +103,9 @@ export function IntakeForm({
         required
       />
       <details className="intake-more" open={problem === "job_description_too_long" || undefined}>
-        <summary>תיאור המשרה המלא (לא חובה)</summary>
+        <summary>תיאור המשרה (לא חובה)</summary>
         <TextArea
-          label="תיאור המשרה המלא (לא חובה)"
+          label="תיאור המשרה (לא חובה)"
           placeholder="הדביקו כאן את תיאור המשרה"
           value={jobDescription}
           error={errorFor("jobDescription")}
@@ -126,9 +126,9 @@ export function IntakeForm({
         ))}
       <p className="intake-privacy">
         {askConsent && <>{privacyLink}. </>}
-        רוצים פרטיות מלאה? אפשר להריץ את הכלי אצלכם, הוא{" "}
+        אפשר גם להריץ את הכלי אצלכם. הקוד זמין{" "}
         <a href={REPO_URL} target="_blank" rel="noopener">
-          קוד פתוח ב־GitHub
+          ב־GitHub
         </a>
         .
       </p>

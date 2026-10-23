@@ -12,6 +12,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 export const Disabled: Story = { args: { disabled: true } };
-export const Secondary: Story = { args: { variant: "secondary", children: "הזמן מקום לאימון מול מצלמה" } };
-export const Link: Story = { args: { variant: "link", children: "ייצוא HTML" } };
-export const Dark: Story = { args: { variant: "dark", children: "ייצוא PDF" } };
+export const Secondary: Story = { args: { variant: "secondary", children: "הגשת בקשה לתרגול עם קוחה" } };
+export const Link: Story = { args: { variant: "link", children: "הורדת HTML" } };
+export const Dark: Story = { args: { variant: "dark", children: "הורדת PDF" } };
