@@ -33,25 +33,25 @@ export function ExportPanel({
   return (
     <div className="intake export-panel">
       <Message from="kocha">
-        תודה שבניתם איתי את קורות החיים! הם מוכנים. אפשר לייצא אותם עכשיו ולהתחיל לשלוח. בהצלחה!
+        קורות החיים שלכם מוכנים! אפשר להוריד את הקובץ ולשלוח למשרות שמעניינות אתכם. בהצלחה!
       </Message>
       <div className="export-actions">
         <Button variant="dark" onClick={onExportPdf} disabled={pdf.status === "working"}>
-          {pdf.status === "working" ? "מכין PDF…" : "ייצוא PDF"}
+          {pdf.status === "working" ? "מכינה PDF…" : "הורדת PDF"}
         </Button>
-        <Button variant="link" onClick={onExportHtml}>ייצוא HTML</Button>
+        <Button variant="link" onClick={onExportHtml}>הורדת HTML</Button>
       </div>
       <p className={`export-status${pdf.status === "error" ? " is-error" : ""}`} role="status">
         {pdf.text}
       </p>
       <Block className="export-practice-card">
-        <Message from="kocha">לפני שאתם מגיעים לראיון בואו לתרגל איתי אחד מול המצלמה!</Message>
+        <Message from="kocha">רוצים לתרגל לקראת ראיון? אפשר להגיש בקשה לתרגול איתי מול המצלמה.</Message>
         {consent && (
           <Checkbox label={consentLabel("cv_processing")} checked={consent.checked} onChange={(e) => consent.onChange(e.target.checked)} />
         )}
         {consent && !consent.checked ? (
           <Button className="export-practice" disabled>
-            קבע ראיון עם קוחה
+            הגשת בקשה לתרגול עם קוחה
           </Button>
         ) : (
           <a
@@ -66,13 +66,13 @@ export function ExportPanel({
               onPractice();
             }}
           >
-            קבע ראיון עם קוחה
+            הגשת בקשה לתרגול עם קוחה
           </a>
         )}
       </Block>
       {prep && (
         <>
-          <h2 className="ds-sr-only">הכנה לשיחת הגיוס</h2>
+          <h2 className="ds-sr-only">הכנה לראיון</h2>
           {prep}
         </>
       )}

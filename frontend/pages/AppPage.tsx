@@ -30,7 +30,7 @@ import { ExportPanel, type PdfState } from "./ExportPanel";
 import { IntakeForm } from "./IntakeForm";
 import { Reading } from "./Reading";
 
-const STAGES = ["מה, מו, מי", "כוונון", "עיצוב", "ייצוא"];
+const STAGES = ["קורות החיים שלכם", "עריכת תוכן", "עיצוב", "הורדה"];
 const TEMPLATE_NAMES = Object.keys(TEMPLATES) as TemplateName[];
 const PALETTE_NAMES = Object.keys(PALETTES) as PaletteName[];
 const TYPOGRAPHY_NAMES = Object.keys(TYPOGRAPHY) as TypographyName[];
@@ -317,7 +317,7 @@ export function AppPage({
 
   const [pdf, setPdf] = useState<PdfState>({ status: "idle" });
   async function exportPdf(d: CvDocument) {
-    setPdf({ status: "working", text: "מכין את קובץ ה־PDF…" });
+    setPdf({ status: "working", text: "מכינה את קובץ ה־PDF…" });
     try {
       const name = await downloadCvPdf(d, api.pdf);
       setPdf({ status: "done", text: `הקובץ ${name} ירד לתיקיית ההורדות.` });
@@ -412,7 +412,7 @@ export function AppPage({
         <StageGauge label="שלבי העבודה" stages={STAGES} current={stage} onSelect={setStage} canSelect={(i) => i > 0 && intakeSent} />
         <div role="alert" className="app-page-error">
           {limited && "יותר מדי בקשות בזמן קצר. נסו שוב בעוד כמה דקות."}
-          {!limited && error && `משהו השתבש בחיבור לשרת (${error}). מנסים שוב…`}
+          {!limited && error && `משהו השתבש בחיבור לשרת (${error}). מנסה להתחבר שוב…`}
         </div>
       </div>
 
@@ -451,9 +451,9 @@ export function AppPage({
                 <Text variant="heading">קורות חיים</Text>
                 {overflowing && (
                   <div className="app-page-overflow" role="status">
-                    <span>חורג מעמוד אחד בכ־{overflowMm} מ״מ</span>
+                    <span>קורות החיים חורגים מעמוד אחד בכ־{overflowMm} מ״מ</span>
                     <Button variant="secondary" onClick={askToFit} disabled={waiting}>
-                      קצרו לעמוד אחד
+                      קיצור לעמוד אחד
                     </Button>
                   </div>
                 )}
@@ -563,7 +563,7 @@ export function AppPage({
       )}
       <footer className="app-page-footer">
         <p className="app-page-footer-pitch">
-          כשתגיעו לראיון תהיו מוכנים אם תתאמנו עם{" "}
+          לקראת ראיון, אפשר להגיש בקשה לתרגול עם{" "}
           <a href={kochaUrl("footer")} target="_blank" rel="noopener">
             קוֹחָה
           </a>

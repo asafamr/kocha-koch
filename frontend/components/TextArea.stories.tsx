@@ -9,7 +9,7 @@ const longText = Array.from(
 const meta = {
   title: "Components/TextArea",
   component: TextArea,
-  args: { label: "תיאור המשרה המלא (לא חובה)", placeholder: "הדביקו כאן את תיאור המשרה" },
+  args: { label: "תיאור המשרה (לא חובה)", placeholder: "הדביקו כאן את תיאור המשרה" },
 } satisfies Meta<typeof TextArea>;
 export default meta;
 type Story = StoryObj<typeof meta>;
