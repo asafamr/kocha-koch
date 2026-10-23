@@ -45,7 +45,7 @@ export function ExportPanel({
         {pdf.text}
       </p>
       <Block className="export-practice-card">
-        <Message from="kocha">רוצים לתרגל לקראת ראיון? אפשר להגיש בקשה לתרגול איתי מול המצלמה. התרגול זמין כרגע במסגרת פיילוט בהזמנה בלבד.</Message>
+        <Message from="kocha">רוצים לתרגל לקראת ראיון? אפשר להגיש בקשה לתרגול איתי מול המצלמה.</Message>
         {consent && (
           <Checkbox label={consentLabel("cv_processing")} checked={consent.checked} onChange={(e) => consent.onChange(e.target.checked)} />
         )}
